@@ -1,0 +1,27 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"jsx": "react-jsx",
+		"strict": true,
+		"noEmit": true,
+		"isolatedModules": true,
+		"allowImportingTsExtensions": true,
+		"erasableSyntaxOnly": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"useDefineForClassFields": true,
+		"forceConsistentCasingInFileNames": true,
+		"types": ["vite/client", "node"],
+		"paths": {
+			"@earendil-works/chord/context": ["../chord/src/context/index.ts"],
+			"@earendil-works/chord": ["../chord/src/index.ts"],
+			"@earendil-works/pi-protocol": ["../protocol/src/index.ts"],
+			"@earendil-works/pi-client/ws": ["../client/src/ws.ts"],
+			"@earendil-works/pi-client": ["../client/src/index.ts"]
+		}
+	},
+	"include": ["src", "vite.config.ts"]
+}

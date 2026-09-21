@@ -17,6 +17,10 @@
 		"./unix": {
 			"types": "./dist/transports/unix/index.d.ts",
 			"import": "./dist/transports/unix/index.js"
+		},
+		"./ws": {
+			"types": "./dist/transports/ws/index.d.ts",
+			"import": "./dist/transports/ws/index.js"
 		}
 	},
 	"files": [
@@ -49,9 +53,11 @@
 	"dependencies": {
 		"@earendil-works/chord": "^0.86.1",
 		"@earendil-works/pi-agent-core": "^0.86.1",
-		"@earendil-works/pi-protocol": "^0.86.1"
+		"@earendil-works/pi-protocol": "^0.86.1",
+		"ws": "8.21.3"
 	},
 	"devDependencies": {
+		"@types/ws": "8.18.1",
 		"shx": "0.4.0",
 		"vitest": "4.1.9"
 	}
