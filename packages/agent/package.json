@@ -18,6 +18,10 @@
 			"types": "./dist/harness/context.d.ts",
 			"import": "./dist/harness/context.js"
 		},
+		"./harness/mcp": {
+			"types": "./dist/harness/mcp/index.d.ts",
+			"import": "./dist/harness/mcp/index.js"
+		},
 		"./experimental/pico3": {
 			"types": "./dist/harness/pico3/index.d.ts",
 			"import": "./dist/harness/pico3/index.js"

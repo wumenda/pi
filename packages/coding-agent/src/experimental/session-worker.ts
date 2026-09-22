@@ -1,5 +1,6 @@
+import { readFile } from "node:fs/promises";
 import { createConnection, type Socket } from "node:net";
-import { isAbsolute } from "node:path";
+import { isAbsolute, join } from "node:path";
 import {
 	isJsonValue,
 	type JsonValue,
@@ -14,7 +15,10 @@ import {
 	AgentHarness,
 	type AgentHarness as AgentHarnessInstance,
 	type AgentLane,
+	type AskUserRegistry,
 	BACKGROUND_CONTEXT,
+	createAskUserQuestionTool,
+	createAskUserRegistry,
 	createBashTool,
 	createReadTool,
 	createWriteTool,
@@ -24,10 +28,17 @@ import {
 	TODO_CONTEXT,
 	withCancel,
 } from "@earendil-works/pi-agent-core";
+import {
+	createMcpTools,
+	type McpServerConfig,
+	type McpServerConfigMap,
+	McpServerManager,
+} from "@earendil-works/pi-agent-core/harness/mcp";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/node";
 import lockfile from "proper-lockfile";
 import Type, { type Static } from "typebox";
 import { Check } from "typebox/value";
+import { getAgentDir } from "../config.ts";
 import { findInitialModel, resolveCliModel } from "../core/model-resolver.ts";
 import { ModelRuntime } from "../core/model-runtime.ts";
 import { SettingsManager } from "../core/settings-manager.ts";
@@ -483,6 +494,7 @@ async function closeResources(resources: {
 	session?: Session<JsonlSessionMetadata>;
 	repo: JsonlSessionRepo;
 	executionEnv: NodeExecutionEnv;
+	mcpManager?: McpServerManager;
 	releaseOwnership: () => Promise<void>;
 }): Promise<void> {
 	const errors: unknown[] = [];
@@ -494,6 +506,11 @@ async function closeResources(resources: {
 	try {
 		if (resources.harness) await resources.harness.close(TODO_CONTEXT);
 		else await resources.session?.close(TODO_CONTEXT);
+	} catch (error) {
+		errors.push(error);
+	}
+	try {
+		await resources.mcpManager?.close();
 	} catch (error) {
 		errors.push(error);
 	}
@@ -541,16 +558,20 @@ async function run(options: SessionWorkerOptions, createHarness: CreateSessionWo
 	let session: Session<JsonlSessionMetadata> | undefined;
 	let harness: AgentHarnessInstance | undefined;
 	let lane: AgentLane | undefined;
+	let mcpManager: McpServerManager | undefined;
 	let services: SessionWorkerServices | undefined;
 	try {
 		session = await repo.open(metadata, TODO_CONTEXT);
 		const runtime = await createHarness(session, options, executionEnv);
 		harness = runtime.harness;
 		lane = runtime.lane ?? (await harness.lane("main", TODO_CONTEXT));
+		mcpManager = runtime.mcpHost;
 		services = await createSessionWorkerServices({
 			lane,
+			askUser: runtime.askUser,
 			modelRuntime: runtime.modelRuntime,
 			settingsManager: runtime.settingsManager,
+			mcpHost: runtime.mcpHost,
 			facetLoader: runtime.facetLoader,
 			publish: (scope, subscriptionId, update) =>
 				control.send({
@@ -564,7 +585,7 @@ async function run(options: SessionWorkerOptions, createHarness: CreateSessionWo
 		});
 	} catch (error) {
 		try {
-			await closeResources({ harness, services, session, repo, executionEnv, releaseOwnership });
+			await closeResources({ harness, services, session, repo, executionEnv, mcpManager, releaseOwnership });
 		} catch (cleanupError) {
 			throw new AggregateError([error, cleanupError], "Session worker startup and cleanup failed");
 		}
@@ -586,7 +607,7 @@ async function run(options: SessionWorkerOptions, createHarness: CreateSessionWo
 		activeRequests.clear();
 		for (const remove of removeLifecycleListeners) remove();
 		removeLifecycleListeners = [];
-		closing = closeResources({ harness, services, repo, executionEnv, releaseOwnership });
+		closing = closeResources({ harness, services, repo, executionEnv, mcpManager, releaseOwnership });
 		return closing;
 	};
 	const closeAndExit = (): void => {
@@ -828,7 +849,16 @@ async function createCodingAgentHarness(
 		if (resolved.error) throw new Error(`Session worker could not resolve model: ${resolved.error}`);
 	}
 	if (!resolved.model) throw new Error("Session worker could not resolve a model");
-	const tools = [createReadTool(), createWriteTool(), createBashTool()];
+	const askUserRegistry: AskUserRegistry = createAskUserRegistry();
+	const mcpManager = new McpServerManager(await loadMcpServerConfigs());
+	await mcpManager.connectAll();
+	const tools = [
+		createReadTool(),
+		createWriteTool(),
+		createBashTool(),
+		createAskUserQuestionTool(),
+		...createMcpTools(mcpManager),
+	];
 	const activeToolNames = tools.map((tool) => tool.name);
 	const harness = (
 		await AgentHarness.create(
@@ -839,7 +869,7 @@ async function createCodingAgentHarness(
 				thinkingLevel: resolved.thinkingLevel,
 				tools,
 				activeToolNames,
-				toolContext: { env: executionEnv },
+				toolContext: { env: executionEnv, askUser: askUserRegistry },
 				resources: {},
 			},
 			TODO_CONTEXT,
@@ -859,16 +889,113 @@ async function createCodingAgentHarness(
 			lane,
 			modelRuntime,
 			settingsManager,
+			askUser: askUserRegistry,
+			mcpHost: mcpManager,
 			facetLoader: createSessionPluginFacetLoader(options.pluginManifestPaths),
 		};
 	} catch (error) {
+		const cleanup: unknown[] = [];
 		try {
 			await harness.close(TODO_CONTEXT);
 		} catch (cleanupError) {
-			throw new AggregateError([error, cleanupError], "Session worker model selection and cleanup failed");
+			cleanup.push(cleanupError);
+		}
+		try {
+			await mcpManager.close();
+		} catch (cleanupError) {
+			cleanup.push(cleanupError);
+		}
+		if (cleanup.length > 0) {
+			throw new AggregateError([error, ...cleanup], "Session worker startup and cleanup failed");
 		}
 		throw error;
 	}
+}
+
+async function loadMcpServerConfigs(): Promise<McpServerConfigMap> {
+	const configPath = join(getAgentDir(), "mcp.json");
+	let raw: string;
+	try {
+		raw = await readFile(configPath, "utf8");
+	} catch {
+		return {};
+	}
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(raw);
+	} catch (error) {
+		console.error(
+			`Ignoring invalid MCP config at ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
+		);
+		return {};
+	}
+	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+		console.error(`Ignoring invalid MCP config at ${configPath}: expected a JSON object of server configs`);
+		return {};
+	}
+	const servers: McpServerConfigMap = {};
+	for (const [id, value] of Object.entries(parsed)) {
+		const config = toMcpServerConfig(value);
+		if (config === undefined) {
+			console.error(`Ignoring invalid MCP server config ${JSON.stringify(id)} at ${configPath}`);
+			continue;
+		}
+		servers[id] = config;
+	}
+	return servers;
+}
+
+function toMcpServerConfig(value: unknown): McpServerConfig | undefined {
+	if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined;
+	const candidate = value as Record<string, unknown>;
+	if (candidate.type === "stdio") {
+		if (typeof candidate.command !== "string" || candidate.command.length === 0) return undefined;
+		const args = candidate.args === undefined ? undefined : toStringList(candidate.args);
+		if (candidate.args !== undefined && args === undefined) return undefined;
+		const env = candidate.env === undefined ? undefined : toStringRecord(candidate.env);
+		if (candidate.env !== undefined && env === undefined) return undefined;
+		const cwd =
+			candidate.cwd === undefined
+				? undefined
+				: typeof candidate.cwd === "string" && candidate.cwd.length > 0
+					? candidate.cwd
+					: undefined;
+		if (candidate.cwd !== undefined && cwd === undefined) return undefined;
+		return {
+			type: "stdio",
+			command: candidate.command,
+			...(args === undefined ? {} : { args }),
+			...(env === undefined ? {} : { env }),
+			...(cwd === undefined ? {} : { cwd }),
+		};
+	}
+	if (candidate.type === "http") {
+		if (typeof candidate.url !== "string" || candidate.url.length === 0) return undefined;
+		const headers = candidate.headers === undefined ? undefined : toStringRecord(candidate.headers);
+		if (candidate.headers !== undefined && headers === undefined) return undefined;
+		return { type: "http", url: candidate.url, ...(headers === undefined ? {} : { headers }) };
+	}
+	return undefined;
+}
+
+function toStringList(value: unknown): string[] | undefined {
+	if (!Array.isArray(value)) return undefined;
+	const list: string[] = [];
+	for (const entry of value) {
+		if (typeof entry !== "string") return undefined;
+		list.push(entry);
+	}
+	return list;
+}
+
+function toStringRecord(value: unknown): Record<string, string> | undefined {
+	if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined;
+	const record: Record<string, string> = {};
+	for (const [key, entry] of Object.entries(value)) {
+		if (typeof entry !== "string") return undefined;
+		record[key] = entry;
+	}
+	return record;
 }
 
 export function runSessionWorkerProcess(args: readonly string[]): Promise<void> {

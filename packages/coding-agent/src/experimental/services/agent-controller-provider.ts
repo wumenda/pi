@@ -1,6 +1,7 @@
-import type { AgentLane, OperationResultRecord, SuspendedRun } from "@earendil-works/pi-agent-core";
+import type { AgentLane, AskUserRegistry, OperationResultRecord, SuspendedRun } from "@earendil-works/pi-agent-core";
 import type { ImageContent } from "@earendil-works/pi-ai";
 import type {
+	AgentAskUserAnswerRequest,
 	AgentController as AgentControllerService,
 	AgentOperationError,
 	AgentOperationResponse,
@@ -8,7 +9,7 @@ import type {
 	AgentQueueResponse,
 } from "./agent-controller.ts";
 
-export function createAgentController(lane: AgentLane): AgentControllerService {
+export function createAgentController(lane: AgentLane, askUser?: AskUserRegistry): AgentControllerService {
 	const queue = async (
 		operation: "steer" | "followUp" | "nextRun",
 		request: AgentPromptRequest,
@@ -69,6 +70,17 @@ export function createAgentController(lane: AgentLane): AgentControllerService {
 			return result.ok
 				? toOperationResponse(result.value.navigation)
 				: { accepted: false, operationId: operationId(result.error), error: toAgentError(result.error) };
+		},
+		async answerAskUser(request: AgentAskUserAnswerRequest) {
+			if (typeof request.answers !== "object" || request.answers === null) {
+				throw new Error("ask_user_question answers must be a JSON object");
+			}
+			if (askUser === undefined) {
+				throw new Error("ask_user_question is not available in this session");
+			}
+			if (!askUser.answer(request.toolCallId, request.answers)) {
+				throw new Error(`No pending ask_user_question for tool call ${request.toolCallId}`);
+			}
 		},
 	};
 }

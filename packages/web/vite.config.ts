@@ -8,6 +8,8 @@ const source = (packagePath: string): string => fileURLToPath(new URL(packagePat
 const workspaceAliases = [
 	{ find: /^@earendil-works\/chord\/context$/, replacement: source("../chord/src/context/index.ts") },
 	{ find: /^@earendil-works\/chord$/, replacement: source("../chord/src/index.ts") },
+	{ find: /^@earendil-works\/pi-agent-core$/, replacement: source("../agent/src/index.ts") },
+	{ find: /^@earendil-works\/pi-ai$/, replacement: source("../ai/src/index.ts") },
 	{ find: /^@earendil-works\/pi-protocol$/, replacement: source("../protocol/src/index.ts") },
 	{ find: /^@earendil-works\/pi-client\/ws$/, replacement: source("../client/src/ws.ts") },
 	{ find: /^@earendil-works\/pi-client$/, replacement: source("../client/src/index.ts") },

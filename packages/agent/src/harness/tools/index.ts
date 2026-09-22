@@ -1,4 +1,12 @@
 export {
+	type AskUserAnswers,
+	type AskUserPendingAsk,
+	type AskUserQuestionInput,
+	type AskUserRegistry,
+	createAskUserQuestionTool,
+	createAskUserRegistry,
+} from "./ask-user.ts";
+export {
 	type BashExecution,
 	type BashPrepare,
 	type BashToolDetails,

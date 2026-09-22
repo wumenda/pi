@@ -11,11 +11,14 @@ import {
 	type ServiceCall,
 	type ServiceProviderUpdate,
 } from "@earendil-works/chord";
-import type { AgentHarness, AgentLane } from "@earendil-works/pi-agent-core";
+import type { AgentHarness, AgentLane, AskUserRegistry } from "@earendil-works/pi-agent-core";
+import type { McpServerManager } from "@earendil-works/pi-agent-core/harness/mcp";
 import type { ModelRuntime } from "../../core/model-runtime.ts";
 import type { SettingsManager } from "../../core/settings-manager.ts";
 import { AgentController } from "./agent-controller.ts";
 import { createAgentController } from "./agent-controller-provider.ts";
+import { McpHost } from "./mcp-host.ts";
+import { createMcpHost } from "./mcp-host-provider.ts";
 import { createModelsServiceFacet } from "./models-provider.ts";
 import { SessionPlugins } from "./plugins.ts";
 import { createTranscriptServiceFacet } from "./transcript-provider.ts";
@@ -25,6 +28,8 @@ export interface SessionWorkerRuntime {
 	readonly lane?: AgentLane;
 	readonly modelRuntime?: ModelRuntime;
 	readonly settingsManager?: SettingsManager;
+	readonly askUser?: AskUserRegistry;
+	readonly mcpHost?: McpServerManager;
 	readonly facetLoader?: FacetLoader;
 }
 
@@ -46,15 +51,23 @@ export interface SessionWorkerServices {
 
 export async function createSessionWorkerServices(options: {
 	readonly lane: AgentLane;
+	readonly askUser?: AskUserRegistry;
 	readonly modelRuntime: ModelRuntime | undefined;
 	readonly settingsManager?: SettingsManager;
+	readonly mcpHost?: McpServerManager;
 	readonly facetLoader?: FacetLoader;
 	publish(scope: WorkerServiceScope, subscriptionId: string, update: ServiceProviderUpdate): Promise<void>;
 }): Promise<SessionWorkerServices> {
 	const agentControllerRuntimeFacet = defineFacet({
 		id: "@pi/agent-controller-runtime",
 		setup(env) {
-			env.provide(AgentController, createAgentController(options.lane));
+			env.provide(AgentController, createAgentController(options.lane, options.askUser));
+		},
+	});
+	const mcpHostRuntimeFacet = defineFacet({
+		id: "@pi/mcp-host-runtime",
+		setup(env) {
+			env.provide(McpHost, createMcpHost(options.mcpHost));
 		},
 	});
 	let reloadPlugins = (): Promise<void> => Promise.reject(new Error("Session plugins are not ready"));
@@ -66,6 +79,7 @@ export async function createSessionWorkerServices(options: {
 	});
 	const builtins = await createStaticFacetLoader([
 		agentControllerRuntimeFacet,
+		mcpHostRuntimeFacet,
 		pluginRuntimeFacet,
 		createModelsServiceFacet(options),
 		createTranscriptServiceFacet(options.lane),

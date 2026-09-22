@@ -18,6 +18,10 @@
 		"paths": {
 			"@earendil-works/chord/context": ["../chord/src/context/index.ts"],
 			"@earendil-works/chord": ["../chord/src/index.ts"],
+			"@earendil-works/pi-agent-core": ["../agent/src/index.ts"],
+			"@earendil-works/pi-ai": ["../ai/src/index.ts"],
+			"@earendil-works/pi-ai/*": ["../ai/src/*.ts"],
+			"@earendil-works/pi-telemetry": ["../telemetry/src/index.ts"],
 			"@earendil-works/pi-protocol": ["../protocol/src/index.ts"],
 			"@earendil-works/pi-client/ws": ["../client/src/ws.ts"],
 			"@earendil-works/pi-client": ["../client/src/index.ts"]

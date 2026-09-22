@@ -12,6 +12,9 @@
 		"typecheck": "tsgo -p tsconfig.json --noEmit"
 	},
 	"dependencies": {
+		"@earendil-works/chord": "^0.86.1",
+		"@earendil-works/pi-agent-core": "^0.86.1",
+		"@earendil-works/pi-ai": "^0.86.1",
 		"@earendil-works/pi-client": "^0.86.1",
 		"@earendil-works/pi-protocol": "^0.86.1",
 		"react": "19.3.0",

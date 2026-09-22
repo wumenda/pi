@@ -1,4 +1,4 @@
-import { type Context, defineService } from "@earendil-works/chord";
+import { type Context, defineService, type JsonValue } from "@earendil-works/chord";
 
 export interface AgentPromptImage {
 	type: "image";
@@ -35,6 +35,12 @@ export interface AgentNavigationRequest {
 	customInstructions: string | null;
 }
 
+export interface AgentAskUserAnswerRequest {
+	toolCallId: string;
+	/** Structured answers: { [pageId]: { [fieldId]: value | value[] } }. */
+	answers: JsonValue;
+}
+
 /** Presentation-safe command facade over the worker-owned main AgentLane. */
 export interface AgentController {
 	prompt(request: AgentPromptRequest, context: Context): Promise<AgentOperationResponse>;
@@ -49,6 +55,8 @@ export interface AgentController {
 	resume(context: Context): Promise<AgentOperationResponse>;
 	compact(request: AgentCompactionRequest, context: Context): Promise<AgentOperationResponse>;
 	navigate(request: AgentNavigationRequest, context: Context): Promise<AgentOperationResponse>;
+	/** Resolve a suspended ask_user_question tool call; throws when the call is not pending. */
+	answerAskUser(request: AgentAskUserAnswerRequest, context: Context): Promise<void>;
 }
 
 export const AgentController = defineService<AgentController>("pi.agent-controller");
