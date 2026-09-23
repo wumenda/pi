@@ -250,18 +250,124 @@ pre {
 	min-height: 0;
 }
 
-@media (max-width: 1100px) {
-	.app-layout {
-		grid-template-columns: 220px minmax(0, 1fr) minmax(320px, 440px);
-	}
+.mobile-bar {
+	display: none;
+	align-items: center;
+	height: var(--h-header);
+	padding: 0 var(--sp-3);
+	background: var(--s1);
+	border-bottom: 1px solid var(--border-soft);
 }
 
-@media (max-width: 860px) {
+.mobile-tabs {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	gap: 4px;
+}
+
+.mobile-tab {
+	padding: 6px 16px;
+	font-size: 13px;
+	color: var(--t2);
+	border-radius: var(--r-sm);
+	transition:
+		color var(--dur-fast) var(--ease),
+		background var(--dur-fast) var(--ease);
+}
+
+.mobile-tab-active,
+.mobile-tab-active:hover {
+	color: var(--brand-ink);
+	background: var(--brand-dim);
+}
+
+.chat-menu-btn {
+	display: none;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	border-radius: var(--r-sm);
+	color: var(--t2);
+	flex-shrink: 0;
+	transition: background var(--dur-fast) var(--ease);
+}
+
+.chat-menu-btn:hover {
+	background: var(--s2);
+	color: var(--t1);
+}
+
+.drawer-scrim {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 40;
+	background: rgba(23, 33, 43, 0.35);
+}
+
+/* ≤1100：会话栏收起为抽屉，保留 工作区 + 对话 两栏 */
+@media (max-width: 1100px) {
 	.app-layout {
 		grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
 	}
 
 	.left-pane {
+		position: fixed;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 50;
+		width: min(280px, 84vw);
+		border-right: 1px solid var(--border);
+		box-shadow: var(--shadow-overlay);
+		transform: translateX(-100%);
+		visibility: hidden;
+		transition:
+			transform var(--dur) var(--ease),
+			visibility 0s var(--dur);
+	}
+
+	.app-layout.sessions-open .left-pane {
+		transform: translateX(0);
+		visibility: visible;
+		transition: transform var(--dur) var(--ease);
+	}
+
+	.drawer-scrim {
+		display: block;
+	}
+
+	.chat-menu-btn {
+		display: grid;
+	}
+}
+
+/* ≤720：单栏，顶部切换 工作区 / 对话 */
+@media (max-width: 720px) {
+	.app-layout {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+
+	.mobile-bar {
+		display: flex;
+		grid-row: 1;
+		grid-column: 1 / -1;
+	}
+
+	.center-pane,
+	.right-pane {
+		display: none;
+	}
+
+	.app-layout.view-workspace .center-pane,
+	.app-layout.view-chat .right-pane {
+		display: flex;
+	}
+
+	.chat-header .chat-menu-btn,
+	.chat-header .theme-toggle {
 		display: none;
 	}
 }

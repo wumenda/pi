@@ -26,6 +26,9 @@ interface TranscriptEntryLike {
 	readonly summary?: unknown;
 }
 
+/** 稳定的空 transcript，避免每次渲染产生新引用触发 effect 重跑 */
+const EMPTY_ENTRIES: readonly TranscriptEntryLike[] = [];
+
 type ToolCallStatus = "running" | "completed" | "error";
 
 type ChatRow =
@@ -242,6 +245,8 @@ function formatTime(timestamp: number): string {
 export function App(): ReactNode {
 	const pi = usePiApp();
 	const [theme, setTheme] = useState<"light" | "dark">("light");
+	const [sessionsOpen, setSessionsOpen] = useState(false);
+	const [mobileView, setMobileView] = useState<"workspace" | "chat">("chat");
 	const [url, setUrl] = useState("ws://127.0.0.1:8787");
 	const [serverId, setServerId] = useState("");
 	const [draft, setDraft] = useState("");
@@ -263,7 +268,7 @@ export function App(): ReactNode {
 		});
 	}, [pi.activeSessionId, pi.callMcpTool, pi.getMcpUiResource]);
 
-	const entries: readonly TranscriptEntryLike[] = pi.transcript?.snapshot?.transcript ?? [];
+	const entries: readonly TranscriptEntryLike[] = pi.transcript?.snapshot?.transcript ?? EMPTY_ENTRIES;
 	const workspace = useIframeWorkspace(entries, pi.activeSessionId ?? null);
 	const rows = useMemo(() => buildChatRows(entries), [entries]);
 
@@ -348,11 +353,47 @@ export function App(): ReactNode {
 	const running = typeof pi.transcript?.snapshot?.operation?.id === "string";
 
 	return (
-		<div className="app-layout">
+		<div className={`app-layout view-${mobileView}${sessionsOpen ? " sessions-open" : ""}`}>
+			<header className="mobile-bar">
+				<button type="button" className="chat-menu-btn" aria-label="打开会话列表" onClick={() => setSessionsOpen(true)}>
+					☰
+				</button>
+				<nav className="mobile-tabs">
+					<button
+						type="button"
+						className={`mobile-tab${mobileView === "workspace" ? " mobile-tab-active" : ""}`}
+						onClick={() => setMobileView("workspace")}
+					>
+						工作区
+					</button>
+					<button
+						type="button"
+						className={`mobile-tab${mobileView === "chat" ? " mobile-tab-active" : ""}`}
+						onClick={() => setMobileView("chat")}
+					>
+						对话
+					</button>
+				</nav>
+				<button
+					type="button"
+					className="theme-toggle"
+					aria-label="切换主题"
+					onClick={() => setTheme((previous) => (previous === "light" ? "dark" : "light"))}
+				>
+					{theme === "light" ? "☾" : "☀"}
+				</button>
+			</header>
 			<aside className="left-pane">
 				<div className="sidebar-header">
 					<span className="sidebar-title">会话</span>
-					<button type="button" className="sidebar-new-btn" onClick={() => void pi.createSession()}>
+					<button
+						type="button"
+						className="sidebar-new-btn"
+						onClick={() => {
+							void pi.createSession();
+							setSessionsOpen(false);
+						}}
+					>
 						+ 新建
 					</button>
 				</div>
@@ -364,7 +405,10 @@ export function App(): ReactNode {
 								type="button"
 								key={session.sessionId}
 								className={`session-item${active ? " session-item-active" : ""}`}
-								onClick={() => void pi.attachSession(session.sessionId)}
+								onClick={() => {
+									void pi.attachSession(session.sessionId);
+									setSessionsOpen(false);
+								}}
 							>
 								<span className="session-title">{session.sessionId.slice(0, 8)}</span>
 								<span className="session-time">{formatTime(session.createdAt)}</span>
@@ -408,6 +452,9 @@ export function App(): ReactNode {
 			<aside className="right-pane">
 				<div className="chat-header">
 					<div className="chat-header-info">
+						<button type="button" className="chat-menu-btn" aria-label="打开会话列表" onClick={() => setSessionsOpen(true)}>
+							☰
+						</button>
 						<div className="chat-header-icon">π</div>
 						<div className="chat-header-meta">
 							<div className="chat-header-title">Pi 对话</div>
@@ -471,6 +518,9 @@ export function App(): ReactNode {
 					</div>
 				</form>
 			</aside>
+			{sessionsOpen && (
+				<button type="button" className="drawer-scrim" aria-label="关闭会话列表" onClick={() => setSessionsOpen(false)} />
+			)}
 		</div>
 	);
 }

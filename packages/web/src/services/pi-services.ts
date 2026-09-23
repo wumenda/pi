@@ -34,18 +34,13 @@ export class PiServices {
 		this.#serverTransport = createClientServiceTransport(client, () => ({ serverId: client.serverId }));
 		this.#sessionTransport = createClientServiceTransport(client, () => client.attachment);
 		this.#serverBinding = createRemoteServiceBinding({
-			services: [{ id: SessionDirectory.id }],
+			services: [{ id: SessionDirectory.id }, { id: SessionManagement.id }],
 			transport: this.#serverTransport,
 			bound: client.connected,
 			onError: this.#onError,
 		});
 		this.#sessionBinding = createRemoteServiceBinding({
-			services: [
-				{ id: Transcript.id },
-				{ id: AgentController.id },
-				{ id: SessionManagement.id },
-				{ id: McpHost.id },
-			],
+			services: [{ id: Transcript.id }, { id: AgentController.id }, { id: McpHost.id }],
 			transport: this.#sessionTransport,
 			bound: client.attachment !== undefined && client.connected,
 			onError: this.#onError,
@@ -67,7 +62,7 @@ export class PiServices {
 	}
 
 	get sessionManagement(): SessionManagement {
-		return this.#sessionBinding.use(SessionManagement);
+		return this.#serverBinding.use(SessionManagement);
 	}
 
 	get mcpHost(): McpHost {
