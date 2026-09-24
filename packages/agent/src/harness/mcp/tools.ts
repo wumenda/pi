@@ -49,6 +49,24 @@ export function extractMcpToolUi(tool: McpRoutedTool): McpToolUiDescriptor | und
 	return descriptor;
 }
 
+/**
+ * Whether the model should see this tool. Tools whose `_meta.ui.visibility`
+ * declares an audience list are model-visible only when it contains `"model"`
+ * (`["app"]` marks app-only tools, invoked by MCP Apps host surfaces via reverse
+ * `tools/call`); such tools stay registered so harness-side execution keeps
+ * working, but are excluded from the model-visible active tool list. Tools
+ * without a visibility declaration default to model-visible.
+ */
+export function isVisibleToLlm(tool: McpRoutedTool): boolean {
+	const meta = tool.tool._meta;
+	if (typeof meta !== "object" || meta === null) return true;
+	const ui = (meta as { ui?: unknown }).ui;
+	if (typeof ui !== "object" || ui === null) return true;
+	const visibility = (ui as { visibility?: unknown }).visibility;
+	if (!Array.isArray(visibility)) return true;
+	return visibility.includes("model");
+}
+
 function sanitizeNamePart(value: string): string {
 	const sanitized = value.replace(/[^a-zA-Z0-9_-]/g, "_");
 	return sanitized.length > 0 ? sanitized : "server";

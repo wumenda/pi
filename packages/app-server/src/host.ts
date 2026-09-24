@@ -2,7 +2,12 @@ import { join, resolve } from "node:path";
 import type { Context } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import type { HarnessEvent } from "@earendil-works/pi-agent-core";
-import { createMcpTools, McpServerManager } from "@earendil-works/pi-agent-core/harness/mcp";
+import {
+	createMcpTools,
+	isVisibleToLlm,
+	McpServerManager,
+	mcpToolName,
+} from "@earendil-works/pi-agent-core/harness/mcp";
 import type { JsonlSessionMetadata } from "@earendil-works/pi-agent-core/harness/session";
 import type { RoutedSessionHandle, ServerHost } from "@earendil-works/pi-server";
 import type { AppServerConfig } from "./config.ts";
@@ -104,13 +109,19 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 							`mcp server ${status.id}: state=${status.state} toolCount=${status.toolCount}${status.error === undefined ? "" : ` error=${status.error}`}`,
 						);
 					}
+					const mcpTools = createMcpTools(manager);
 					const runtime = await createSessionRuntime({
 						session,
 						models: deps.llm.models,
 						model: deps.llm.model,
 						workspaceDir,
 						mcp: manager,
-						extraTools: createMcpTools(manager),
+						extraTools: mcpTools,
+						// MCP Apps app-only 工具（visibility=["app"]）仅 iframe 经反向调用可用
+						hiddenFromLlm: manager
+							.tools()
+							.filter((routed) => !isVisibleToLlm(routed))
+							.map((routed) => mcpToolName(routed.serverId, routed.tool.name)),
 					});
 					const recorder = createToolEventRecorder(deps.config.dataDir, metadata.id);
 					const sessionServices = await createSessionServices(runtime, recorder);

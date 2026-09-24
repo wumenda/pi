@@ -11,6 +11,7 @@ export {
 export {
 	createMcpTools,
 	extractMcpToolUi,
+	isVisibleToLlm,
 	type McpToolDetails,
 	type McpToolUiDescriptor,
 	mcpToolName,

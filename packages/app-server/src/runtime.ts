@@ -25,6 +25,12 @@ export interface SessionRuntimeOptions {
 	mcp: McpServerManager;
 	/** 附加工具（host 注入 MCP 桥接工具）。 */
 	extraTools?: AgentHarnessTool<ExecutionToolContext>[];
+	/**
+	 * 注册但不对模型开放的工具名（MCP Apps app-only 工具，`visibility=["app"]`）：
+	 * 不进 activeToolNames（模型不可见、模型调用被拒），工具本身保持注册；
+	 * MCP host 反向调用走 manager 直连，不受影响。
+	 */
+	hiddenFromLlm?: readonly string[];
 }
 
 export interface SessionRuntime {
@@ -45,13 +51,14 @@ export async function createSessionRuntime(options: SessionRuntimeOptions): Prom
 		createAskUserQuestionTool(),
 		...(options.extraTools ?? []),
 	];
+	const hidden = new Set(options.hiddenFromLlm ?? []);
 	const { harness } = await AgentHarness.create<ExecutionToolContext>(
 		{
 			session: options.session,
 			models: options.models,
 			model: options.model,
 			tools,
-			activeToolNames: tools.map((tool) => tool.name),
+			activeToolNames: tools.map((tool) => tool.name).filter((name) => !hidden.has(name)),
 			toolContext: { env, askUser },
 			resources: {},
 		},
