@@ -1,11 +1,18 @@
 /**
  * ask_user_question 卡片渲染契约（镜像 ask_user_question/schema.py 统一字段模型）：
  * - 值域 valueType（enum/number/text/file）与控件 widget 正交；
- * - 6 种交互类型是统一 schema 的预设约束（list-single/list-multi/form/table/dropdown/file-collect）；
+ * - 7 种交互类型是统一 schema 的预设约束（list-single/list-multi/form/table/dropdown/file-collect/file-download）；
  * - tool part 的 state.input 即本契约实例（模型调用参数）。
  */
 
-export type AskUserType = "list-single" | "list-multi" | "form" | "table" | "dropdown" | "file-collect";
+export type AskUserType =
+	| "list-single"
+	| "list-multi"
+	| "form"
+	| "table"
+	| "dropdown"
+	| "file-collect"
+	| "file-download";
 
 export type ValueType = "enum" | "number" | "text" | "file";
 

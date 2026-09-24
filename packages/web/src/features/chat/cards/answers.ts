@@ -13,7 +13,15 @@ export function isAskUserTool(calledTool: string): boolean {
 	return calledTool.includes("ask_user_");
 }
 
-const TYPES: readonly AskUserType[] = ["list-single", "list-multi", "form", "table", "dropdown", "file-collect"];
+const TYPES: readonly AskUserType[] = [
+	"list-single",
+	"list-multi",
+	"form",
+	"table",
+	"dropdown",
+	"file-collect",
+	"file-download",
+];
 
 function isRecord(v: unknown): v is Record<string, unknown> {
 	return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -150,7 +158,18 @@ export type CompletionError =
 	| { kind: "custom-empty"; fieldId: string; message: string }
 	| { kind: "table-min-rows"; fieldId: string; message: string }
 	| { kind: "table-cell"; fieldId: string; rowIndex: number; colId: string; message: string }
-	| { kind: "file-meta"; fieldId: string; fileIndex: number; metaId: string; message: string };
+	| { kind: "file-meta"; fieldId: string; fileIndex: number; metaId: string; message: string }
+	| { kind: "path-form"; fieldId: string; message: string };
+
+/** 工作区相对路径形态（file-download 选项/答案用）：/ 分隔，禁绝对路径、盘符、反斜杠与 .. 段 */
+export function isRelativeWorkspacePath(value: string): boolean {
+	if (value.length === 0) return false;
+	if (value.startsWith("/") || value.startsWith("\\")) return false;
+	if (/^[a-zA-Z]:/.test(value)) return false;
+	if (value.includes("\\")) return false;
+	if (value.split("/").includes("..")) return false;
+	return true;
+}
 
 /** 自定义占位 label：allowCustom 为真时追加的「自定义」选项 label（与渲染层共享，须一致） */
 export const CUSTOM_LABEL = "其他（自定义）";
@@ -171,9 +190,13 @@ export function validateAnswersDetailed(
 	const errors: CompletionError[] = [];
 
 	for (const page of pages) {
-		// 页级交互类型；table 页走行编辑校验，其余走逐字段校验
+		// 页级交互类型；table 页走行编辑校验，file-download 页走下载清单校验，其余走逐字段校验
 		if (page.type === "table") {
 			collectTableErrors(page, values, errors);
+			continue;
+		}
+		if (page.type === "file-download") {
+			collectDownloadErrors(page, values, errors);
 			continue;
 		}
 		for (const field of answerableFields(page)) {
@@ -262,6 +285,37 @@ function collectFileErrors(field: FieldInput, v: unknown, errors: CompletionErro
 					fileIndex: fi,
 					metaId: meta.id,
 					message: `「${field.label}」第 ${fi + 1} 个文件缺少「${meta.label}」`,
+				});
+			}
+		}
+	}
+}
+
+/** file-download 页错误：minCount（默认 1）/ maxCount + 答案路径形态（工作区相对路径防御校验） */
+function collectDownloadErrors(page: PageInput, values: CardAnswers, errors: CompletionError[]): void {
+	for (const field of answerableFields(page)) {
+		const raw = values[page.id]?.[field.id];
+		const paths = Array.isArray(raw) ? (raw as unknown[]).filter((v): v is string => typeof v === "string") : [];
+		const minCount = field.constraints?.minCount ?? 1;
+		if (paths.length < minCount) {
+			errors.push({
+				kind: "minCount",
+				fieldId: field.id,
+				message: `「${field.label}」为必填项，请至少选择 ${minCount} 个文件`,
+			});
+		} else if (field.constraints?.maxCount != null && paths.length > field.constraints.maxCount) {
+			errors.push({
+				kind: "maxCount",
+				fieldId: field.id,
+				message: `「${field.label}」最多选择 ${field.constraints.maxCount} 个文件`,
+			});
+		}
+		for (const path of paths) {
+			if (!isRelativeWorkspacePath(path)) {
+				errors.push({
+					kind: "path-form",
+					fieldId: field.id,
+					message: `「${field.label}」答案须为工作区相对路径（/ 分隔，禁绝对路径与 .. 段），实际 ${JSON.stringify(path)}`,
 				});
 			}
 		}

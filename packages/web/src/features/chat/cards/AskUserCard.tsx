@@ -9,6 +9,11 @@ import {
 } from "./answers.ts";
 import type { AskUserInput, CardAnswers, FieldInput, PageInput, UploadedFileValue } from "./types.ts";
 
+/** 下载所选文件（端点由 Task 24 提供；本任务仅保留调用点，未接入时给出可读反馈） */
+async function downloadSessionFile(_sessionId: string, path: string): Promise<void> {
+	throw new Error(`下载端点尚未接入（Task 24）：${path}`);
+}
+
 export type AskCardPhase = "awaiting" | "submitted" | "rejected";
 
 export interface AskUserCardProps {
@@ -220,6 +225,17 @@ function PageView({
 					errors={errors}
 					onChange={(rows) => onPageChange({ ...pageValues, __rows__: rows })}
 				/>
+			) : page.type === "file-download" ? (
+				(page.fields ?? []).map((field) => (
+					<FileDownloadList
+						key={field.id}
+						field={field}
+						disabled={disabled}
+						value={pageValues[field.id]}
+						errors={errors.filter((e) => e.fieldId === field.id)}
+						onChange={(value) => onChange(field.id, value)}
+					/>
+				))
 			) : (
 				(page.fields ?? []).map((field) => (
 					<FieldView
@@ -556,6 +572,80 @@ function MetaInput({
 			disabled={disabled}
 			onChange={(e) => onChange(e.target.value)}
 		/>
+	);
+}
+
+/**
+ * file-download 下载清单：卡片式路径多选（选项 label + 工作区相对路径）。
+ * 作答值存选项 id（相对路径），与通用 checkbox 存 label 的语义不同；
+ * 「下载所选」触发会话文件下载端点（Task 24 接入）。
+ */
+function FileDownloadList({
+	field,
+	disabled,
+	value,
+	errors,
+	onChange,
+}: {
+	field: FieldInput;
+	disabled: boolean;
+	value: unknown;
+	errors: CompletionError[];
+	onChange: (value: unknown) => void;
+}): ReactNode {
+	const options = field.options ?? [];
+	const selected = Array.isArray(value) ? (value as unknown[]).filter((v): v is string => typeof v === "string") : [];
+	const [downloadNote, setDownloadNote] = useState<string | undefined>(undefined);
+
+	const toggle = (id: string, checked: boolean) => {
+		onChange(checked ? [...selected, id] : selected.filter((path) => path !== id));
+	};
+
+	const downloadSelected = async () => {
+		if (selected.length === 0) return;
+		setDownloadNote(undefined);
+		try {
+			for (const path of selected) await downloadSessionFile("", path);
+			setDownloadNote("已开始下载所选文件");
+		} catch (e) {
+			setDownloadNote(e instanceof Error ? e.message : String(e));
+		}
+	};
+
+	const error = errors.find((e) => e.kind === "minCount" || e.kind === "maxCount" || e.kind === "path-form");
+
+	return (
+		<div className="ask-card-field">
+			<label className="ask-card-field-label">
+				{field.label}
+				{field.required && <span className="ask-card-required">*</span>}
+			</label>
+			{field.description && <div className="ask-card-field-desc">{field.description}</div>}
+			<div className="ask-option-group">
+				{options.map((o) => {
+					const checked = selected.includes(o.id);
+					return (
+						<label key={o.id} className="ask-option">
+							<input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => toggle(o.id, e.target.checked)} />
+							<span>
+								{o.label}
+								<span className="ask-card-option-desc"> · {o.id}</span>
+							</span>
+						</label>
+					);
+				})}
+			</div>
+			<button
+				type="button"
+				className="ask-btn"
+				disabled={disabled || selected.length === 0}
+				onClick={() => void downloadSelected()}
+			>
+				下载所选{selected.length > 0 ? `（${selected.length}）` : ""}
+			</button>
+			{downloadNote && <span className="ask-card-file-hint"> {downloadNote}</span>}
+			{error && <span className="ask-card-field-error">{error.message}</span>}
+		</div>
 	);
 }
 
