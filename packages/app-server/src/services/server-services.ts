@@ -6,6 +6,7 @@ import {
 } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import type { RoutedServerServiceAttachment, RoutedServerServiceHost } from "@earendil-works/pi-server";
+import { createLogger } from "../logger.ts";
 import {
 	type SessionCreateOptions,
 	SessionDirectory,
@@ -13,6 +14,8 @@ import {
 	SessionManagement,
 	type SessionSummary,
 } from "./contracts.ts";
+
+const log = createLogger("server-services");
 
 export interface ServerServices {
 	readonly host: RoutedServerServiceHost;
@@ -54,6 +57,7 @@ export async function createServerServices(options: {
 	return {
 		host: {
 			attachClient(presentation) {
+				log.info("server services attachment created for client");
 				const provider = new RemoteServiceProvider([
 					{ service: SessionDirectory, mode: "singleton" },
 					{ service: SessionManagement, mode: "singleton" },
@@ -63,16 +67,24 @@ export async function createServerServices(options: {
 					create: (createOptions, context) =>
 						serialize(async () => {
 							const created = await options.create(createOptions, context);
+							log.info(`session-management.create -> ${created.sessionId}`);
 							await refreshNow(context);
 							return created;
 						}),
 					remove: (sessionId, context) =>
 						serialize(async () => {
+							log.info(`session-management.remove -> ${sessionId}`);
 							await options.remove(sessionId, context);
 							await refreshNow(context);
 						}),
-					attach: (sessionId, context) => serialize(() => presentation.attachSession(sessionId, context)),
-					detach: (context) => serialize(() => presentation.detachSession(context)),
+					attach: (sessionId, context) => {
+						log.info(`session-management.attach -> ${sessionId}`);
+						return serialize(() => presentation.attachSession(sessionId, context));
+					},
+					detach: (context) => {
+						log.info("session-management.detach");
+						return serialize(() => presentation.detachSession(context));
+					},
 				});
 				const attachment = createProviderAttachment(provider, () => attachments.delete(attachment));
 				attachments.add(attachment);

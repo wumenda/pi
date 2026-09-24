@@ -9,7 +9,10 @@ import {
 	reduceLaneSnapshot,
 	type WatchHandle,
 } from "@earendil-works/pi-agent-core";
+import { createLogger } from "../logger.ts";
 import type { Transcript, TranscriptState } from "./contracts.ts";
+
+const log = createLogger("transcript");
 
 export interface TranscriptRuntime {
 	readonly service: Transcript;
@@ -71,8 +74,10 @@ export function createTranscriptService(
 			watch = opened;
 			publishSnapshot(opened.snapshot, null, BACKGROUND_CONTEXT);
 			opened.start(onEvent);
+			log.info("transcript watch activated (initial snapshot published)");
 		},
 		async dispose() {
+			log.info("transcript watch disposed");
 			let failure: unknown;
 			try {
 				await rebase;

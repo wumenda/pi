@@ -50,6 +50,19 @@ interface Session {
 	services: PiServices;
 }
 
+/** 排查日志：统一前缀便于浏览器控制台过滤；debug 级别需开启 verbose 才可见。 */
+const logInfo = (message: string): void => {
+	console.info(`[pi-app] ${message}`);
+};
+const logError = (message: string): void => {
+	console.error(`[pi-app] ${message}`);
+};
+const logDebug = (message: string): void => {
+	console.debug(`[pi-app] ${message}`);
+};
+const truncate = (text: string, max = 200): string =>
+	text.length <= max ? text : `${text.slice(0, max)}…(${text.length} chars)`;
+
 const initialState: PiAppState = {
 	phase: "idle",
 	connectionState: "disconnected",
@@ -102,6 +115,7 @@ export function usePiApp(): PiAppState & PiAppActions {
 
 		client.onConnectionStateChange((change) => {
 			if (change.state === "disconnected") {
+				logError(`connection lost: ${change.error?.message ?? "no error detail"}`);
 				setState((previous) => ({
 					...previous,
 					connectionState: change.state,
@@ -112,26 +126,39 @@ export function usePiApp(): PiAppState & PiAppActions {
 					error: change.error?.message,
 				}));
 			} else {
+				logInfo(`connection state: ${change.state}`);
 				setState((previous) => ({ ...previous, connectionState: change.state }));
 			}
 		});
 
 		void (async () => {
 			try {
+				logInfo(`connecting to ${url.trim()} (serverId=${trimmedServerId})`);
 				const hello = await client.connect();
+				logInfo(`hello received: serverId=${hello.serverId} version=${hello.version}`);
 				setState((previous) => ({ ...previous, hello }));
 				await services.ready();
+				logInfo("server services ready (session-directory / session-management bound)");
 				setState((previous) => ({ ...previous, phase: "ready", connectionState: "connected", error: undefined }));
 
 				const directory = services.sessionDirectory;
 				directory.state.subscribe((value) => {
 					if (value !== undefined) setState((previous) => ({ ...previous, sessions: value.sessions }));
 				});
+				logInfo("session-directory subscribed");
 				const transcript = services.transcript;
 				transcript.state.subscribe((value) => {
+					if (value === undefined) return;
+					if (value.snapshot !== undefined && value.snapshot !== null) {
+						logDebug(`transcript snapshot received (operation=${value.snapshot.operation?.id ?? "none"})`);
+					}
+					const eventType = value.event?.type;
+					if (eventType !== undefined) logDebug(`transcript event: ${eventType}`);
 					setState((previous) => ({ ...previous, transcript: value }));
 				});
+				logInfo("transcript subscribed (awaiting attach)");
 			} catch (error) {
+				logError(`connect failed: ${error instanceof Error ? error.message : String(error)}`);
 				sessionRef.current = undefined;
 				servicesRef.current = undefined;
 				void services.dispose().finally(() => client.dispose());
@@ -148,6 +175,7 @@ export function usePiApp(): PiAppState & PiAppActions {
 	const disconnect = useCallback(() => {
 		const session = sessionRef.current;
 		if (!session) return;
+		logInfo("disconnecting");
 		sessionRef.current = undefined;
 		servicesRef.current = undefined;
 		void session.services
@@ -168,21 +196,27 @@ export function usePiApp(): PiAppState & PiAppActions {
 	const createSession = useCallback(async () => {
 		const services = servicesRef.current;
 		if (!services) return;
+		logInfo("createSession: calling session-management.create");
 		const summary = await services.sessionManagement.create({}, BACKGROUND_CONTEXT);
+		logInfo(`createSession: created ${summary.sessionId}, attaching`);
 		await services.sessionManagement.attach(summary.sessionId, BACKGROUND_CONTEXT);
+		logInfo(`createSession: attached ${summary.sessionId} (session services bound)`);
 		setState((previous) => ({ ...previous, activeSessionId: summary.sessionId, transcript: undefined }));
 	}, []);
 
 	const attachSession = useCallback(async (sessionId: string) => {
 		const services = servicesRef.current;
 		if (!services) return;
+		logInfo(`attachSession: ${sessionId}`);
 		await services.sessionManagement.attach(sessionId, BACKGROUND_CONTEXT);
+		logInfo(`attachSession: ${sessionId} attached (session services bound)`);
 		setState((previous) => ({ ...previous, activeSessionId: sessionId, transcript: undefined }));
 	}, []);
 
 	const detach = useCallback(async () => {
 		const services = servicesRef.current;
 		if (!services) return;
+		logInfo("detach");
 		await services.sessionManagement.detach(BACKGROUND_CONTEXT);
 		setState((previous) => ({ ...previous, activeSessionId: undefined, transcript: undefined }));
 	}, []);
@@ -191,9 +225,13 @@ export function usePiApp(): PiAppState & PiAppActions {
 		const services = servicesRef.current;
 		const trimmed = message.trim();
 		if (!services || trimmed.length === 0) return;
+		logInfo(`prompt: ${truncate(trimmed)}`);
 		setState((previous) => ({ ...previous, promptError: undefined }));
 		const response = await services.agentController.prompt({ message: trimmed, images: null }, BACKGROUND_CONTEXT);
-		if (!response.accepted) {
+		if (response.accepted) {
+			logInfo(`prompt: accepted (operationId=${response.operationId})`);
+		} else {
+			logError(`prompt: rejected (${response.error.code}): ${response.error.message}`);
 			setState((previous) => ({ ...previous, promptError: response.error.message }));
 		}
 	}, []);
@@ -202,13 +240,18 @@ export function usePiApp(): PiAppState & PiAppActions {
 		const services = servicesRef.current;
 		if (!services) return;
 		const operationId = services.transcript.state.value?.snapshot?.operation?.id;
-		if (operationId === undefined) return;
+		if (operationId === undefined) {
+			logInfo("abort: no active operation");
+			return;
+		}
+		logInfo(`abort: requesting abort for ${operationId}`);
 		await services.agentController.requestAbort(operationId, BACKGROUND_CONTEXT);
 	}, []);
 
 	const answerAskUser = useCallback(async (toolCallId: string, answers: JsonValue) => {
 		const services = servicesRef.current;
 		if (!services) return;
+		logInfo(`answerAskUser: toolCallId=${toolCallId} answers=${truncate(JSON.stringify(answers))}`);
 		await services.agentController.answerAskUser({ toolCallId, answers }, BACKGROUND_CONTEXT);
 	}, []);
 
