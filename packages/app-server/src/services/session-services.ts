@@ -9,6 +9,7 @@ import { createLogger } from "../logger.ts";
 import type { SessionRuntime } from "../runtime.ts";
 import { createAgentController } from "./agent-controller.ts";
 import { AgentController, McpHost, Transcript, type TranscriptState } from "./contracts.ts";
+import { createMcpHostService } from "./mcp-host.ts";
 import { createTranscriptService } from "./transcript.ts";
 
 const log = createLogger("session-services");
@@ -23,16 +24,7 @@ export async function createSessionServices(runtime: SessionRuntime): Promise<Se
 	const transcriptState = replicatedState<TranscriptState>({ snapshot: null, event: null });
 	const transcript = createTranscriptService(runtime.lane, transcriptState);
 	await transcript.activate();
-	// Task 8 用真实 McpServerManager 替换此 stub。
-	const mcpHostStub: McpHost = {
-		callTool: async () => {
-			throw new Error("MCP is not configured");
-		},
-		getUiResource: async () => {
-			throw new Error("MCP is not configured");
-		},
-		statuses: async () => [],
-	};
+	const mcpHost = createMcpHostService(runtime.mcp);
 	return {
 		attachmentFactory(_context) {
 			log.info("session attachment created for client");
@@ -43,7 +35,7 @@ export async function createSessionServices(runtime: SessionRuntime): Promise<Se
 			]);
 			provider.provide(Transcript, transcript.service);
 			provider.provide(AgentController, createAgentController(runtime.lane, runtime.askUser));
-			provider.provide(McpHost, mcpHostStub);
+			provider.provide(McpHost, mcpHost);
 			const endpoint = createRemoteServiceEndpoint(provider);
 			return {
 				invokeService(call, publish, ctx) {
