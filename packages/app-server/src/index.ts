@@ -148,6 +148,7 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 						httpPort: options.httpPort ?? config.httpPort,
 						...(config.token === undefined ? {} : { token: config.token }),
 						...(users === undefined ? {} : { users }),
+						...(config.webDist === undefined ? {} : { webDist: config.webDist }),
 					},
 					hostForDeps,
 				);

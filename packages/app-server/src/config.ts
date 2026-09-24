@@ -22,6 +22,8 @@ export interface AppServerConfig {
 	 * `<dataDir>/users/<userId>`；未配置 = 单用户模式，dataDir 原样。
 	 */
 	users?: Record<string, string>;
+	/** web 前端生产构建目录（Task 28 静态托管 + SPA fallback）；缺省不注册静态托管。 */
+	webDist?: string;
 }
 
 /** 连接/请求的身份解析结果（users 模式）；single 表示单用户模式（无 userId 维度）。 */
@@ -63,6 +65,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppServerConfi
 		...(env.APP_SERVER_MCP_CONFIG === undefined ? {} : { mcpConfigPath: env.APP_SERVER_MCP_CONFIG }),
 		...(env.APP_SERVER_TOKEN === undefined || env.APP_SERVER_TOKEN === "" ? {} : { token: env.APP_SERVER_TOKEN }),
 		...usersEntries(env),
+		...(env.APP_SERVER_WEB_DIST === undefined || env.APP_SERVER_WEB_DIST === ""
+			? {}
+			: { webDist: env.APP_SERVER_WEB_DIST }),
 	};
 }
 

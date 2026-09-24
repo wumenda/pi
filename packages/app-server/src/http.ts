@@ -14,6 +14,7 @@ import { createReadStream } from "node:fs";
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { basename, resolve, sep } from "node:path";
 import fastifyMultipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import { resolveIdentity } from "./config.ts";
 
@@ -93,11 +94,23 @@ export function intersectCsp(declared: string | null): string {
 }
 
 export function createHttpServer(
-	options: { httpPort: number; token?: string; users?: Record<string, string> },
+	options: { httpPort: number; token?: string; users?: Record<string, string>; webDist?: string },
 	deps: HttpDeps,
 ): FastifyInstance {
 	const app = Fastify({ logger: false });
 	app.register(fastifyMultipart, { limits: { fileSize: MAX_FILE_SIZE } });
+	// 静态托管（Task 28，webDist 配置后启用）：packages/web/dist 生产构建面。
+	// SPA fallback：未匹配路由的非 /api/ 路径回落 index.html（深链）；
+	// 未知 /api/ 路径保持 404 JSON，不被 fallback 吞掉。
+	if (options.webDist !== undefined && options.webDist !== "") {
+		app.register(fastifyStatic, { root: resolve(options.webDist), wildcard: false });
+		app.setNotFoundHandler((request, reply) => {
+			if (request.raw.url?.startsWith("/api/")) {
+				return reply.code(404).send({ error: "not found" });
+			}
+			return reply.sendFile("index.html");
+		});
+	}
 	// CORS：web 前端（vite 8788）跨源访问 HTTP 面（上传/下载/ui-resources）。
 	// 回环开发面不带凭据，通配 origin 即可；token 认证（Task 26）接入后仍适用。
 	// 预检 OPTIONS 在 token 校验之前放行（浏览器预检不携带自定义凭据）。
