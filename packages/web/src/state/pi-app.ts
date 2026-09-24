@@ -169,6 +169,7 @@ export function usePiApp(): PiAppState & PiAppActions {
 		const services = servicesRef.current;
 		if (!services) return;
 		const summary = await services.sessionManagement.create({}, BACKGROUND_CONTEXT);
+		await services.sessionManagement.attach(summary.sessionId, BACKGROUND_CONTEXT);
 		setState((previous) => ({ ...previous, activeSessionId: summary.sessionId, transcript: undefined }));
 	}, []);
 
