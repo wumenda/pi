@@ -1,9 +1,15 @@
-import { createModels, createProvider, envApiKeyAuth, type Model, type Models } from "@earendil-works/pi-ai";
+import { type Api, createModels, createProvider, envApiKeyAuth, type Model, type Models } from "@earendil-works/pi-ai";
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 
 export interface AgentPlanLlm {
 	models: Models;
 	model: Model<"openai-completions">;
+}
+
+/** app-server 依赖的最小 LLM 能力（测试注入 faux provider 时用宽松的 Model<Api>）。 */
+export interface AppServerLlm {
+	models: Models;
+	model: Model<Api>;
 }
 
 /** AgentPlan OpenAI 兼容端点；凭据经 AGENTPLAN_API_KEY 环境变量解析。 */

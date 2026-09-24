@@ -1,6 +1,16 @@
+import { resolve } from "node:path";
+import { loadConfig } from "./config.ts";
 import { createAppServer } from "./index.ts";
+import { createAgentPlanLlm } from "./llm.ts";
+import { createSessionStore } from "./sessions.ts";
 
-const handle = createAppServer({ wsPort: Number(process.env.APP_SERVER_WS_PORT ?? 8790) });
+const config = loadConfig();
+const llm = createAgentPlanLlm(config.agentPlanBaseUrl, config.modelId);
+const store = createSessionStore({
+	dataDir: config.dataDir,
+	workspaceDir: resolve(config.dataDir, "workspace"),
+});
+const handle = createAppServer({ wsPort: config.wsPort, deps: { config, store, llm } });
 await handle.start();
 console.log("app-server ready");
 console.log(`  serverId: ${handle.serverId}`);
