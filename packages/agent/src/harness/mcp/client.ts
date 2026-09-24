@@ -145,6 +145,8 @@ export class McpClient {
 	#stderrTail = "";
 	#closed = false;
 	#closePromise: Promise<void> = Promise.resolve();
+	/** Server-initiated message stream (Streamable HTTP GET); carries progress notifications. */
+	#listenerAbort: AbortController | undefined;
 
 	constructor(options: McpClientOptions) {
 		this.serverId = options.serverId;
@@ -177,6 +179,7 @@ export class McpClient {
 			const serverInfo = asRecord(asRecord(result)?.serverInfo);
 			if (serverInfo === undefined) throw new McpClientError("MCP server returned an invalid initialize result");
 			await this.#notify("notifications/initialized", {});
+			if (this.#config.type === "http") this.#openHttpListener();
 			this.state = "ready";
 			await this.listTools();
 		} catch (error) {
@@ -251,6 +254,8 @@ export class McpClient {
 	/** Terminate the transport; pending requests reject with a closed error. */
 	async close(): Promise<void> {
 		this.#closed = true;
+		this.#listenerAbort?.abort();
+		this.#listenerAbort = undefined;
 		const error = new McpClientError(`MCP server ${this.serverId} is closed`);
 		for (const pending of this.#pending.values()) {
 			clearTimeout(pending.timer);
@@ -396,6 +401,66 @@ export class McpClient {
 			return;
 		}
 		await this.#sendHttp(message);
+	}
+
+	/**
+	 * Open the Streamable HTTP server-initiated stream and route its messages
+	 * through #handleMessage. Servers deliver progress notifications on this
+	 * stream (the POST response stream only carries the call's reply); without
+	 * it, notifications are silently dropped. Best-effort: servers without GET
+	 * stream support simply yield no listener.
+	 */
+	#openHttpListener(): void {
+		const config = this.#config;
+		if (config.type !== "http" || this.#sessionKey === undefined) return;
+		const url = config.url;
+		const sessionKey = this.#sessionKey;
+		const abort = new AbortController();
+		this.#listenerAbort = abort;
+		void (async () => {
+			try {
+				const response = await fetch(url, {
+					method: "GET",
+					headers: {
+						accept: "text/event-stream",
+						"mcp-session-id": sessionKey,
+						...(config.headers ?? {}),
+					},
+					signal: abort.signal,
+				});
+				if (!response.ok || !response.headers.get("content-type")?.includes("text/event-stream")) {
+					await response.body?.cancel().catch(() => {});
+					return;
+				}
+				const reader = response.body?.getReader();
+				if (reader === undefined) return;
+				const decoder = new TextDecoder();
+				let buffer = "";
+				for (;;) {
+					const { done, value } = await reader.read();
+					if (done) break;
+					buffer += decoder.decode(value, { stream: true });
+					let index = buffer.indexOf("\n");
+					while (index >= 0) {
+						const line = buffer.slice(0, index).trim();
+						buffer = buffer.slice(index + 1);
+						if (line.startsWith("data:")) {
+							const payload = line.slice(5).trim();
+							if (payload.length > 0) {
+								try {
+									this.#handleMessage(JSON.parse(payload) as JsonRpcMessage);
+								} catch {
+									// skip malformed SSE payload
+								}
+							}
+						}
+						index = buffer.indexOf("\n");
+					}
+				}
+			} catch {
+				// aborted on close, or no standalone stream; POST-only operation still works
+			}
+		})();
 	}
 
 	async #sendHttp(message: JsonRpcRequest | JsonRpcNotification): Promise<void> {

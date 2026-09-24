@@ -37,11 +37,15 @@ export function matchProgressNotification(input: {
 		if (record?.method !== "notifications/progress") return;
 		const params = asRecord(record.params);
 		if (params === undefined || params.progressToken !== token) return;
+		// Extension payloads (e.g. uiEvent) ride the params meta map: mcp 2.x
+		// servers emit `_meta` (spec alias), while some mcp 1.x releases emit
+		// the raw field name `meta`.
+		const meta = asRecord(params._meta) ?? asRecord(params.meta);
 		onProgress({
 			progress: typeof params.progress === "number" ? params.progress : 0,
 			total: typeof params.total === "number" ? params.total : null,
 			message: typeof params.message === "string" ? params.message : null,
-			uiEvent: params.ui_event ?? params.uiEvent ?? null,
+			uiEvent: params.ui_event ?? params.uiEvent ?? meta?.uiEvent ?? null,
 		});
 	};
 }
