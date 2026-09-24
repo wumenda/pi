@@ -160,12 +160,10 @@ describe("validateQuestionStructure", () => {
 	});
 
 	it("reports one issue per violating page with its own pageId", () => {
-		const issues = validateQuestionStructure({
-			title: "t",
-			pages: [validPage("list-single"), pageWith("form", { fields: [] })],
-		});
+		const formPage = { ...pageWith("form", { fields: [] }), id: "p2" } as Page;
+		const issues = validateQuestionStructure({ title: "t", pages: [validPage("list-single"), formPage] });
 		expect(issues).toHaveLength(1);
-		expect(issues[0]?.pageId).toBe("p1");
+		expect(issues[0]?.pageId).toBe("p2");
 	});
 });
 
