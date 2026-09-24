@@ -159,3 +159,25 @@ export interface McpHost {
 }
 
 export const McpHost = defineService<McpHost>("pi.mcp-host");
+
+/** One recorded tool-execution event: arguments, progress, or result. */
+export interface ToolExecutionEvent {
+	kind: "input" | "progress" | "result";
+	toolCallId: string;
+	toolName: string | null;
+	serverId: string | null;
+	resourceUri: string | null;
+	args: JsonValue | null;
+	progress: number | null;
+	total: number | null;
+	message: string | null;
+	uiEvent: JsonValue | null;
+	isError: boolean;
+	timestamp: number;
+}
+
+/** Recorded tool-execution events for the attached session. */
+export interface ToolEvents {
+	events(context: Context): Promise<ToolExecutionEvent[]>;
+}
+export const ToolEvents = defineService<ToolEvents>("pi.tool-events");

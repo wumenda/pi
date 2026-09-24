@@ -6,7 +6,7 @@ import {
 } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import { type Client, createClientServiceTransport } from "@earendil-works/pi-client";
-import { AgentController, McpHost, SessionDirectory, SessionManagement, Transcript } from "./contracts.ts";
+import { AgentController, McpHost, SessionDirectory, SessionManagement, ToolEvents, Transcript } from "./contracts.ts";
 
 /**
  * Remote service bindings for one connected pi-server.
@@ -40,7 +40,7 @@ export class PiServices {
 			onError: this.#onError,
 		});
 		this.#sessionBinding = createRemoteServiceBinding({
-			services: [{ id: Transcript.id }, { id: AgentController.id }, { id: McpHost.id }],
+			services: [{ id: Transcript.id }, { id: AgentController.id }, { id: McpHost.id }, { id: ToolEvents.id }],
 			transport: this.#sessionTransport,
 			bound: client.attachment !== undefined && client.connected,
 			onError: this.#onError,
@@ -67,6 +67,10 @@ export class PiServices {
 
 	get mcpHost(): McpHost {
 		return this.#sessionBinding.use(McpHost);
+	}
+
+	get toolEvents(): ToolEvents {
+		return this.#sessionBinding.use(ToolEvents);
 	}
 
 	/** Wait until every acquired service has installed its initial snapshot. */

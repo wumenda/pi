@@ -7,8 +7,9 @@ import {
 import type { RoutedSessionAttachment } from "@earendil-works/pi-server";
 import { createLogger } from "../logger.ts";
 import type { SessionRuntime } from "../runtime.ts";
+import type { ToolEventRecorder } from "../tool-events.ts";
 import { createAgentController } from "./agent-controller.ts";
-import { AgentController, McpHost, Transcript, type TranscriptState } from "./contracts.ts";
+import { AgentController, McpHost, ToolEvents, Transcript, type TranscriptState } from "./contracts.ts";
 import { createMcpHostService } from "./mcp-host.ts";
 import { createTranscriptService } from "./transcript.ts";
 
@@ -20,7 +21,10 @@ export interface SessionServiceRuntime {
 }
 
 /** 每会话一份：transcript state 共享给所有 attach 的客户端。 */
-export async function createSessionServices(runtime: SessionRuntime): Promise<SessionServiceRuntime> {
+export async function createSessionServices(
+	runtime: SessionRuntime,
+	recorder: ToolEventRecorder,
+): Promise<SessionServiceRuntime> {
 	const transcriptState = replicatedState<TranscriptState>({ snapshot: null, event: null });
 	const transcript = createTranscriptService(runtime.lane, transcriptState);
 	await transcript.activate();
@@ -32,10 +36,12 @@ export async function createSessionServices(runtime: SessionRuntime): Promise<Se
 				{ service: Transcript, mode: "singleton" },
 				{ service: AgentController, mode: "singleton" },
 				{ service: McpHost, mode: "singleton" },
+				{ service: ToolEvents, mode: "singleton" },
 			]);
 			provider.provide(Transcript, transcript.service);
 			provider.provide(AgentController, createAgentController(runtime.lane, runtime.askUser));
 			provider.provide(McpHost, mcpHost);
+			provider.provide(ToolEvents, { events: () => recorder.events() });
 			const endpoint = createRemoteServiceEndpoint(provider);
 			return {
 				invokeService(call, publish, ctx) {

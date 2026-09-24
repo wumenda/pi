@@ -1,6 +1,7 @@
 import { join, resolve } from "node:path";
 import type { Context } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
+import type { HarnessEvent } from "@earendil-works/pi-agent-core";
 import { createMcpTools, McpServerManager } from "@earendil-works/pi-agent-core/harness/mcp";
 import type { JsonlSessionMetadata } from "@earendil-works/pi-agent-core/harness/session";
 import type { RoutedSessionHandle, ServerHost } from "@earendil-works/pi-server";
@@ -12,6 +13,7 @@ import { createSessionRuntime, type SessionRuntime } from "./runtime.ts";
 import { createServerServices, type ServerServices } from "./services/server-services.ts";
 import { createSessionServices, type SessionServiceRuntime } from "./services/session-services.ts";
 import type { SessionStore } from "./sessions.ts";
+import { createToolEventRecorder, recordToolEvent, type ToolEventRecorder } from "./tool-events.ts";
 
 const log = createLogger("host");
 
@@ -30,6 +32,21 @@ export interface AppServerHostHandle {
 interface RuntimeEntry {
 	runtime: SessionRuntime;
 	services: SessionServiceRuntime;
+	unsubscribe: Array<() => void>;
+}
+
+/** 订阅 harness 工具事件并落盘；映射失败只记日志，不影响运行。 */
+function subscribeToolEvents(runtime: SessionRuntime, recorder: ToolEventRecorder): Array<() => void> {
+	const unsubscribe: Array<() => void> = [];
+	const onToolEvent = (event: HarnessEvent): void => {
+		recordToolEvent(recorder, event).catch((error) => {
+			log.error(`tool event record failed: ${error instanceof Error ? error.message : String(error)}`);
+		});
+	};
+	for (const type of ["tool_start", "tool_update", "tool_end"] as const) {
+		unsubscribe.push(runtime.harness.events.on(type, onToolEvent));
+	}
+	return unsubscribe;
 }
 
 /** 会话运行时缓存：attach/detach 不销毁，removeSession 与 shutdown 才关闭。 */
@@ -46,6 +63,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		if (entry === undefined) return;
 		runtimes.delete(sessionId);
 		log.info(`closing runtime for session ${sessionId}`);
+		for (const unsubscribe of entry.unsubscribe) unsubscribe();
 		await entry.services.dispose().catch(() => undefined);
 		await entry.runtime.close().catch(() => undefined);
 	}
@@ -94,8 +112,10 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 						mcp: manager,
 						extraTools: createMcpTools(manager),
 					});
-					const sessionServices = await createSessionServices(runtime);
-					entry = { runtime, services: sessionServices };
+					const recorder = createToolEventRecorder(deps.config.dataDir, metadata.id);
+					const sessionServices = await createSessionServices(runtime, recorder);
+					const unsubscribe = subscribeToolEvents(runtime, recorder);
+					entry = { runtime, services: sessionServices, unsubscribe };
 					runtimes.set(metadata.id, entry);
 					log.info(`openSession ${metadata.id}: runtime ready in ${Date.now() - startedAt}ms`);
 				} catch (error) {
