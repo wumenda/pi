@@ -1,6 +1,7 @@
 import { type Static, Type } from "typebox";
 import type { JsonValue } from "../session/types.ts";
 import type { AgentHarnessTool } from "../types.ts";
+import { validateQuestionStructure } from "./ask-user-validation.ts";
 import type { ExecutionToolContext } from "./tool-context.ts";
 
 // ---------------------------------------------------------------------------
@@ -231,6 +232,13 @@ export function createAskUserQuestionTool<
 			const registry = toolContext.askUser;
 			if (registry === undefined) {
 				throw new Error("ask_user_question is not available: no ask-user registry is configured for this session");
+			}
+			// 结构预设校验（不挂起）：失败抛可行动报错（harness 置 error 结果），模型可自纠重试
+			const issues = validateQuestionStructure(params);
+			if (issues.length > 0) {
+				throw new Error(
+					`ask_user_question 结构校验失败，未向用户提问，请修正后重试：\n${issues.map((issue) => issue.message).join("\n")}`,
+				);
 			}
 			const answers = await new Promise<AskUserAnswers>((resolve, reject) => {
 				registry.register(toolCallId, params, resolve, reject);
