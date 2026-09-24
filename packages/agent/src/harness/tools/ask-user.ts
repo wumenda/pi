@@ -66,6 +66,7 @@ const askUserPageSchema = Type.Object({
 			Type.Literal("table"),
 			Type.Literal("dropdown"),
 			Type.Literal("file-collect"),
+			Type.Literal("file-download"),
 		],
 		{ description: "Interaction preset for this page" },
 	),
@@ -87,7 +88,71 @@ const askUserSchema = Type.Object({
 
 export type AskUserQuestionInput = Static<typeof askUserSchema>;
 
-const askUserDescription = `Collect structured input from the user and suspend until they answer. Prefer this over guessing whenever you need a decision, confirmation, preferences, or multi-field data entry. Compose one or more pages; each page is one interaction preset: "list-single" (single choice), "list-multi" (multi choice), "form" (typed fields), "table" (editable rows with column definitions), "dropdown" (single choice select), "file-collect" (file uploads with optional per-file metadata). Fields declare valueType (enum|number|text|file) and widget (radio|checkbox|select|number|text|textarea|file) plus optional options/constraints/defaultValue. Answers arrive as JSON shaped {"<pageId>": {"<fieldId>": value or value[]}}; table pages answer an array of row objects under the page id. Do not use this for trivial choices you can reasonably decide yourself.`;
+export type AskUserPage = Static<typeof askUserPageSchema>;
+
+// ---------------------------------------------------------------------------
+// Structural preset validation: file-download (contract doc §4.7/§6)
+// ---------------------------------------------------------------------------
+
+/** file-download 选项 id 路径安全：违规返回违规描述，合法返回 null */
+function pathSafetyProblem(value: string): string | null {
+	if (value.length === 0) return "空路径";
+	if (/^[a-zA-Z]:/.test(value)) return "盘符绝对路径";
+	if (value.startsWith("/") || value.startsWith("\\")) return "以 / 或 \\ 开头的绝对路径";
+	if (value.includes("\\")) return "含反斜杠（必须用 / 分隔）";
+	if (value.split("/").includes("..")) return "含 .. 路径段（路径穿越）";
+	return null;
+}
+
+/**
+ * file-download 页结构预设校验（工具层第一道防线，权威校验在下载端点）：
+ * 至少 1 个字段（valueType=enum + widget=checkbox + options 非空，
+ * 选项 id 为工作区相对路径）；constraints.minCount ≥1（如提供）。
+ * 返回可行动错误数组（含页 id 与「期望 vs 实际」），为空表示合法。
+ */
+export function validateFileDownloadPage(pageField: AskUserPage): string[] {
+	const errors: string[] = [];
+	const pageId = pageField.id;
+	const fields = pageField.fields ?? [];
+	if (fields.length === 0) {
+		errors.push(
+			`页 ${pageId}：file-download 期望至少 1 个字段，实际 0 个；请提供 valueType="enum" + widget="checkbox" 且 options 非空的字段`,
+		);
+	}
+	for (const field of fields) {
+		if (field.valueType !== "enum") {
+			errors.push(
+				`页 ${pageId} 字段 ${field.id}：file-download 期望 valueType="enum"（valueType="file" 为上传专用，禁用于下载），实际 "${field.valueType}"`,
+			);
+		}
+		if (field.widget !== "checkbox") {
+			errors.push(
+				`页 ${pageId} 字段 ${field.id}：file-download 期望 widget="checkbox"（下载卡片为路径多选），实际 "${field.widget}"`,
+			);
+		}
+		const options = field.options ?? [];
+		if (options.length === 0) {
+			errors.push(
+				`页 ${pageId} 字段 ${field.id}：file-download 期望 options 非空（选项 id 为工作区相对路径），实际 0 个`,
+			);
+		}
+		for (const option of options) {
+			const problem = pathSafetyProblem(option.id);
+			if (problem !== null) {
+				errors.push(
+					`页 ${pageId} 字段 ${field.id} 选项 ${JSON.stringify(option.id)}：期望工作区相对路径（/ 分隔），实际 ${JSON.stringify(option.id)}（${problem}）`,
+				);
+			}
+		}
+		const minCount = field.constraints?.minCount;
+		if (typeof minCount === "number" && minCount < 1) {
+			errors.push(`页 ${pageId} 字段 ${field.id}：constraints.minCount 期望 ≥1，实际 ${minCount}`);
+		}
+	}
+	return errors;
+}
+
+const askUserDescription = `Collect structured input from the user and suspend until they answer. Prefer this over guessing whenever you need a decision, confirmation, preferences, or multi-field data entry. Compose one or more pages; each page is one interaction preset: "list-single" (single choice), "list-multi" (multi choice), "form" (typed fields), "table" (editable rows with column definitions), "dropdown" (single choice select), "file-collect" (file uploads with optional per-file metadata), "file-download" (download checklist; fields are enum+checkbox and option ids MUST be workspace-relative paths using "/" separators — no absolute paths, drive letters, backslashes, or ".." segments). Fields declare valueType (enum|number|text|file) and widget (radio|checkbox|select|number|text|textarea|file) plus optional options/constraints/defaultValue. Answers arrive as JSON shaped {"<pageId>": {"<fieldId>": value or value[]}}; table pages answer an array of row objects under the page id. Do not use this for trivial choices you can reasonably decide yourself.`;
 
 // ---------------------------------------------------------------------------
 // Pending-ask registry
