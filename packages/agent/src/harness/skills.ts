@@ -44,9 +44,15 @@ interface SkillFrontmatter {
 	[key: string]: unknown;
 }
 
-/** Format a skill invocation prompt, optionally appending additional user instructions. */
+/** Format a skill invocation prompt, optionally appending additional user instructions.
+ * Host-facing declarations (title/tools) travel inside the block as an HTML comment so
+ * applications can recover them from transcripts without changing the opening-tag format. */
 export function formatSkillInvocation(skill: Skill, additionalInstructions?: string): string {
-	const skillBlock = `<skill name="${skill.name}" location="${skill.filePath}">\nReferences are relative to ${dirnameEnvPath(skill.filePath)}.\n\n${skill.content}\n</skill>`;
+	const meta: { title?: string; tools?: readonly SkillToolDeclaration[] } = {};
+	if (skill.title !== undefined) meta.title = skill.title;
+	if (skill.tools !== undefined && skill.tools.length > 0) meta.tools = skill.tools;
+	const metaLine = Object.keys(meta).length > 0 ? `<!-- skill-meta ${JSON.stringify(meta)} -->\n` : "";
+	const skillBlock = `<skill name="${skill.name}" location="${skill.filePath}">\nReferences are relative to ${dirnameEnvPath(skill.filePath)}.\n${metaLine}\n${skill.content}\n</skill>`;
 	return additionalInstructions ? `${skillBlock}\n\n${additionalInstructions}` : skillBlock;
 }
 

@@ -16,6 +16,8 @@ export interface ToolUiCall {
 	serverId?: string;
 	toolCallId: string;
 	toolName: string;
+	/** 工具展示名（skill 声明的 tool title；缺省回退 toolName） */
+	toolTitle?: string;
 	status: ToolUiStatus;
 	input?: Record<string, unknown>;
 	output?: string;
@@ -192,7 +194,7 @@ export function ensureToolIframe(call: ToolUiCall): void {
 		// running/pending 为有效执行（占用实例）；completed/error 释放实例回可复用
 		active: call.status === "running" || call.status === "pending",
 		toolName: call.toolName,
-		title: call.toolName,
+		title: call.toolTitle ?? call.toolName,
 		group,
 		groupContext: call.groupContext ?? null,
 	});

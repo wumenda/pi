@@ -3,8 +3,10 @@
  * pi 的 skill 调用不是 tool part，而是以 user message 文本进入 transcript
  * （`formatSkillInvocation` 生成 `<skill name="…" location="…">` 块，见
  * packages/agent/src/harness/skills.ts）。这里扫描 transcript 条目流，
- * 从 user message 条目的文本中提取 skill 读取实例。
+ * 从 user message 条目的文本中提取 skill 读取实例（含 skill-meta 声明）。
  */
+
+import { parseSkillDeclaration, type SkillDeclaration } from "../mcp/skill-declaration.ts";
 
 /** skill 加载信息（对齐参考应用 SkillPartInfo 语义） */
 export interface SkillPartInfo {
@@ -13,6 +15,8 @@ export interface SkillPartInfo {
 	directory: string;
 	/** skill 实例标识：承载 skill 块的 user entry id（每次读取独立条目 → 独立实例） */
 	instanceId: string;
+	/** frontmatter 声明（title/tools；skill-meta 注释缺失时无此字段） */
+	declaration?: SkillDeclaration;
 }
 
 /** 与 pi 侧 parseSkillBlock 同源的正则（packages/coding-agent/src/core/agent-session.ts） */
@@ -65,7 +69,25 @@ export function extractSkillRead(entry: SkillSourceEntry): SkillPartInfo | null 
 	const parsed = parseSkillBlockText(text);
 	if (!parsed || parsed.name.length === 0) return null;
 	if (entry.id.length === 0) return null;
-	return { name: parsed.name, directory: parsed.directory, instanceId: entry.id };
+	const declaration = parseSkillDeclaration(text);
+	return {
+		name: parsed.name,
+		directory: parsed.directory,
+		instanceId: entry.id,
+		...(declaration !== undefined ? { declaration } : {}),
+	};
+}
+
+/**
+ * 就绪门控：skill 块已开始（`<skill ` 开头）但尚未完整到达（无 `</skill>` 收尾）。
+ * 流式增量下，未完整块不应让后续 tool 调用误归上一个 skill 实例；全量重扫在
+ * 块完整后自动纠正归属。
+ */
+export function isIncompleteSkillBlock(entry: SkillSourceEntry): boolean {
+	if (entry.type !== "message") return false;
+	const text = userMessageText(entry.message);
+	if (!text.startsWith("<skill ")) return false;
+	return parseSkillBlockText(text) === null;
 }
 
 /**

@@ -8,11 +8,20 @@
  * 归属判定沿用参考应用的"上下文时序"：tool 调用归属其前最近一次 skill 读取实例。
  */
 
-import { extractSkillRead, type SkillPartInfo, type SkillSourceEntry } from "../skills/skill-parse.ts";
+import {
+	extractSkillRead,
+	isIncompleteSkillBlock,
+	type SkillPartInfo,
+	type SkillSourceEntry,
+} from "../skills/skill-parse.ts";
+import { rawMcpToolName } from "./naming.ts";
 import type { ToolUiCall, ToolUiStatus } from "./pipeline.ts";
+import { findMatchingDeclaration } from "./skill-declaration.ts";
 import type { SkillReadContext } from "./types.ts";
 
 export type TranscriptEntryView = SkillSourceEntry;
+
+export { rawMcpToolName };
 
 /** skill 实例键 `<name>#<instanceId>`（分组复合键前缀，与 pipeline.resolveIframeGroup 一致） */
 export function skillGroupKey(info: SkillPartInfo): string {
@@ -61,18 +70,6 @@ function parseMcpUiDetails(message: unknown): McpUiDescriptor | null {
 	return descriptor;
 }
 
-/** 与 agent 核心 mcpToolName 的 sanitize 一致（serverId 原始值 → 工具名片段） */
-function sanitizeNamePart(value: string): string {
-	const sanitized = value.replace(/[^a-zA-Z0-9_-]/g, "_");
-	return sanitized.length > 0 ? sanitized : "server";
-}
-
-/** 原生 MCP 桥接工具名 `mcp__<serverId>__<toolName>` → MCP 侧原始 tool 名 */
-export function rawMcpToolName(harnessName: string, serverId: string): string {
-	const prefix = `mcp__${sanitizeNamePart(serverId)}__`;
-	return harnessName.startsWith(prefix) ? harnessName.slice(prefix.length) : harnessName;
-}
-
 /** assistant toolCall part 中原生 MCP 桥接工具的挂起信息（结果到达前累积） */
 interface OpenMcpCall {
 	harnessName: string;
@@ -110,6 +107,11 @@ export function scanTranscript(entries: readonly TranscriptEntryView[]): Transcr
 				skillInstances.push(skill);
 			}
 			lastSkill = skill;
+			continue;
+		}
+		// 就绪门控：skill 块流式未完整 → 阻断上一实例延续，防误归（完整后全量重扫自动纠正）
+		if (isIncompleteSkillBlock(entry)) {
+			lastSkill = null;
 			continue;
 		}
 
@@ -150,15 +152,29 @@ export function scanTranscript(entries: readonly TranscriptEntryView[]): Transcr
 			if (open === undefined) continue;
 			const status: ToolUiStatus = (message as { isError?: unknown }).isError === true ? "error" : "completed";
 			const output = messageText(message);
+			// 声明比对：groupContext 实例声明了 tools 且不含本工具 → 不硬归该实例
+			// （groupContext 置空，走 pipeline 的池内最近分组兜底）；未声明工具集的
+			// 实例保持时序归属。命中声明条目时顺带取展示名。
+			const declaredTools =
+				open.groupContext === null
+					? undefined
+					: skillInstances.find((instance) => instance.instanceId === open.groupContext?.instanceId)?.declaration
+							?.tools;
+			const rawName = rawMcpToolName(open.harnessName, descriptor.serverId);
+			const matched =
+				declaredTools === undefined
+					? undefined
+					: findMatchingDeclaration(open.harnessName, descriptor.serverId, declaredTools);
 			calls.push({
 				resourceUri: descriptor.resourceUri,
 				serverId: descriptor.serverId,
 				toolCallId,
-				toolName: rawMcpToolName(open.harnessName, descriptor.serverId),
+				toolName: rawName,
+				...(matched?.title !== undefined ? { toolTitle: matched.title } : {}),
 				status,
 				input: open.input,
 				...(descriptor.permissions !== undefined ? { permissions: descriptor.permissions } : {}),
-				groupContext: open.groupContext,
+				groupContext: declaredTools === undefined || matched !== undefined ? open.groupContext : null,
 				...(output.length > 0 ? { output } : {}),
 			});
 		}
