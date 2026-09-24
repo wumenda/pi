@@ -5,10 +5,13 @@ import {
 	replicatedState,
 } from "@earendil-works/chord";
 import type { RoutedSessionAttachment } from "@earendil-works/pi-server";
+import { createLogger } from "../logger.ts";
 import type { SessionRuntime } from "../runtime.ts";
 import { createAgentController } from "./agent-controller.ts";
 import { AgentController, McpHost, Transcript, type TranscriptState } from "./contracts.ts";
 import { createTranscriptService } from "./transcript.ts";
+
+const log = createLogger("session-services");
 
 export interface SessionServiceRuntime {
 	attachmentFactory(context: Context): RoutedSessionAttachment;
@@ -32,6 +35,7 @@ export async function createSessionServices(runtime: SessionRuntime): Promise<Se
 	};
 	return {
 		attachmentFactory(_context) {
+			log.info("session attachment created for client");
 			const provider = new RemoteServiceProvider([
 				{ service: Transcript, mode: "singleton" },
 				{ service: AgentController, mode: "singleton" },
@@ -46,6 +50,7 @@ export async function createSessionServices(runtime: SessionRuntime): Promise<Se
 					return endpoint.invoke(call, publish, ctx);
 				},
 				release() {
+					log.info("session attachment released");
 					endpoint.dispose();
 					provider.dispose();
 				},
