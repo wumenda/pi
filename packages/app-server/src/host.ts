@@ -6,12 +6,14 @@ import {
 	createMcpTools,
 	extractMcpToolUi,
 	isVisibleToLlm,
+	type McpRoutedTool,
 	McpServerManager,
 	mcpToolName,
 } from "@earendil-works/pi-agent-core/harness/mcp";
 import type { JsonlSessionMetadata } from "@earendil-works/pi-agent-core/harness/session";
 import type { RoutedSessionHandle, ServerHost } from "@earendil-works/pi-server";
 import type { AppServerConfig } from "./config.ts";
+import type { McpToolManifestEntry } from "./http.ts";
 import type { AppServerLlm } from "./llm.ts";
 import { createLogger } from "./logger.ts";
 import { loadMcpServerConfigs } from "./mcp-config.ts";
@@ -42,6 +44,8 @@ export interface AppServerHostHandle {
 		html: string;
 		declaredCsp: string | null;
 	}>;
+	/** MCP Apps 工具清单（HTTP mcp-tools 端点用）：带 ui:// 声明的工具 + 受众可见性 */
+	listMcpTools(): Promise<McpToolManifestEntry[]>;
 	close(): Promise<void>;
 }
 
@@ -63,6 +67,18 @@ function subscribeToolEvents(runtime: SessionRuntime, recorder: ToolEventRecorde
 		unsubscribe.push(runtime.harness.events.on(type, onToolEvent));
 	}
 	return unsubscribe;
+}
+
+/** 工具的受众可见性声明（_meta.ui.visibility）；未声明或为空返回 undefined */
+function declaredVisibility(routed: McpRoutedTool): string[] | undefined {
+	const meta = routed.tool._meta;
+	if (typeof meta !== "object" || meta === null) return undefined;
+	const ui = (meta as { ui?: unknown }).ui;
+	if (typeof ui !== "object" || ui === null) return undefined;
+	const visibility = (ui as { visibility?: unknown }).visibility;
+	if (!Array.isArray(visibility)) return undefined;
+	const list = visibility.filter((entry): entry is string => typeof entry === "string");
+	return list.length > 0 ? list : undefined;
 }
 
 /** 会话运行时缓存：attach/detach 不销毁，removeSession 与 shutdown 才关闭。 */
@@ -111,6 +127,28 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 			}
 		}
 		throw lastError instanceof Error ? lastError : new Error(`no connected manager for ${request.serverId}`);
+	};
+	// MCP Apps 工具清单：跨存活会话 manager 聚合带 ui:// 声明的工具（按 serverId+name 去重）
+	const listMcpTools = async (): Promise<McpToolManifestEntry[]> => {
+		const seen = new Set<string>();
+		const entries: McpToolManifestEntry[] = [];
+		for (const manager of managers) {
+			for (const routed of manager.tools()) {
+				const ui = extractMcpToolUi(routed);
+				if (ui === undefined) continue;
+				const key = `${routed.serverId}\0${routed.tool.name}`;
+				if (seen.has(key)) continue;
+				seen.add(key);
+				const visibility = declaredVisibility(routed);
+				entries.push({
+					serverId: routed.serverId,
+					name: routed.tool.name,
+					resourceUri: ui.resourceUri,
+					...(visibility === undefined ? {} : { visibility }),
+				});
+			}
+		}
+		return entries;
 	};
 	const services = await createServerServices({
 		list: async () => (await deps.store.list()).map(toSummary),
@@ -195,6 +233,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		host,
 		services,
 		readUiResource,
+		listMcpTools,
 		async close() {
 			for (const sessionId of [...runtimes.keys()]) await closeRuntime(sessionId);
 			await services.dispose();

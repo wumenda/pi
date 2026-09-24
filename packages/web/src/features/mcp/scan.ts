@@ -8,6 +8,7 @@
  * 归属判定沿用参考应用的"上下文时序"：tool 调用归属其前最近一次 skill 读取实例。
  */
 
+import { getCachedMcpTools, resolveServerId } from "../../api/mcp-tools.ts";
 import {
 	extractSkillRead,
 	isIncompleteSkillBlock,
@@ -43,10 +44,10 @@ function messageText(message: unknown): string {
 		.join("");
 }
 
-/** agent 核心 McpToolDetails.mcpUi 的 UI 描述符形状（web 侧镜像） */
+/** agent 核心 McpToolDetails.mcpUi 的 UI 描述符形状（web 侧镜像；serverId 缺失走清单自愈） */
 interface McpUiDescriptor {
 	resourceUri: string;
-	serverId: string;
+	serverId?: string;
 	permissions?: string[];
 }
 
@@ -64,10 +65,10 @@ function parseMcpUiDetails(message: unknown): ParsedToolDetails | null {
 	const mcpUi = (details as { mcpUi?: unknown }).mcpUi;
 	if (typeof mcpUi !== "object" || mcpUi === null) return null;
 	const resourceUri = (mcpUi as { resourceUri?: unknown }).resourceUri;
-	const serverId = (mcpUi as { serverId?: unknown }).serverId;
 	if (typeof resourceUri !== "string" || !resourceUri.startsWith("ui://")) return null;
-	if (typeof serverId !== "string" || serverId.length === 0) return null;
-	const descriptor: McpUiDescriptor = { resourceUri, serverId };
+	const descriptor: McpUiDescriptor = { resourceUri };
+	const serverId = (mcpUi as { serverId?: unknown }).serverId;
+	if (typeof serverId === "string" && serverId.length > 0) descriptor.serverId = serverId;
 	const declared = (mcpUi as { permissions?: unknown }).permissions;
 	if (Array.isArray(declared)) {
 		const list = declared.filter((p): p is string => typeof p === "string");
@@ -93,6 +94,11 @@ export interface TranscriptScanResult {
 	skillInstances: SkillPartInfo[];
 	/** 带 UI 的 tool 调用（流序；details.mcpUi 随终态结果持久化，故条目均为终态） */
 	calls: ToolUiCall[];
+	/**
+	 * serverId 未知而挂起的 harness 工具名（描述符缺 serverId 且清单未命中）：
+	 * 调用不产出、去重游标不推进；清单到达后由调用方触发重扫补建。
+	 */
+	pendingToolNames: string[];
 }
 
 /**
@@ -106,6 +112,7 @@ export function scanTranscript(entries: readonly TranscriptEntryView[]): Transcr
 	const skillInstances: SkillPartInfo[] = [];
 	const seenInstances = new Set<string>();
 	const calls: ToolUiCall[] = [];
+	const pendingToolNames = new Set<string>();
 	// toolCallId → 挂起调用信息（结果条目回查产出 ToolUiCall）
 	const openCalls = new Map<string, OpenMcpCall>();
 	let lastSkill: SkillPartInfo | null = null;
@@ -162,6 +169,18 @@ export function scanTranscript(entries: readonly TranscriptEntryView[]): Transcr
 			if (typeof toolCallId !== "string" || toolCallId.length === 0) continue;
 			const open = openCalls.get(toolCallId);
 			if (open === undefined) continue;
+			// serverId 自愈：描述符缺 serverId（历史会话产物）→ 从 mcp-tools 清单
+			// 归一化解析；清单未就绪或未命中 → 挂起并报告（不产出调用、去重游标
+			// 不推进，清单到达后调用方触发重扫补建）。
+			let serverId = descriptor.serverId;
+			if (serverId === undefined) {
+				const resolved = resolveServerId(getCachedMcpTools() ?? [], open.harnessName);
+				if (resolved === null) {
+					pendingToolNames.add(open.harnessName);
+					continue;
+				}
+				serverId = resolved;
+			}
 			const status: ToolUiStatus = (message as { isError?: unknown }).isError === true ? "error" : "completed";
 			const output = messageText(message);
 			// 声明比对：groupContext 实例声明了 tools 且不含本工具 → 不硬归该实例
@@ -172,14 +191,14 @@ export function scanTranscript(entries: readonly TranscriptEntryView[]): Transcr
 					? undefined
 					: skillInstances.find((instance) => instance.instanceId === open.groupContext?.instanceId)?.declaration
 							?.tools;
-			const rawName = rawMcpToolName(open.harnessName, descriptor.serverId);
+			const rawName = rawMcpToolName(open.harnessName, serverId);
 			const matched =
 				declaredTools === undefined
 					? undefined
-					: findMatchingDeclaration(open.harnessName, descriptor.serverId, declaredTools);
+					: findMatchingDeclaration(open.harnessName, serverId, declaredTools);
 			calls.push({
 				resourceUri: descriptor.resourceUri,
-				serverId: descriptor.serverId,
+				serverId,
 				toolCallId,
 				toolName: rawName,
 				...(matched?.title !== undefined ? { toolTitle: matched.title } : {}),
@@ -192,5 +211,5 @@ export function scanTranscript(entries: readonly TranscriptEntryView[]): Transcr
 			});
 		}
 	}
-	return { skillInstances, calls };
+	return { skillInstances, calls, pendingToolNames: [...pendingToolNames] };
 }

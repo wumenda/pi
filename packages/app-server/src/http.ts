@@ -1,8 +1,10 @@
 /**
- * app-server HTTP 面（Task 18）：
+ * app-server HTTP 面（Task 18/19）：
  * - GET /api/v1/ui-resources —— MCP Apps iframe 的加载端点。iframe 以 HTTP src
  *   （而非 srcdoc）加载应用文档，使逐应用 CSP 响应头生效（srcdoc 只能继承宿主页 CSP）。
  * - CSP 求交：应用声明的 CSP 只允许在平台默认之上收窄，不允许放宽（方法论 10.1）。
+ * - GET /api/v1/mcp-tools —— MCP Apps 工具清单（带 ui:// 声明的工具），
+ *   web 侧用于描述符缺 serverId 的历史条目自愈。
  */
 
 import Fastify, { type FastifyInstance } from "fastify";
@@ -14,8 +16,18 @@ export interface UiResourcePayload {
 	declaredCsp: string | null;
 }
 
+/** GET /api/v1/mcp-tools 条目：带 ui:// 声明的工具 + 受众可见性 */
+export interface McpToolManifestEntry {
+	serverId: string;
+	name: string;
+	resourceUri: string;
+	/** 受众可见性声明（_meta.ui.visibility）；未声明时缺省（默认模型可见） */
+	visibility?: string[];
+}
+
 export interface HttpDeps {
 	readUiResource(request: { serverId: string; resourceUri: string }): Promise<UiResourcePayload>;
+	listMcpTools(): Promise<McpToolManifestEntry[]>;
 }
 
 const PLATFORM_CSP =
@@ -73,6 +85,10 @@ export function createHttpServer(_options: { httpPort: number }, deps: HttpDeps)
 			request.log.error(error);
 			return reply.code(502).send({ error: error instanceof Error ? error.message : String(error) });
 		}
+	});
+	app.get("/api/v1/mcp-tools", async (_request, reply) => {
+		const tools = await deps.listMcpTools();
+		return reply.code(200).header("cache-control", "no-store").send(tools);
 	});
 	return app;
 }

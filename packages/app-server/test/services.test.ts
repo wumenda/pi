@@ -31,6 +31,9 @@ describe("app-server services", () => {
 		const workspaceDir = resolve(config.dataDir, "workspace");
 		const faux = createFauxLlm();
 		const handle = createAppServer({
+			// 端口 0 = OS 分配：避免与开发实例的固定端口（WS 8790 / HTTP 8791）冲突
+			wsPort: 0,
+			httpPort: 0,
 			deps: {
 				config,
 				store: createSessionStore({ dataDir: config.dataDir, workspaceDir }),

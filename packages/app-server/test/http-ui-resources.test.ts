@@ -8,6 +8,7 @@ function fakeDeps() {
 			html: "<html>app</html>",
 			declaredCsp: null as string | null,
 		}),
+		listMcpTools: async () => [],
 	};
 }
 
@@ -30,13 +31,12 @@ describe("GET /api/v1/ui-resources", () => {
 	});
 	it("propagates read failures as 502", async () => {
 		const http = createHttpServer(
-			{
-				httpPort: 0,
-			},
+			{ httpPort: 0 },
 			{
 				readUiResource: async () => {
 					throw new Error("server down");
 				},
+				listMcpTools: async () => [],
 			},
 		);
 		const response = await http.inject({

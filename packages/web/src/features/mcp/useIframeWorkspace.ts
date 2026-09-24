@@ -6,10 +6,11 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { requestMcpToolManifest, subscribeMcpTools } from "../../api/mcp-tools.ts";
 import type { SkillPartInfo } from "../skills/skill-parse.ts";
 import { iframePool } from "./IframePool.ts";
 import { messageBridge } from "./MessageBridge.ts";
-import { ensureToolIframe, sendToolProgress, startHostProtocol } from "./pipeline.ts";
+import { ensureToolIframe, hostHttpBase, sendToolProgress, startHostProtocol } from "./pipeline.ts";
 import {
 	clearSeenProgress,
 	registerToolProgressListener,
@@ -53,6 +54,7 @@ export function useIframeWorkspace(
 	const [activeUri, setActiveUri] = useState<string | null>(iframePool.activeResourceUri);
 	const [activeGroup, setActiveGroupState] = useState<string | null>(null);
 	const [skillInstances, setSkillInstances] = useState<SkillPartInfo[]>([]);
+	const [manifestVersion, setManifestVersion] = useState(0);
 	const processedRef = useRef<Set<string>>(new Set());
 	const lastSessionKeyRef = useRef<string | null>(null);
 
@@ -126,8 +128,10 @@ export function useIframeWorkspace(
 		};
 	}, []);
 
-	// transcript 扫描：skill 实例建档 + tool 调用推进（按 toolCallId:status 去重）
+	// transcript 扫描：skill 实例建档 + tool 调用推进（按 toolCallId:status 去重）。
 	useEffect(() => {
+		// manifestVersion 仅作重扫触发器：清单变更 → 重扫补建 serverId 挂起的调用
+		void manifestVersion;
 		if (entries === undefined) {
 			setSkillInstances([]);
 			return;
@@ -141,7 +145,20 @@ export function useIframeWorkspace(
 			processed.add(key);
 			ensureToolIframe(call);
 		}
-	}, [entries]);
+		// 清单自愈：serverId 未知而挂起的调用 → 按工具名防抖拉取清单，
+		// 清单变更时经订阅触发本 effect 重扫补建（挂起调用未推进去重游标）。
+		for (const harnessName of result.pendingToolNames) {
+			try {
+				void requestMcpToolManifest(hostHttpBase(), harnessName);
+			} catch {
+				console.warn(`[pi-app] mcp-tools 清单拉取跳过（HTTP 基址未接入）: ${harnessName}`);
+				break;
+			}
+		}
+	}, [entries, manifestVersion]);
+
+	// 清单变更订阅 → bump 版本触发重扫（挂载期注册，随组件生命周期退订）
+	useEffect(() => subscribeMcpTools(() => setManifestVersion((version) => version + 1)), []);
 
 	const setActiveGroup = useCallback((group: string) => {
 		const uri = latestInGroup(iframePool.snapshot(), group);

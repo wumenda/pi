@@ -11,3 +11,8 @@ export function rawMcpToolName(harnessName: string, serverId: string): string {
 	const prefix = `mcp__${sanitizeNamePart(serverId)}__`;
 	return harnessName.startsWith(prefix) ? harnessName.slice(prefix.length) : harnessName;
 }
+
+/** MCP 侧原始 tool 名 + serverId → 原生 MCP 桥接工具名（与 agent 核心 mcpToolName 一致） */
+export function namespacedMcpToolName(serverId: string, rawName: string): string {
+	return `mcp__${sanitizeNamePart(serverId)}__${sanitizeNamePart(rawName)}`;
+}

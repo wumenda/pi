@@ -98,6 +98,11 @@ export function setHostContext(context: HostContext): void {
 	hostContext = context;
 }
 
+/** app-server HTTP 基址（宿主注入；未注入时抛错，调用方需自行兜底） */
+export function hostHttpBase(): string {
+	return hostContext.getHttpBase();
+}
+
 /**
  * 把 tool 调用输出映射为 MCP Apps tool-result 通知：
  * structuredContent 优先（服务端原样透传），否则 output 为 JSON 对象文本时

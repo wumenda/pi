@@ -87,7 +87,10 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 				hostHandle = handle;
 				http = createHttpServer(
 					{ httpPort: options.httpPort ?? options.deps.config.httpPort },
-					{ readUiResource: (request) => handle.readUiResource(request) },
+					{
+						readUiResource: (request) => handle.readUiResource(request),
+						listMcpTools: () => handle.listMcpTools(),
+					},
 				);
 				await http.listen({
 					port: options.httpPort ?? options.deps.config.httpPort,
