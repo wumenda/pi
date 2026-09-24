@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
+import { McpServerManager } from "@earendil-works/pi-agent-core/harness/mcp";
 import { fauxAssistantMessage, fauxText, fauxToolCall } from "@earendil-works/pi-ai";
 import { afterEach, describe, expect, it } from "vitest";
 import { createSessionRuntime } from "../src/runtime.ts";
@@ -29,6 +30,7 @@ async function setup() {
 		models: llm.models,
 		model: llm.model,
 		workspaceDir: join(root, "ws"),
+		mcp: new McpServerManager({}),
 	});
 	return { runtime, llm };
 }

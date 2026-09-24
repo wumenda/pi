@@ -8,6 +8,7 @@ describe("loadConfig", () => {
 		expect(config.modelId).toBe("glm-5.3-flash");
 		expect(config.wsPort).toBe(8790);
 		expect(config.dataDir).toBe(".data");
+		expect(config.mcpConfigPath).toBeUndefined();
 	});
 	it("honors env overrides", () => {
 		const config = loadConfig({
@@ -20,5 +21,9 @@ describe("loadConfig", () => {
 		expect(config.modelId).toBe("glm-5");
 		expect(config.wsPort).toBe(9000);
 		expect(config.dataDir).toBe("tmp-data");
+	});
+	it("honors APP_SERVER_MCP_CONFIG override", () => {
+		const config = loadConfig({ APP_SERVER_MCP_CONFIG: "custom-mcp.json" });
+		expect(config.mcpConfigPath).toBe("custom-mcp.json");
 	});
 });

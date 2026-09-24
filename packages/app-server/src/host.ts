@@ -1,11 +1,13 @@
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import type { Context } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
+import { createMcpTools, McpServerManager } from "@earendil-works/pi-agent-core/harness/mcp";
 import type { JsonlSessionMetadata } from "@earendil-works/pi-agent-core/harness/session";
 import type { RoutedSessionHandle, ServerHost } from "@earendil-works/pi-server";
 import type { AppServerConfig } from "./config.ts";
 import type { AppServerLlm } from "./llm.ts";
 import { createLogger } from "./logger.ts";
+import { loadMcpServerConfigs } from "./mcp-config.ts";
 import { createSessionRuntime, type SessionRuntime } from "./runtime.ts";
 import { createServerServices, type ServerServices } from "./services/server-services.ts";
 import { createSessionServices, type SessionServiceRuntime } from "./services/session-services.ts";
@@ -73,12 +75,24 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 				const startedAt = Date.now();
 				log.info(`openSession ${metadata.id}: creating runtime`);
 				const session = await deps.store.open(metadata);
+				let mcpManager: McpServerManager | undefined;
 				try {
+					const mcpConfigPath = deps.config.mcpConfigPath ?? join(deps.config.dataDir, "mcp.json");
+					const mcpConfig = await loadMcpServerConfigs(mcpConfigPath);
+					const manager = new McpServerManager(mcpConfig);
+					mcpManager = manager;
+					for (const status of await manager.connectAll()) {
+						log.info(
+							`mcp server ${status.id}: state=${status.state} toolCount=${status.toolCount}${status.error === undefined ? "" : ` error=${status.error}`}`,
+						);
+					}
 					const runtime = await createSessionRuntime({
 						session,
 						models: deps.llm.models,
 						model: deps.llm.model,
 						workspaceDir,
+						mcp: manager,
+						extraTools: createMcpTools(manager),
 					});
 					const sessionServices = await createSessionServices(runtime);
 					entry = { runtime, services: sessionServices };
@@ -88,6 +102,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 					log.error(
 						`openSession ${metadata.id}: runtime failed: ${error instanceof Error ? error.message : String(error)}`,
 					);
+					await mcpManager?.close().catch(() => undefined);
 					await session.close(BACKGROUND_CONTEXT).catch(() => undefined);
 					throw error;
 				}
