@@ -68,7 +68,7 @@ function sanitizeNamePart(value: string): string {
 }
 
 /** 原生 MCP 桥接工具名 `mcp__<serverId>__<toolName>` → MCP 侧原始 tool 名 */
-function rawMcpToolName(harnessName: string, serverId: string): string {
+export function rawMcpToolName(harnessName: string, serverId: string): string {
 	const prefix = `mcp__${sanitizeNamePart(serverId)}__`;
 	return harnessName.startsWith(prefix) ? harnessName.slice(prefix.length) : harnessName;
 }

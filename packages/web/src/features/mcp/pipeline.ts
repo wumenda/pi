@@ -2,7 +2,7 @@ import type { JsonValue } from "@earendil-works/chord";
 import type { ToolExecutionEvent } from "../../services/contracts.ts";
 import { iframeInstanceKey, iframePool } from "./IframePool.ts";
 import { messageBridge, THEME_CHANGED_METHOD } from "./MessageBridge.ts";
-import { type ProgressPayload, seenProgress, shouldDeliverProgress } from "./progress.ts";
+import { type ProgressPayload, seenProgress, shouldDeliverProgress, shouldReplayProgress } from "./progress.ts";
 import { type SkillReadContext, SOLO_GROUP_KEY } from "./types.ts";
 
 /** tool 调用推进状态（对齐参考应用 ToolPart.state.status 的子集语义） */
@@ -201,9 +201,6 @@ export function ensureToolIframe(call: ToolUiCall): void {
 	// 新建实例：经 pi.mcp-host 服务读取应用 HTML 后以 srcdoc 注入（异步；消息先排队）
 	if (isNew) {
 		void loadIframeHtml(sendKey, call.serverId, call.resourceUri);
-		// 冷启动恢复：既有重放（tool-input → tool-result）之后，补推该执行已落盘的
-		// progress 事件（同页面已实时收过的指纹被去重抑制；页面刷新后全部真正送达）
-		void replayRecordedProgress(call.toolCallId);
 	}
 	if (call.status === "pending" || call.status === "running") {
 		messageBridge.send(sendKey, "ui/notifications/tool-input", {
@@ -219,6 +216,11 @@ export function ensureToolIframe(call: ToolUiCall): void {
 		messageBridge.sendToolResult(sendKey, toMcpToolResult(call));
 	} else {
 		messageBridge.sendToolResult(sendKey, toMcpToolResult(call));
+	}
+	// 冷启动/恢复补推：新建实例或复用实例的未绑定执行（重进会话的中间调用）在终态
+	// 补推已落盘 progress（同页面已实时收过的指纹被去重抑制；刷新后全部真正送达）
+	if (shouldReplayProgress(alreadyBound, isNew, call.status)) {
+		void replayRecordedProgress(call.toolCallId);
 	}
 }
 

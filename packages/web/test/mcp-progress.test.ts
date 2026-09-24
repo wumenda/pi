@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { extractProgressPayload, progressFingerprint, shouldDeliverProgress } from "../src/features/mcp/progress.ts";
+import {
+	extractProgressPayload,
+	progressFingerprint,
+	shouldDeliverProgress,
+	shouldReplayProgress,
+} from "../src/features/mcp/progress.ts";
 
 describe("progressFingerprint", () => {
 	it("distinguishes same value with different uiEvent", () => {
@@ -20,6 +25,23 @@ describe("shouldDeliverProgress", () => {
 		expect(shouldDeliverProgress(seen, "t1", payload)).toBe(true);
 		expect(shouldDeliverProgress(seen, "t1", payload)).toBe(false);
 		expect(shouldDeliverProgress(seen, "t2", payload)).toBe(true);
+	});
+});
+
+describe("shouldReplayProgress", () => {
+	it("replays for new instance and reused-instance recovery on terminal status", () => {
+		// 冷启动新建实例：补推
+		expect(shouldReplayProgress(false, true, "completed")).toBe(true);
+		// 重进会话复用已有实例（非新建、执行未绑定）：同样补推（多调用共享实例的中间调用）
+		expect(shouldReplayProgress(false, false, "completed")).toBe(true);
+		expect(shouldReplayProgress(false, false, "error")).toBe(true);
+	});
+	it("skips live status transitions and running calls", () => {
+		// 同页面实时 running→completed（执行已绑定，progress 已实时投递）：不补推
+		expect(shouldReplayProgress(true, false, "completed")).toBe(false);
+		// 运行中：不补推
+		expect(shouldReplayProgress(false, true, "running")).toBe(false);
+		expect(shouldReplayProgress(false, true, "pending")).toBe(false);
 	});
 });
 

@@ -16,7 +16,7 @@ import {
 	type ToolProgressListener,
 	unregisterToolProgressListener,
 } from "./progress.ts";
-import { scanTranscript, type TranscriptEntryView } from "./scan.ts";
+import { rawMcpToolName, scanTranscript, type TranscriptEntryView } from "./scan.ts";
 import type { IframeInstance } from "./types.ts";
 
 export interface IframeWorkspace {
@@ -101,10 +101,25 @@ export function useIframeWorkspace(
 	}, [sessionKey]);
 
 	// progress 实时转发监听：pi-app 的 transcript 订阅 → pipeline 投递（去重 + 按执行寻址）。
+	// 首条 progress 携带 frame（details.mcpUi）时执行期引导创建 iframe——scan 只认终态
+	// toolResult 的 mcpUi，运行中的调用在此处补齐实时链路（去重由 pipeline 指纹负责）。
 	// 监听随组件生命周期注册（与会话无关）；跨会话隔离由会话切换处的指纹清空 +
 	// pipeline 的执行绑定寻址保证（旧执行的绑定已随 destroyAll 清除，进度自然丢弃）。
 	useEffect(() => {
-		const listener: ToolProgressListener = (toolCallId, payload) => sendToolProgress(toolCallId, payload);
+		const listener: ToolProgressListener = (toolCallId, payload, frame) => {
+			if (frame !== undefined && iframePool.keyForExecution(toolCallId) === undefined) {
+				ensureToolIframe({
+					resourceUri: frame.resourceUri,
+					serverId: frame.serverId,
+					toolCallId,
+					toolName: rawMcpToolName(frame.toolName, frame.serverId),
+					status: "running",
+					input: {},
+					groupContext: null,
+				});
+			}
+			sendToolProgress(toolCallId, payload);
+		};
 		registerToolProgressListener(listener);
 		return () => {
 			unregisterToolProgressListener(listener);

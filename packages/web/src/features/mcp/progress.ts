@@ -14,8 +14,17 @@ export interface ProgressPayload {
 	uiEvent: unknown;
 }
 
-/** tool_update progress 转发监听器（pi-app transcript 订阅 → 工作区投递） */
-export type ToolProgressListener = (toolCallId: string, payload: ProgressPayload) => void;
+/** tool_update 携带的 UI 归属信息（首次 progress 到达时用于引导创建执行 iframe） */
+export interface LiveToolFrame {
+	resourceUri: string;
+	serverId: string;
+	/** harness 工具名（`mcp__<serverId>__<name>`，工作区负责还原原始名） */
+	toolName: string;
+}
+
+/** tool_update progress 转发监听器（pi-app transcript 订阅 → 工作区投递）；
+ * frame 仅在 tool_update 的 details.mcpUi 存在时携带，用于运行中 iframe 引导 */
+export type ToolProgressListener = (toolCallId: string, payload: ProgressPayload, frame?: LiveToolFrame) => void;
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
 	return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -62,6 +71,24 @@ export function shouldDeliverProgress(
 	return true;
 }
 
+/** ensureToolIframe 的调用到达形态（isNew = 本次 acquire 新建了实例；alreadyBound = 执行此前已绑定实例） */
+export type ReplayDecision = {
+	alreadyBound: boolean;
+	isNew: boolean;
+	status: "pending" | "running" | "completed" | "error";
+};
+
+/**
+ * 终态调用是否补推已落盘 progress（冷启动/恢复）：
+ * - 新建实例（冷启动）或复用已有实例且执行未绑定（重进会话的中间调用恢复）→ 补推，
+ *   否则多调用共享实例（如增量 Tab UI）恢复后只有首个调用的进度可见；
+ * - 执行已绑定（同页面实时 running→completed）→ 不补推：progress 已实时投递，
+ *   补推只会被指纹去重空转一次 RPC。
+ */
+export function shouldReplayProgress(alreadyBound: boolean, isNew: boolean, status: ReplayDecision["status"]): boolean {
+	return (status === "completed" || status === "error") && (isNew || !alreadyBound);
+}
+
 const listeners = new Set<ToolProgressListener>();
 
 /** 注册 progress 转发监听器（pi-app transcript 订阅回调调用 emitToolProgress 投递） */
@@ -74,9 +101,19 @@ export function unregisterToolProgressListener(listener: ToolProgressListener): 
 	listeners.delete(listener);
 }
 
+/** 从 tool_update 事件的 `partialResult.details` 提取运行中 UI 引导信息（details.mcpUi）。 */
+export function extractLiveToolFrame(details: unknown, toolName: string): LiveToolFrame | undefined {
+	const mcpUi = asRecord(asRecord(details)?.mcpUi);
+	const resourceUri = mcpUi?.resourceUri;
+	const serverId = mcpUi?.serverId;
+	if (typeof resourceUri !== "string" || !resourceUri.startsWith("ui://")) return undefined;
+	if (typeof serverId !== "string" || serverId.length === 0) return undefined;
+	return { resourceUri, serverId, toolName };
+}
+
 /** 转发一条 progress 到全部监听器（无监听器时丢弃——宿主工作区未挂载） */
-export function emitToolProgress(toolCallId: string, payload: ProgressPayload): void {
-	for (const listener of listeners) listener(toolCallId, payload);
+export function emitToolProgress(toolCallId: string, payload: ProgressPayload, frame?: LiveToolFrame): void {
+	for (const listener of listeners) listener(toolCallId, payload, frame);
 }
 
 /** 页面生命周期内的去重记忆：toolCallId → 已投递指纹集（会话切换清空） */
