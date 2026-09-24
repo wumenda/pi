@@ -6,7 +6,7 @@ import { isServerId } from "@earendil-works/pi-protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPiClient } from "../api/pi.ts";
 import { getToolEvents as fetchToolEvents } from "../api/tool-events.ts";
-import { emitToolProgress, extractProgressPayload } from "../features/mcp/progress.ts";
+import { emitToolProgress, extractLiveToolFrame, extractProgressPayload } from "../features/mcp/progress.ts";
 import type {
 	McpHostToolCallResult,
 	McpHostUiResource,
@@ -160,10 +160,15 @@ export function usePiApp(): PiAppState & PiAppActions {
 					const eventType = value.event?.type;
 					if (eventType !== undefined) logDebug(`transcript event: ${eventType}`);
 					// MCP Apps progress 实时转发：tool_update 携带 details.progress 时
-					// 投递给注册的监听器（工作区注册，经 pipeline 去重后按执行寻址 iframe）
+					// 投递给注册的监听器（工作区注册，经 pipeline 去重后按执行寻址 iframe；
+					// frame 携带 details.mcpUi，供工作区在执行期引导创建 iframe）
 					if (value.event?.type === "tool_update") {
-						const payload = extractProgressPayload(value.event.partialResult.details);
-						if (payload !== null) emitToolProgress(value.event.toolCallId, payload);
+						const details = value.event.partialResult.details;
+						const payload = extractProgressPayload(details);
+						if (payload !== null) {
+							const frame = extractLiveToolFrame(details, value.event.toolName);
+							emitToolProgress(value.event.toolCallId, payload, frame);
+						}
 					}
 					setState((previous) => ({ ...previous, transcript: value }));
 				});
