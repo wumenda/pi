@@ -25,10 +25,7 @@ describe("createMcpHostService", () => {
 	});
 	it("getUiResource returns html and mimeType", async () => {
 		const service = createMcpHostService(fakeManager() as never);
-		const resource = await service.getUiResource(
-			{ serverId: "example", resourceUri: "ui://x" },
-			BACKGROUND_CONTEXT,
-		);
+		const resource = await service.getUiResource({ serverId: "example", resourceUri: "ui://x" }, BACKGROUND_CONTEXT);
 		expect(resource.mimeType).toBe("text/html");
 		expect(resource.html).toContain("app");
 	});

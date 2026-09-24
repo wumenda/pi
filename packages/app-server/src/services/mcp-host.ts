@@ -5,13 +5,13 @@ import type {
 	McpServerManager,
 	McpServerStatus,
 } from "@earendil-works/pi-agent-core/harness/mcp";
-import {
-	type McpHost,
-	type McpHostServerStatus,
-	type McpHostToolCallRequest,
-	type McpHostToolCallResult,
-	type McpHostToolContent,
-	type McpHostUiResource,
+import type {
+	McpHost,
+	McpHostServerStatus,
+	McpHostToolCallRequest,
+	McpHostToolCallResult,
+	McpHostToolContent,
+	McpHostUiResource,
 } from "./contracts.ts";
 
 const UI_RESOURCE_PREFIX = "ui://";

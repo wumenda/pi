@@ -12,7 +12,7 @@ import {
 	type ExecutionToolContext,
 } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/harness/env/nodejs";
-import { type McpServerManager } from "@earendil-works/pi-agent-core/harness/mcp";
+import type { McpServerManager } from "@earendil-works/pi-agent-core/harness/mcp";
 import type { JsonlSessionMetadata, Session } from "@earendil-works/pi-agent-core/harness/session";
 import type { Api, Model, Models } from "@earendil-works/pi-ai";
 
