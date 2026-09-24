@@ -21,6 +21,8 @@ export interface ToolUiCall {
 	status: ToolUiStatus;
 	input?: Record<string, unknown>;
 	output?: string;
+	/** 服务端结构化结果（details.structuredContent 透传；推送 tool-result 时优先于 output 文本解析） */
+	structuredContent?: Record<string, unknown>;
 	/** _meta.ui.permissions 特权声明（仅首次创建 iframe 时生效；约定字段） */
 	permissions?: readonly string[];
 	/**
@@ -92,7 +94,8 @@ export function setHostContext(context: HostContext): void {
 
 /**
  * 把 tool 调用输出映射为 MCP Apps tool-result 通知：
- * output 为 JSON 对象文本时作为 structuredContent 透传，否则仅提供文本 content。
+ * structuredContent 优先（服务端原样透传），否则 output 为 JSON 对象文本时
+ * 解析为 structuredContent 回退，否则仅提供文本 content。
  */
 function toMcpToolResult(call: ToolUiCall): McpToolResultPayload {
 	const text = call.output ?? "";
@@ -103,6 +106,10 @@ function toMcpToolResult(call: ToolUiCall): McpToolResultPayload {
 		// 宿主工作台内嵌标记：App 据此隐藏自带外壳
 		_embed: true,
 	};
+	if (!payload.isError && call.structuredContent !== undefined) {
+		payload.structuredContent = call.structuredContent;
+		return payload;
+	}
 	if (!payload.isError && text.length > 0) {
 		try {
 			const parsed: unknown = JSON.parse(text);

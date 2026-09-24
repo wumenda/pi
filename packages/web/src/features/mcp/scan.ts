@@ -50,8 +50,14 @@ interface McpUiDescriptor {
 	permissions?: string[];
 }
 
+/** toolResult message details 的提取结果（UI 描述符 + 服务端结构化结果） */
+interface ParsedToolDetails {
+	mcpUi: McpUiDescriptor;
+	structuredContent?: Record<string, unknown>;
+}
+
 /** 从 toolResult message 的 details 提取 MCP Apps UI 描述符（无则 null） */
-function parseMcpUiDetails(message: unknown): McpUiDescriptor | null {
+function parseMcpUiDetails(message: unknown): ParsedToolDetails | null {
 	if (typeof message !== "object" || message === null) return null;
 	const details = (message as { details?: unknown }).details;
 	if (typeof details !== "object" || details === null) return null;
@@ -67,7 +73,12 @@ function parseMcpUiDetails(message: unknown): McpUiDescriptor | null {
 		const list = declared.filter((p): p is string => typeof p === "string");
 		if (list.length > 0) descriptor.permissions = list;
 	}
-	return descriptor;
+	const parsed: ParsedToolDetails = { mcpUi: descriptor };
+	const structured = (details as { structuredContent?: unknown }).structuredContent;
+	if (typeof structured === "object" && structured !== null && !Array.isArray(structured)) {
+		parsed.structuredContent = structured as Record<string, unknown>;
+	}
+	return parsed;
 }
 
 /** assistant toolCall part 中原生 MCP 桥接工具的挂起信息（结果到达前累积） */
@@ -144,8 +155,9 @@ export function scanTranscript(entries: readonly TranscriptEntryView[]): Transcr
 		}
 
 		if (role === "toolResult") {
-			const descriptor = parseMcpUiDetails(message);
-			if (descriptor === null) continue;
+			const parsed = parseMcpUiDetails(message);
+			if (parsed === null) continue;
+			const descriptor = parsed.mcpUi;
 			const toolCallId = (message as { toolCallId?: unknown }).toolCallId;
 			if (typeof toolCallId !== "string" || toolCallId.length === 0) continue;
 			const open = openCalls.get(toolCallId);
@@ -174,6 +186,7 @@ export function scanTranscript(entries: readonly TranscriptEntryView[]): Transcr
 				status,
 				input: open.input,
 				...(descriptor.permissions !== undefined ? { permissions: descriptor.permissions } : {}),
+				...(parsed.structuredContent !== undefined ? { structuredContent: parsed.structuredContent } : {}),
 				groupContext: declaredTools === undefined || matched !== undefined ? open.groupContext : null,
 				...(output.length > 0 ? { output } : {}),
 			});

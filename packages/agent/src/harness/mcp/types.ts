@@ -66,6 +66,8 @@ export type McpContent =
 export interface McpCallToolResult {
 	content: McpContent[];
 	isError?: boolean;
+	/** Server-provided structured result (MCP `result.structuredContent`), when present. */
+	structuredContent?: Record<string, unknown>;
 }
 
 /** One resource content entry inside a resources/read result. */

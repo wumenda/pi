@@ -28,6 +28,8 @@ export interface McpToolDetails {
 	mcpUi?: McpToolUiDescriptor;
 	/** Latest progress payload from `notifications/progress`; present on tool_update events only. */
 	progress?: McpProgressPayload;
+	/** Server-provided structured tool result; persisted with the terminal tool-result entry. */
+	structuredContent?: Record<string, unknown>;
 }
 
 const UI_RESOURCE_PREFIX = "ui://";
@@ -138,7 +140,10 @@ export function createMcpTools(
 							details: { ...(ui === undefined ? {} : { mcpUi: ui }), progress: payload },
 						}),
 				);
-				const details: McpToolDetails = ui === undefined ? {} : { mcpUi: ui };
+				const details: McpToolDetails = {
+					...(ui === undefined ? {} : { mcpUi: ui }),
+					...(result.structuredContent === undefined ? {} : { structuredContent: result.structuredContent }),
+				};
 				return { content: mapContent(result.content), details };
 			},
 		});

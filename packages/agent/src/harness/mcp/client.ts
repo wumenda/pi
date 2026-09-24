@@ -240,6 +240,9 @@ export class McpClient {
 			return {
 				content: parseContents(result),
 				isError: record?.isError === true ? true : undefined,
+				...(asRecord(record?.structuredContent) !== undefined
+					? { structuredContent: asRecord(record?.structuredContent) }
+					: {}),
 			};
 		} finally {
 			if (token !== undefined) this.#progressHandlers.delete(token);
