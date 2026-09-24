@@ -14,6 +14,9 @@ packages/ai/src/providers/.model-generation-*/
 
 # Environment
 .env
+.trae/
+agentplan.yml
+.data/
 
 # Editor files
 .vscode/
