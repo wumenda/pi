@@ -121,10 +121,15 @@ export function answerableFields(page: PageInput): FieldInput[] {
 	return page.fields ?? [];
 }
 
-/** 按 defaultValue 初始化作答值（number 用 null 占位以便受控输入） */
+/** 按 defaultValue 初始化作答值（number 用 null 占位以便受控输入）；
+ * table 页播种预设行（page.rows → __rows__，行浅拷贝防直接改动入参） */
 export function collectDefaultValues(input: AskUserInput): CardAnswers {
 	const values: CardAnswers = {};
 	for (const page of input.pages) {
+		if (page.type === "table") {
+			values[page.id] = { __rows__: (page.rows ?? []).map((row) => ({ ...row })) };
+			continue;
+		}
 		const pageValues: Record<string, unknown> = {};
 		for (const field of answerableFields(page)) {
 			if (field.defaultValue !== undefined && field.defaultValue !== null) {
@@ -335,19 +340,27 @@ export function validateAnswers(
 }
 
 /**
- * 合并自定义槽位（供 encodeAnswers 与卡片摘要共用）：
- * 字段值 = CUSTOM_LABEL 时，用同字段的 `${id}__custom` 自由文本替换并丢弃槽位；
- * 未选中自定义时丢弃残留的 `__custom` 槽位。不做静默兜底——文本为空时保持占位值原样。
+ * 合并自定义槽位并按页类型整形答案（供卡片提交与摘要共用）：
+ * - table 页：答案为行数组直接挂页 id（契约 §4.4），丢弃 `__rows__` 槽位包装；
+ * - 其余页：字段值 = CUSTOM_LABEL 时，用同字段的 `${id}__custom` 自由文本替换并丢弃槽位；
+ *   未选中自定义时丢弃残留的 `__custom` 槽位。不做静默兜底——文本为空时保持占位值原样。
  */
-export function normalizeAnswers(values: CardAnswers): CardAnswers {
+export function normalizeAnswers(input: AskUserInput, values: CardAnswers): CardAnswers {
 	const out: CardAnswers = {};
-	for (const [pageId, pageValues] of Object.entries(values)) {
+	for (const page of input.pages) {
+		const pageValues = values[page.id] ?? {};
+		if (page.type === "table") {
+			const rows = pageValues.__rows__;
+			// 答案形态为行数组（契约 §4.4）；CardAnswers 值域声明为对象，行数组在此收窄断言
+			out[page.id] = (Array.isArray(rows) ? rows : []) as unknown as Record<string, unknown>;
+			continue;
+		}
 		const normalized: Record<string, unknown> = {};
 		for (const [key, v] of Object.entries(pageValues)) {
 			if (key.endsWith("__custom")) continue;
 			normalized[key] = v === CUSTOM_LABEL ? (pageValues[`${key}__custom`] ?? v) : v;
 		}
-		out[pageId] = normalized;
+		out[page.id] = normalized;
 	}
 	return out;
 }

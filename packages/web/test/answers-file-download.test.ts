@@ -119,7 +119,54 @@ describe("collectDefaultValues / normalizeAnswers file-download", () => {
 		expect(values.p1?.files).toEqual([]);
 	});
 	it("normalizeAnswers keeps the {pageId:{fieldId:[相对路径...]}} shape", () => {
-		const normalized = normalizeAnswers(valuesWith(["reports/summary.pdf", "drawings/p-001.dwg"]));
+		const normalized = normalizeAnswers(downloadInput, valuesWith(["reports/summary.pdf", "drawings/p-001.dwg"]));
 		expect(normalized).toEqual({ p1: { files: ["reports/summary.pdf", "drawings/p-001.dwg"] } });
+	});
+});
+
+describe("collectDefaultValues / normalizeAnswers table", () => {
+	const tableInput: AskUserInput = {
+		title: "改造项目清单",
+		question: null,
+		allowCustom: false,
+		pages: [
+			{
+				type: "table",
+				id: "plan",
+				title: "项目",
+				columns: [
+					{ id: "name", label: "名称", valueType: "text", widget: "text" },
+					{ id: "rank", label: "优先级", valueType: "number", widget: "number" },
+				],
+				rows: [
+					{ name: "加热炉改造", rank: 2 },
+					{ name: "分馏塔改造", rank: 3 },
+				],
+			},
+		],
+	};
+
+	it("collectDefaultValues seeds preset rows into __rows__ (行浅拷贝)", () => {
+		const values = collectDefaultValues(tableInput);
+		expect(values.plan).toEqual({
+			__rows__: [
+				{ name: "加热炉改造", rank: 2 },
+				{ name: "分馏塔改造", rank: 3 },
+			],
+		});
+		const rows = values.plan?.__rows__ as Record<string, unknown>[];
+		expect(rows[0]).not.toBe(tableInput.pages[0]?.rows?.[0]);
+	});
+
+	it("normalizeAnswers unwraps __rows__ to a row array on the page id (契约 §4.4)", () => {
+		const values = collectDefaultValues(tableInput);
+		const normalized = normalizeAnswers(tableInput, values);
+		expect(normalized).toEqual({
+			plan: [
+				{ name: "加热炉改造", rank: 2 },
+				{ name: "分馏塔改造", rank: 3 },
+			],
+		});
+		expect(Object.keys(normalized.plan as unknown[])).not.toContain("__rows__");
 	});
 });

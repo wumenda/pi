@@ -89,7 +89,7 @@ export function AskUserCard({ input, resolved, onSubmit, onCancel }: AskUserCard
 		setError(undefined);
 		setBusy(true);
 		try {
-			await onSubmit(normalizeAnswers(values));
+			await onSubmit(normalizeAnswers(input, values));
 			setPhase("submitted");
 		} catch (e) {
 			setError(`提交失败：${e instanceof Error ? e.message : String(e)}`);
@@ -137,7 +137,7 @@ export function AskUserCard({ input, resolved, onSubmit, onCancel }: AskUserCard
 			{input.question && <div className="ask-card-question">{input.question}</div>}
 
 			{finalized ? (
-				<pre className="ask-card-summary">{JSON.stringify(normalizeAnswers(values), null, 2)}</pre>
+				<pre className="ask-card-summary">{JSON.stringify(normalizeAnswers(input, values), null, 2)}</pre>
 			) : (
 				<>
 					<PageView

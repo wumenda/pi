@@ -74,6 +74,27 @@ describe("POST /api/v1/sessions/:sessionId/files", () => {
 	});
 });
 
+describe("CORS（web 前端跨源访问 HTTP 面）", () => {
+	it("marks every API response accessible to any origin", async () => {
+		const uploaded = await postFiles("sid-1", [{ name: "files", filename: "a.pdf", content: "x" }]);
+		expect(uploaded.headers["access-control-allow-origin"]).toBe("*");
+		const downloaded = await getFile("sid-1", "missing.txt");
+		expect(downloaded.headers["access-control-allow-origin"]).toBe("*");
+	});
+
+	it("answers preflight OPTIONS with 204 and permissive headers", async () => {
+		const http = createHttpServer({ httpPort: 0 }, deps);
+		const response = await http.inject({
+			method: "OPTIONS",
+			url: "/api/v1/sessions/sid-1/files",
+			headers: { origin: "http://localhost:8788", "access-control-request-method": "POST" },
+		});
+		expect(response.statusCode).toBe(204);
+		expect(response.headers["access-control-allow-origin"]).toBe("*");
+		expect(response.headers["access-control-allow-methods"]).toContain("POST");
+	});
+});
+
 describe("GET /api/v1/sessions/:sessionId/files", () => {
 	it("streams a stored file with content-disposition attachment", async () => {
 		const uploaded = await postFiles("sid-1", [{ name: "files", filename: "doc.pdf", content: "download-me" }]);

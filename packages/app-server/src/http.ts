@@ -81,6 +81,23 @@ export function intersectCsp(declared: string | null): string {
 export function createHttpServer(_options: { httpPort: number }, deps: HttpDeps): FastifyInstance {
 	const app = Fastify({ logger: false });
 	app.register(fastifyMultipart, { limits: { fileSize: MAX_FILE_SIZE } });
+	// CORS：web 前端（vite 8788）跨源访问 HTTP 面（上传/下载/ui-resources）。
+	// 回环开发面不带凭据，通配 origin 即可；token 认证（Task 26）接入后仍适用。
+	app.addHook("onRequest", async (request, reply) => {
+		if (request.method === "OPTIONS") {
+			return reply
+				.code(204)
+				.header("access-control-allow-origin", "*")
+				.header("access-control-allow-methods", "GET, POST, OPTIONS")
+				.header("access-control-allow-headers", "content-type")
+				.header("access-control-max-age", "600")
+				.send();
+		}
+	});
+	app.addHook("onSend", async (_request, reply, payload) => {
+		reply.header("access-control-allow-origin", "*");
+		return payload;
+	});
 	app.get("/api/v1/ui-resources", async (request, reply) => {
 		const { serverId, resourceUri } = request.query as Record<string, string | undefined>;
 		if (serverId === undefined || serverId === "" || resourceUri === undefined || resourceUri === "") {
