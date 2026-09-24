@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { downloadSessionFile, uploadSessionFiles } from "../../../api/files.ts";
+import { hostHttpBase, hostSessionId } from "../../mcp/pipeline.ts";
 import {
 	CUSTOM_LABEL,
 	collectDefaultValues,
@@ -8,11 +10,6 @@ import {
 	type CompletionError,
 } from "./answers.ts";
 import type { AskUserInput, CardAnswers, FieldInput, PageInput, UploadedFileValue } from "./types.ts";
-
-/** 下载所选文件（端点由 Task 24 提供；本任务仅保留调用点，未接入时给出可读反馈） */
-async function downloadSessionFile(_sessionId: string, path: string): Promise<void> {
-	throw new Error(`下载端点尚未接入（Task 24）：${path}`);
-}
 
 export type AskCardPhase = "awaiting" | "submitted" | "rejected";
 
@@ -290,20 +287,35 @@ function FieldView({
 	const isCustomSelected = value === CUSTOM_LABEL;
 	const customText = typeof customValue === "string" ? customValue : "";
 
-	// 选文件（按大小上限过滤）→ 记录 { filename, bytes }
-	const handleFiles = (e: ChangeEvent<HTMLInputElement>) => {
+	// 选文件（按大小上限过滤）→ 上传到会话工作区 → 记录 { filename, bytes, path } 引用
+	const [uploadNote, setUploadNote] = useState<string | undefined>(undefined);
+	const [uploading, setUploading] = useState(false);
+	const handleFiles = async (e: ChangeEvent<HTMLInputElement>) => {
 		const selected = e.target.files;
 		if (!selected || selected.length === 0) return;
 		const maxSizeMB = field.constraints?.maxSizeMB;
-		const accepted: UploadedFileValue[] = [];
-		for (const file of Array.from(selected)) {
-			if (maxSizeMB != null && file.size > maxSizeMB * 1024 * 1024) continue;
-			accepted.push({ filename: file.name, bytes: file.size });
-		}
-		if (accepted.length > 0) {
-			onChange([...files, ...accepted]);
-		}
+		const picked = Array.from(selected).filter((file) => maxSizeMB == null || file.size <= maxSizeMB * 1024 * 1024);
 		if (fileInputRef.current) fileInputRef.current.value = "";
+		if (picked.length === 0) return;
+		const sessionId = hostSessionId();
+		if (sessionId === undefined) {
+			setUploadNote("文件上传失败：未连接会话");
+			return;
+		}
+		setUploading(true);
+		setUploadNote(undefined);
+		try {
+			const refs = await uploadSessionFiles(hostHttpBase(), sessionId, picked);
+			const sizeByName = new Map(picked.map((file) => [file.name, file.size]));
+			onChange([
+				...files,
+				...refs.map((ref) => ({ filename: ref.filename, bytes: sizeByName.get(ref.filename) ?? 0, path: ref.path })),
+			]);
+		} catch (err) {
+			setUploadNote(err instanceof Error ? err.message : String(err));
+		} finally {
+			setUploading(false);
+		}
 	};
 
 	const setFileMeta = (fileIndex: number, metaId: string, metaValue: unknown) => {
@@ -455,12 +467,18 @@ function FieldView({
 						onChange={handleFiles}
 						aria-label={`选择${field.label}文件`}
 					/>
-					<button type="button" className="ask-btn" disabled={disabled} onClick={() => fileInputRef.current?.click()}>
-						{files.length > 0 ? `已选 ${files.length} 个文件` : "选择文件"}
+					<button
+						type="button"
+						className="ask-btn"
+						disabled={disabled || uploading}
+						onClick={() => fileInputRef.current?.click()}
+					>
+						{uploading ? "上传中…" : files.length > 0 ? `已选 ${files.length} 个文件` : "选择文件"}
 					</button>
 					{field.constraints?.maxSizeMB != null && (
 						<span className="ask-card-file-hint">上限 {field.constraints.maxSizeMB}MB</span>
 					)}
+					{uploadNote && <span className="ask-card-field-error"> {uploadNote}</span>}
 					{files.length > 0 && (
 						<div className="ask-card-file-list">
 							{files.map((f) => (
@@ -604,8 +622,14 @@ function FileDownloadList({
 	const downloadSelected = async () => {
 		if (selected.length === 0) return;
 		setDownloadNote(undefined);
+		const httpBase = hostHttpBase();
+		const sessionId = hostSessionId();
+		if (sessionId === undefined) {
+			setDownloadNote("文件下载失败：未连接会话");
+			return;
+		}
 		try {
-			for (const path of selected) await downloadSessionFile("", path);
+			for (const path of selected) await downloadSessionFile(httpBase, sessionId, path);
 			setDownloadNote("已开始下载所选文件");
 		} catch (e) {
 			setDownloadNote(e instanceof Error ? e.message : String(e));

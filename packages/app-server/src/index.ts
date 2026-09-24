@@ -90,6 +90,7 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 					{
 						readUiResource: (request) => handle.readUiResource(request),
 						listMcpTools: () => handle.listMcpTools(),
+						sessionFilesRoot: (sessionId) => handle.sessionFilesRoot(sessionId),
 					},
 				);
 				await http.listen({

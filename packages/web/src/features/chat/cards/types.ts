@@ -78,6 +78,8 @@ export interface AskUserInput {
 export interface UploadedFileValue {
 	filename: string;
 	bytes: number;
+	/** 会话文件根内相对路径（上传端点返回的引用；本地占位选择时缺省） */
+	path?: string;
 	/** 每个文件附带的元字段值（键为 fileMeta[].id）；fileMeta 缺失时为空对象 */
 	meta?: Record<string, unknown>;
 }

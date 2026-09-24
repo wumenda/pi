@@ -46,6 +46,8 @@ export interface AppServerHostHandle {
 	}>;
 	/** MCP Apps 工具清单（HTTP mcp-tools 端点用）：带 ui:// 声明的工具 + 受众可见性 */
 	listMcpTools(): Promise<McpToolManifestEntry[]>;
+	/** 会话文件根目录（文件上传/下载端点用，安全边界）；未知会话返回 null */
+	sessionFilesRoot(sessionId: string): Promise<string | null>;
 	close(): Promise<void>;
 }
 
@@ -150,6 +152,15 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		}
 		return entries;
 	};
+	// 会话文件根：<dataDir>/sessions-workspace/<sessionId>；store.resolve 校验存在性（含路径注入拒绝）
+	const sessionFilesRoot = async (sessionId: string): Promise<string | null> => {
+		try {
+			await deps.store.resolve(sessionId);
+			return resolve(deps.config.dataDir, "sessions-workspace", sessionId);
+		} catch {
+			return null;
+		}
+	};
 	const services = await createServerServices({
 		list: async () => (await deps.store.list()).map(toSummary),
 		create: async (createOptions) => toSummary(await deps.store.create(createOptions.id)),
@@ -234,6 +245,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		services,
 		readUiResource,
 		listMcpTools,
+		sessionFilesRoot,
 		async close() {
 			for (const sessionId of [...runtimes.keys()]) await closeRuntime(sessionId);
 			await services.dispose();

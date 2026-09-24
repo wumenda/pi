@@ -1,12 +1,19 @@
 /**
- * app-server HTTP 面（Task 18/19）：
+ * app-server HTTP 面（Task 18/19/24）：
  * - GET /api/v1/ui-resources —— MCP Apps iframe 的加载端点。iframe 以 HTTP src
  *   （而非 srcdoc）加载应用文档，使逐应用 CSP 响应头生效（srcdoc 只能继承宿主页 CSP）。
  * - CSP 求交：应用声明的 CSP 只允许在平台默认之上收窄，不允许放宽（方法论 10.1）。
  * - GET /api/v1/mcp-tools —— MCP Apps 工具清单（带 ui:// 声明的工具），
  *   web 侧用于描述符缺 serverId 的历史条目自愈。
+ * - POST/GET /api/v1/sessions/:sessionId/files —— 会话文件上传/下载
+ *   （ask_user file-collect / file-download）；resolve 后必须落在会话文件根内。
  */
 
+import { randomUUID } from "node:crypto";
+import { createReadStream } from "node:fs";
+import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
+import { basename, resolve, sep } from "node:path";
+import fastifyMultipart from "@fastify/multipart";
 import Fastify, { type FastifyInstance } from "fastify";
 
 export interface UiResourcePayload {
@@ -28,7 +35,12 @@ export interface McpToolManifestEntry {
 export interface HttpDeps {
 	readUiResource(request: { serverId: string; resourceUri: string }): Promise<UiResourcePayload>;
 	listMcpTools(): Promise<McpToolManifestEntry[]>;
+	/** 会话文件根目录（uploads/downloads 安全边界）；未知会话返回 null */
+	sessionFilesRoot(sessionId: string): Promise<string | null>;
 }
+
+/** 单文件大小上限（服务端硬顶；字段级 maxSizeMB 约束由模型/前端另行限制） */
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 const PLATFORM_CSP =
 	"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'";
@@ -68,6 +80,7 @@ export function intersectCsp(declared: string | null): string {
 
 export function createHttpServer(_options: { httpPort: number }, deps: HttpDeps): FastifyInstance {
 	const app = Fastify({ logger: false });
+	app.register(fastifyMultipart, { limits: { fileSize: MAX_FILE_SIZE } });
 	app.get("/api/v1/ui-resources", async (request, reply) => {
 		const { serverId, resourceUri } = request.query as Record<string, string | undefined>;
 		if (serverId === undefined || serverId === "" || resourceUri === undefined || resourceUri === "") {
@@ -89,6 +102,72 @@ export function createHttpServer(_options: { httpPort: number }, deps: HttpDeps)
 	app.get("/api/v1/mcp-tools", async (_request, reply) => {
 		const tools = await deps.listMcpTools();
 		return reply.code(200).header("cache-control", "no-store").send(tools);
+	});
+
+	/** 解析会话文件根内相对路径；越界（resolve 后逃出根）返回 undefined */
+	function resolveWithin(root: string, relativePath: string): string | undefined {
+		const resolvedPath = resolve(root, relativePath);
+		return resolvedPath === root || resolvedPath.startsWith(root + sep) ? resolvedPath : undefined;
+	}
+
+	app.post("/api/v1/sessions/:sessionId/files", async (request, reply) => {
+		const { sessionId } = request.params as { sessionId: string };
+		const root = await deps.sessionFilesRoot(sessionId);
+		if (root === null) return reply.code(404).send({ error: `unknown session: ${sessionId}` });
+		const saved: Array<{ filename: string; path: string }> = [];
+		try {
+			for await (const part of request.parts()) {
+				if (part.type !== "file") continue; // 忽略非文件字段
+				const originalName = part.filename ?? "file";
+				// 存盘名剥路径分量并加 uuid 前缀，防同名覆盖与路径注入
+				const safeName = basename(originalName).replace(/[^a-zA-Z0-9._-]/g, "_") || "file";
+				const storedName = `${randomUUID()}-${safeName}`;
+				const buffer = await part.toBuffer(); // 超过 fileSize 上限时抛错 → 400
+				const relativePath = `uploads/${storedName}`;
+				const target = resolveWithin(root, relativePath);
+				if (target === undefined) return reply.code(400).send({ error: "path escapes session root" });
+				await mkdir(resolve(target, ".."), { recursive: true });
+				await writeFile(target, buffer);
+				saved.push({ filename: originalName, path: relativePath });
+			}
+		} catch (error) {
+			request.log.error(error);
+			return reply.code(400).send({ error: error instanceof Error ? error.message : String(error) });
+		}
+		return reply.code(200).send(saved);
+	});
+
+	app.get("/api/v1/sessions/:sessionId/files", async (request, reply) => {
+		const { sessionId } = request.params as { sessionId: string };
+		const { path: relativePath } = request.query as Record<string, string | undefined>;
+		if (relativePath === undefined || relativePath === "") {
+			return reply.code(400).send({ error: "path is required" });
+		}
+		const root = await deps.sessionFilesRoot(sessionId);
+		if (root === null) return reply.code(404).send({ error: `unknown session: ${sessionId}` });
+		const resolvedPath = resolveWithin(root, relativePath);
+		if (resolvedPath === undefined) return reply.code(400).send({ error: "path escapes session root" });
+		// 双保险：realpath 消解符号链接后复查仍须落在根内
+		let realPath: string;
+		try {
+			realPath = await realpath(resolvedPath);
+		} catch {
+			return reply.code(404).send({ error: `file not found: ${relativePath}` });
+		}
+		if (realPath !== root && !realPath.startsWith(root + sep)) {
+			return reply.code(400).send({ error: "path escapes session root" });
+		}
+		const content = await readFile(realPath).catch(() => undefined);
+		if (content === undefined) return reply.code(404).send({ error: `file not found: ${relativePath}` });
+		const filename = basename(realPath);
+		return reply
+			.code(200)
+			.header("content-type", "application/octet-stream")
+			.header(
+				"content-disposition",
+				`attachment; filename="${filename.replace(/[^\x20-\x7e]/g, "_")}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+			)
+			.send(realPath === resolvedPath ? createReadStream(realPath) : content);
 	});
 	return app;
 }

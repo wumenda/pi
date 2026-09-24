@@ -9,6 +9,7 @@ function fakeDeps() {
 			declaredCsp: null as string | null,
 		}),
 		listMcpTools: async () => [],
+		sessionFilesRoot: async () => null,
 	};
 }
 
@@ -37,6 +38,7 @@ describe("GET /api/v1/ui-resources", () => {
 					throw new Error("server down");
 				},
 				listMcpTools: async () => [],
+				sessionFilesRoot: async () => null,
 			},
 		);
 		const response = await http.inject({

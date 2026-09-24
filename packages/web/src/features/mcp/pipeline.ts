@@ -103,6 +103,11 @@ export function hostHttpBase(): string {
 	return hostContext.getHttpBase();
 }
 
+/** 当前会话 id（宿主注入；未连接/未注入时 undefined） */
+export function hostSessionId(): string | undefined {
+	return hostContext.getSessionId();
+}
+
 /**
  * 把 tool 调用输出映射为 MCP Apps tool-result 通知：
  * structuredContent 优先（服务端原样透传），否则 output 为 JSON 对象文本时

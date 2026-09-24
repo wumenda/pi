@@ -15,6 +15,7 @@ function fakeDeps(overrides: Partial<HttpDeps> = {}): HttpDeps {
 	return {
 		readUiResource: async () => ({ mimeType: "text/html", html: "<html>x</html>", declaredCsp: null }),
 		listMcpTools: async () => manifest,
+		sessionFilesRoot: async () => null,
 		...overrides,
 	};
 }
