@@ -5,6 +5,7 @@
  */
 
 import { McpClient } from "./client.ts";
+import type { McpProgressPayload } from "./progress.ts";
 import type { McpCallToolResult, McpReadResourceResult, McpServerConfigMap, McpTool } from "./types.ts";
 
 export type McpServerState = "disconnected" | "connecting" | "ready" | "error";
@@ -121,8 +122,9 @@ export class McpServerManager {
 		name: string,
 		args: Record<string, unknown> | undefined,
 		signal?: AbortSignal,
+		onProgress?: (payload: McpProgressPayload) => void,
 	): Promise<McpCallToolResult> {
-		return await this.#resolve(serverId, name).callTool(name, args, signal);
+		return await this.#resolve(serverId, name).callTool(name, args, signal, onProgress);
 	}
 
 	async readResource(serverId: string | undefined, uri: string, signal?: AbortSignal): Promise<McpReadResourceResult> {

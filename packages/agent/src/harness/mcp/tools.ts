@@ -13,6 +13,7 @@ import { type TSchema, Type } from "typebox";
 import type { ExecutionToolContext } from "../tools/tool-context.ts";
 import type { AgentHarnessTool } from "../types.ts";
 import type { McpRoutedTool, McpServerManager } from "./manager.ts";
+import type { McpProgressPayload } from "./progress.ts";
 import type { McpContent } from "./types.ts";
 
 /** UI descriptor persisted into tool-result details for MCP Apps tools. */
@@ -25,6 +26,8 @@ export interface McpToolUiDescriptor {
 /** Shape of the `details` payload produced by bridged MCP tools. */
 export interface McpToolDetails {
 	mcpUi?: McpToolUiDescriptor;
+	/** Latest progress payload from `notifications/progress`; present on tool_update events only. */
+	progress?: McpProgressPayload;
 }
 
 const UI_RESOURCE_PREFIX = "ui://";
@@ -105,12 +108,17 @@ export function createMcpTools(
 			label,
 			description,
 			parameters: Type.Unsafe<Record<string, unknown>>(routed.tool.inputSchema as TSchema),
-			async execute(_toolCallId, params, _onUpdate, _toolContext, _invocation, context) {
+			async execute(_toolCallId, params, onUpdate, _toolContext, _invocation, context) {
 				const result = await manager.callTool(
 					routed.serverId,
 					routed.tool.name,
 					toJsonObject(params),
 					context.abortSignal,
+					(payload) =>
+						onUpdate({
+							content: [],
+							details: { ...(ui === undefined ? {} : { mcpUi: ui }), progress: payload },
+						}),
 				);
 				const details: McpToolDetails = ui === undefined ? {} : { mcpUi: ui };
 				return { content: mapContent(result.content), details };

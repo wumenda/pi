@@ -4,12 +4,15 @@
  * Implements just enough of the protocol for the pi harness: initialize
  * handshake, tools/list (with pagination), tools/call, resources/read, and
  * clean shutdown. JSON-RPC 2.0 framing is handled inline; server-initiated
- * requests and notifications other than `notifications/initialized` are
+ * requests and notifications other than `notifications/initialized` and
+ * `notifications/progress` (matched against registered progress tokens) are
  * ignored.
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
+import { type McpProgressPayload, matchProgressNotification } from "./progress.ts";
 import {
 	MCP_PROTOCOL_VERSION,
 	type McpCallToolResult,
@@ -136,6 +139,7 @@ export class McpClient {
 	readonly #requestTimeoutMs: number;
 	#nextId = 1;
 	#pending = new Map<number, PendingRequest>();
+	#progressHandlers = new Map<string, (payload: McpProgressPayload) => void>();
 	#process: ChildProcess | undefined;
 	#sessionKey: string | undefined;
 	#stderrTail = "";
@@ -214,13 +218,29 @@ export class McpClient {
 		name: string,
 		args: Record<string, unknown> | undefined,
 		signal?: AbortSignal,
+		onProgress?: (payload: McpProgressPayload) => void,
 	): Promise<McpCallToolResult> {
-		const result = await this.#request("tools/call", { name, arguments: args ?? {} }, undefined, signal);
-		const record = asRecord(result);
-		return {
-			content: parseContents(result),
-			isError: record?.isError === true ? true : undefined,
-		};
+		const token = onProgress === undefined ? undefined : randomUUID();
+		if (token !== undefined && onProgress !== undefined) this.#progressHandlers.set(token, onProgress);
+		try {
+			const result = await this.#request(
+				"tools/call",
+				{
+					name,
+					arguments: args ?? {},
+					...(token === undefined ? {} : { _meta: { progressToken: token } }),
+				},
+				undefined,
+				signal,
+			);
+			const record = asRecord(result);
+			return {
+				content: parseContents(result),
+				isError: record?.isError === true ? true : undefined,
+			};
+		} finally {
+			if (token !== undefined) this.#progressHandlers.delete(token);
+		}
 	}
 
 	async readResource(uri: string, signal?: AbortSignal): Promise<McpReadResourceResult> {
@@ -297,7 +317,15 @@ export class McpClient {
 	}
 
 	#handleMessage(message: JsonRpcMessage): void {
-		if (!("id" in message) || message.id === null || message.id === undefined) return; // notification
+		if (!("id" in message) || message.id === null || message.id === undefined) {
+			// Notification: try matching registered progress handlers before dropping.
+			if ("method" in message) {
+				for (const [token, onProgress] of this.#progressHandlers) {
+					matchProgressNotification({ token, onProgress })(message);
+				}
+			}
+			return;
+		}
 		if (typeof message.id !== "number") return;
 		const pending = this.#pending.get(message.id);
 		if (pending === undefined) return;
