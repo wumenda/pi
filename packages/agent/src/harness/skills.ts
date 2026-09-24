@@ -1,7 +1,14 @@
 import ignore from "ignore";
 import { parse } from "yaml";
 import type { Context } from "./context.ts";
-import { type ExecutionEnv, type FileInfo, type Result, type Skill, toError } from "./types.ts";
+import {
+	type ExecutionEnv,
+	type FileInfo,
+	type Result,
+	type Skill,
+	type SkillToolDeclaration,
+	toError,
+} from "./types.ts";
 
 const MAX_NAME_LENGTH = 64;
 const MAX_DESCRIPTION_LENGTH = 1024;
@@ -32,6 +39,8 @@ interface SkillFrontmatter {
 	name?: string;
 	description?: string;
 	"disable-model-invocation"?: boolean;
+	title?: string;
+	tools?: unknown;
 	[key: string]: unknown;
 }
 
@@ -291,6 +300,13 @@ async function loadSkillFromFile(
 		diagnostics.push({ type: "warning", code: "invalid_metadata", message: error, path: filePath });
 	}
 
+	const title =
+		typeof frontmatter.title === "string" && frontmatter.title.trim() !== "" ? frontmatter.title : undefined;
+	const { tools, errors } = normalizeToolDeclarations(frontmatter.tools);
+	for (const error of errors) {
+		diagnostics.push({ type: "warning", code: "invalid_metadata", message: error, path: filePath });
+	}
+
 	if (!description || description.trim() === "") {
 		return { skill: null, diagnostics };
 	}
@@ -302,9 +318,54 @@ async function loadSkillFromFile(
 			content: body,
 			filePath,
 			disableModelInvocation: frontmatter["disable-model-invocation"] === true,
+			...(title !== undefined ? { title } : {}),
+			...(tools !== undefined ? { tools } : {}),
 		},
 		diagnostics,
 	};
+}
+
+/**
+ * Normalize frontmatter `tools` into declarations: string entries become `{ name }`,
+ * object entries require a string `name` with optional string `title`. Invalid entries
+ * are reported and skipped; a non-array `tools` is reported as a whole.
+ */
+function normalizeToolDeclarations(value: unknown): {
+	tools: SkillToolDeclaration[] | undefined;
+	errors: string[];
+} {
+	if (value === undefined) return { tools: undefined, errors: [] };
+	if (!Array.isArray(value))
+		return { tools: undefined, errors: ["tools must be a list of tool names or {name, title} objects"] };
+	const tools: SkillToolDeclaration[] = [];
+	const errors: string[] = [];
+	for (const entry of value) {
+		if (typeof entry === "string") {
+			if (entry.trim() === "") {
+				errors.push("tools entry must be a non-empty tool name");
+				continue;
+			}
+			tools.push({ name: entry });
+			continue;
+		}
+		if (typeof entry === "object" && entry !== null && !Array.isArray(entry)) {
+			const record = entry as Record<string, unknown>;
+			const name = record.name;
+			const title = record.title;
+			if (typeof name !== "string" || name.trim() === "") {
+				errors.push("tools object entry requires a non-empty string name");
+				continue;
+			}
+			if (title !== undefined && typeof title !== "string") {
+				errors.push(`tools entry "${name}" has a non-string title`);
+				continue;
+			}
+			tools.push({ name, ...(typeof title === "string" && title.trim() !== "" ? { title } : {}) });
+			continue;
+		}
+		errors.push("tools entries must be strings or {name, title} objects");
+	}
+	return { tools: tools.length > 0 ? tools : undefined, errors };
 }
 
 function validateName(name: string, parentDirName: string): string[] {

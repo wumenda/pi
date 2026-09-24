@@ -57,6 +57,18 @@ export interface Skill {
 	filePath: string;
 	/** Exclude this skill from model-visible skill lists while still allowing explicit application invocation. */
 	disableModelInvocation?: boolean;
+	/** Human-readable skill title for host UI display (frontmatter `title`; not sent to the model). */
+	title?: string;
+	/** Tools declared as belonging to this skill (frontmatter `tools`; used for ownership/display, not sent to the model). */
+	tools?: readonly SkillToolDeclaration[];
+}
+
+/** A tool declaration in SKILL.md frontmatter (`tools: [name-or-object]`). */
+export interface SkillToolDeclaration {
+	/** Declared tool name (bare name or harness routing name). */
+	name: string;
+	/** Human-readable tool title for host UI display. */
+	title?: string;
 }
 
 /** Prompt template that can be formatted into a prompt for explicit invocation. */
