@@ -4,6 +4,8 @@ export interface AppServerConfig {
 	modelId: string;
 	/** WS 监听端口。 */
 	wsPort: number;
+	/** HTTP 监听端口（ui-resources 端点，iframe 加载面）。 */
+	httpPort: number;
 	/** 数据根目录：sessions/、tool-events/、mcp.json。 */
 	dataDir: string;
 	/** MCP 配置文件路径；缺省由 host 解析为 join(dataDir, "mcp.json")。 */
@@ -16,6 +18,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppServerConfi
 		agentPlanBaseUrl: env.AGENTPLAN_BASE_URL ?? "https://ark.cn-beijing.volces.com/api/plan/v3",
 		modelId: env.AGENTPLAN_MODEL ?? "glm-5.3-flash",
 		wsPort: Number(env.APP_SERVER_WS_PORT ?? 8790),
+		httpPort: Number(env.APP_SERVER_HTTP_PORT ?? 8791),
 		dataDir: env.APP_SERVER_DATA_DIR ?? ".data",
 		...(env.APP_SERVER_MCP_CONFIG === undefined ? {} : { mcpConfigPath: env.APP_SERVER_MCP_CONFIG }),
 	};

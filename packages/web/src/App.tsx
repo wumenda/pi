@@ -248,6 +248,7 @@ export function App(): ReactNode {
 	const [sessionsOpen, setSessionsOpen] = useState(false);
 	const [mobileView, setMobileView] = useState<"workspace" | "chat">("chat");
 	const [url, setUrl] = useState("ws://127.0.0.1:8787");
+	const [httpBase, setHttpBase] = useState("http://127.0.0.1:8791");
 	const [serverId, setServerId] = useState("");
 	const [draft, setDraft] = useState("");
 	const [sending, setSending] = useState(false);
@@ -258,16 +259,18 @@ export function App(): ReactNode {
 		document.documentElement.dataset.theme = theme;
 	}, [theme]);
 
-	// MCP Apps 宿主上下文：反向 tools/call 与 ui:// 资源读取经 pi.mcp-host chord 服务路由
+	// MCP Apps 宿主上下文：反向 tools/call 与 ui:// 资源读取经 pi.mcp-host chord 服务路由；
+	// getHttpBase 供 iframe 以 HTTP src 加载 ui-resources 端点文档
 	useEffect(() => {
 		setHostContext({
 			getTheme: () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light"),
 			getSessionId: () => pi.activeSessionId,
+			getHttpBase: () => httpBase,
 			callTool: (name, args, sid) => pi.callMcpTool(sid ?? null, name, args),
 			getUiResource: (sid, resourceUri) => pi.getMcpUiResource(sid, resourceUri),
 			getToolEvents: () => pi.getToolEvents(),
 		});
-	}, [pi.activeSessionId, pi.callMcpTool, pi.getMcpUiResource, pi.getToolEvents]);
+	}, [pi.activeSessionId, pi.callMcpTool, pi.getMcpUiResource, pi.getToolEvents, httpBase]);
 
 	const entries: readonly TranscriptEntryLike[] = pi.transcript?.snapshot?.transcript ?? EMPTY_ENTRIES;
 	const workspace = useIframeWorkspace(entries, pi.activeSessionId ?? null);
@@ -324,6 +327,16 @@ export function App(): ReactNode {
 								className="state-view-input"
 								value={url}
 								onChange={(event) => setUrl(event.target.value)}
+								spellCheck={false}
+							/>
+						</label>
+						<label className="state-view-field">
+							HTTP Base
+							<input
+								className="state-view-input"
+								value={httpBase}
+								onChange={(event) => setHttpBase(event.target.value)}
+								placeholder="http://127.0.0.1:8791"
 								spellCheck={false}
 							/>
 						</label>

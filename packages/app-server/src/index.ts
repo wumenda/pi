@@ -4,6 +4,7 @@ import { Server, type ServerHost } from "@earendil-works/pi-server";
 import { createWsListener } from "@earendil-works/pi-server/ws";
 import type { AppServerConfig } from "./config.ts";
 import { type AppServerHostHandle, createAppServerHost } from "./host.ts";
+import { createHttpServer } from "./http.ts";
 import type { AppServerLlm } from "./llm.ts";
 import type { SessionStore } from "./sessions.ts";
 
@@ -19,6 +20,9 @@ export interface AppServerOptions {
 	/** WS 监听端口；0 = OS 分配（默认）。 */
 	wsPort?: number;
 	wsHost?: string;
+	/** HTTP 监听端口（ui-resources 端点）；0 = OS 分配（默认）。 */
+	httpPort?: number;
+	httpHost?: string;
 	/** 有 deps 时装配真实服务（会话目录 / 管理 / 会话级 chord 服务）；缺省保持最小桩。 */
 	deps?: AppServerDeps;
 }
@@ -27,6 +31,8 @@ export interface AppServerHandle {
 	readonly serverId: string;
 	/** 实际绑定端口；start() 前访问抛错。 */
 	readonly wsPort: number;
+	/** HTTP 实际绑定端口；start() 前或无 deps 时访问抛错。 */
+	readonly httpPort: number;
 	start(): Promise<void>;
 	close(): Promise<void>;
 }
@@ -61,6 +67,8 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 	});
 	let server: Server<SessionMetadata> | undefined;
 	let hostHandle: AppServerHostHandle | undefined;
+	let http: ReturnType<typeof createHttpServer> | undefined;
+	let httpPort: number | undefined;
 	return {
 		serverId,
 		get wsPort() {
@@ -68,10 +76,25 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 			if (address === undefined) throw new Error("App server is not started");
 			return address.port;
 		},
+		get httpPort() {
+			if (httpPort === undefined) throw new Error("App server HTTP is not started");
+			return httpPort;
+		},
 		async start() {
 			if (server !== undefined) throw new Error("App server is already started");
 			if (options.deps !== undefined) {
-				hostHandle = await createAppServerHost(options.deps, serverId);
+				const handle = await createAppServerHost(options.deps, serverId);
+				hostHandle = handle;
+				http = createHttpServer(
+					{ httpPort: options.httpPort ?? options.deps.config.httpPort },
+					{ readUiResource: (request) => handle.readUiResource(request) },
+				);
+				await http.listen({
+					port: options.httpPort ?? options.deps.config.httpPort,
+					host: options.httpHost ?? "127.0.0.1",
+				});
+				const address = http.addresses().find((entry) => entry.family === "IPv4") ?? http.addresses()[0];
+				httpPort = typeof address === "object" ? address.port : (options.httpPort ?? 0);
 			}
 			const host: ServerHost<SessionMetadata> = hostHandle !== undefined ? hostHandle.host : createStubHost();
 			server = new Server(host, { listeners: [listener], serverId });
@@ -86,6 +109,10 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 			} finally {
 				const closing = hostHandle;
 				hostHandle = undefined;
+				const closingHttp = http;
+				http = undefined;
+				httpPort = undefined;
+				if (closingHttp !== undefined) await closingHttp.close().catch(() => undefined);
 				if (closing !== undefined) await closing.close();
 			}
 		},

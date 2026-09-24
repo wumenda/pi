@@ -21,6 +21,8 @@ export interface McpToolUiDescriptor {
 	resourceUri: string;
 	serverId: string;
 	permissions?: string[];
+	/** App-declared CSP (`_meta.ui.csp`); host intersects it with the platform default when serving the document. */
+	csp?: string;
 }
 
 /** Shape of the `details` payload produced by bridged MCP tools. */
@@ -48,6 +50,8 @@ export function extractMcpToolUi(tool: McpRoutedTool): McpToolUiDescriptor | und
 		const list = permissions.filter((permission): permission is string => typeof permission === "string");
 		if (list.length > 0) descriptor.permissions = list;
 	}
+	const csp = (ui as { csp?: unknown }).csp;
+	if (typeof csp === "string" && csp.trim() !== "") descriptor.csp = csp;
 	return descriptor;
 }
 

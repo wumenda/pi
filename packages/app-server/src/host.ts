@@ -4,6 +4,7 @@ import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import type { HarnessEvent } from "@earendil-works/pi-agent-core";
 import {
 	createMcpTools,
+	extractMcpToolUi,
 	isVisibleToLlm,
 	McpServerManager,
 	mcpToolName,
@@ -31,6 +32,16 @@ export interface AppServerHostDeps {
 export interface AppServerHostHandle {
 	readonly host: ServerHost<JsonlSessionMetadata>;
 	readonly services: ServerServices;
+	/**
+	 * 读取 MCP Apps ui:// 资源（HTTP ui-resources 端点用）。
+	 * 资源为静态应用文档：任一已连接该 server 的会话 manager 读取等价；
+	 * declaredCsp 取声明该 resourceUri 的工具 `_meta.ui.csp`（未声明 null）。
+	 */
+	readUiResource(request: { serverId: string; resourceUri: string }): Promise<{
+		mimeType: string;
+		html: string;
+		declaredCsp: string | null;
+	}>;
 	close(): Promise<void>;
 }
 
@@ -57,6 +68,8 @@ function subscribeToolEvents(runtime: SessionRuntime, recorder: ToolEventRecorde
 /** 会话运行时缓存：attach/detach 不销毁，removeSession 与 shutdown 才关闭。 */
 export async function createAppServerHost(deps: AppServerHostDeps, serverId: string): Promise<AppServerHostHandle> {
 	const runtimes = new Map<string, RuntimeEntry>();
+	// 存活会话的 MCP manager 登记：ui-resources 端点按需复用已连接实例读静态资源
+	const managers = new Set<McpServerManager>();
 	const workspaceDir = resolve(deps.config.dataDir, "workspace");
 	const toSummary = (metadata: JsonlSessionMetadata) => ({
 		serverId,
@@ -67,11 +80,38 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		const entry = runtimes.get(sessionId);
 		if (entry === undefined) return;
 		runtimes.delete(sessionId);
+		managers.delete(entry.runtime.mcp);
 		log.info(`closing runtime for session ${sessionId}`);
 		for (const unsubscribe of entry.unsubscribe) unsubscribe();
 		await entry.services.dispose().catch(() => undefined);
 		await entry.runtime.close().catch(() => undefined);
 	}
+	const readUiResource = async (request: { serverId: string; resourceUri: string }) => {
+		let lastError: unknown;
+		for (const manager of managers) {
+			try {
+				const contents = await manager.readResource(request.serverId, request.resourceUri);
+				const first = contents.contents[0];
+				const csp = manager
+					.tools()
+					.filter(
+						(routed) =>
+							routed.serverId === request.serverId &&
+							extractMcpToolUi(routed)?.resourceUri === request.resourceUri,
+					)
+					.map((routed) => extractMcpToolUi(routed)?.csp)
+					.find((csp) => csp !== undefined);
+				return {
+					mimeType: first?.mimeType ?? "text/html",
+					html: first?.text ?? "",
+					declaredCsp: csp ?? null,
+				};
+			} catch (error) {
+				lastError = error;
+			}
+		}
+		throw lastError instanceof Error ? lastError : new Error(`no connected manager for ${request.serverId}`);
+	};
 	const services = await createServerServices({
 		list: async () => (await deps.store.list()).map(toSummary),
 		create: async (createOptions) => toSummary(await deps.store.create(createOptions.id)),
@@ -109,6 +149,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 							`mcp server ${status.id}: state=${status.state} toolCount=${status.toolCount}${status.error === undefined ? "" : ` error=${status.error}`}`,
 						);
 					}
+					managers.add(manager);
 					const mcpTools = createMcpTools(manager);
 					const runtime = await createSessionRuntime({
 						session,
@@ -153,6 +194,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 	return {
 		host,
 		services,
+		readUiResource,
 		async close() {
 			for (const sessionId of [...runtimes.keys()]) await closeRuntime(sessionId);
 			await services.dispose();

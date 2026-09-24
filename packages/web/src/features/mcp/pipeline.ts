@@ -59,18 +59,21 @@ export const HOST_CAPABILITIES = {
 } as const;
 
 /**
- * 宿主运行环境注入点：MCP server 调用与 ui:// 资源读取经 pi.mcp-host chord
- * 服务路由到会话 worker，由应用层（App.tsx）在挂载时注入实现；未注入时缺省报错。
+ * 宿主运行环境注入点：MCP server 调用经 pi.mcp-host chord 服务路由到会话
+ * worker，由应用层（App.tsx）在挂载时注入实现；未注入时缺省报错。
+ * getHttpBase 为 app-server 的 ui-resources HTTP 端点基址（iframe 加载面）。
  */
 export interface HostContext {
 	getTheme(): "light" | "dark";
 	getSessionId(): string | undefined;
+	/** app-server HTTP 基址（如 http://127.0.0.1:8791），iframe 经它加载 ui:// 文档 */
+	getHttpBase(): string;
 	/**
 	 * 反向 tools/call：经 pi.mcp-host 服务路由到 MCP server；
 	 * serverId 缺省时按唯一工具名路由（iframe 反向调用的兜底）。
 	 */
 	callTool(name: string, args: JsonValue | null, serverId?: string): Promise<unknown>;
-	/** 读取 MCP Apps ui:// 资源（iframe srcdoc HTML，SEP-1865） */
+	/** 读取 MCP Apps ui:// 资源（SEP-1865 服务能力；iframe 渲染已改走 HTTP src） */
 	getUiResource(serverId: string, resourceUri: string): Promise<{ mimeType: string; html: string }>;
 	/** 读取本会话已落盘的工具执行事件（冷启动 progress 恢复；未注入时返回空集） */
 	getToolEvents(): Promise<ToolExecutionEvent[]>;
@@ -79,6 +82,9 @@ export interface HostContext {
 let hostContext: HostContext = {
 	getTheme: () => "light",
 	getSessionId: () => undefined,
+	getHttpBase: () => {
+		throw new Error("HTTP 基址未接入：请通过 setHostContext 注入 getHttpBase 实现");
+	},
 	callTool: async () => {
 		throw new Error("MCP tools/call 未接入：请通过 setHostContext 注入 callTool 实现");
 	},
@@ -207,9 +213,9 @@ export function ensureToolIframe(call: ToolUiCall): void {
 	});
 	// 发送键取执行实际绑定的实例（并发下可能被派到派生实例，预计算的 iframeKey 只是基键）
 	const sendKey = iframePool.keyForExecution(call.toolCallId) ?? iframeKey;
-	// 新建实例：经 pi.mcp-host 服务读取应用 HTML 后以 srcdoc 注入（异步；消息先排队）
+	// 新建实例：src 指向 app-server ui-resources 端点（消息先排队直至应用就绪）
 	if (isNew) {
-		void loadIframeHtml(sendKey, call.serverId, call.resourceUri);
+		loadIframeSrc(sendKey, call.serverId, call.resourceUri);
 	}
 	if (call.status === "pending" || call.status === "running") {
 		messageBridge.send(sendKey, "ui/notifications/tool-input", {
@@ -234,20 +240,27 @@ export function ensureToolIframe(call: ToolUiCall): void {
 }
 
 /**
- * 新建 iframe 后加载 MCP Apps 应用 HTML：经 pi.mcp-host 服务读取 ui:// 资源，
- * 以 srcdoc 注入沙盒 iframe（experimental server 仅 Unix-socket，无 HTTP 代理路径）。
- * 加载期间实例可能被回收/淘汰，回填前校验池内身份；失败仅记录——iframe 保持空白，
- * 出站通知持续排队直至会话切换回收（MessageBridge 队列上限兜底）。
+ * ui:// 资源的 HTTP 加载地址：app-server 的 ui-resources 端点独立响应头
+ * （content-type + 逐应用求交 CSP）对 iframe 生效。
  */
-async function loadIframeHtml(key: string, serverId: string, resourceUri: string): Promise<void> {
+export function uiResourceUrl(httpBase: string, serverId: string, resourceUri: string): string {
+	const base = httpBase.replace(/\/+$/, "");
+	return `${base}/api/v1/ui-resources?serverId=${encodeURIComponent(serverId)}&resourceUri=${encodeURIComponent(resourceUri)}`;
+}
+
+/**
+ * 新建 iframe 后加载 MCP Apps 应用文档：src 指向 app-server 的 ui-resources
+ * HTTP 端点（CSP 求交响应头生效）。加载期间实例可能被回收/淘汰，回填前校验
+ * 池内身份；失败仅记录——iframe 保持空白，出站通知持续排队直至会话切换回收
+ * （MessageBridge 队列上限兜底）。
+ */
+function loadIframeSrc(key: string, serverId: string, resourceUri: string): void {
 	const instance = iframePool.get(key);
 	if (instance === undefined) return;
 	try {
-		const resource = await hostContext.getUiResource(serverId, resourceUri);
-		if (iframePool.get(key) !== instance) return;
-		instance.element.setAttribute("srcdoc", resource.html);
+		instance.element.setAttribute("src", uiResourceUrl(hostContext.getHttpBase(), serverId, resourceUri));
 	} catch (error) {
-		console.warn(`[MCP] 加载 UI 资源失败 ${resourceUri}`, error);
+		console.warn(`[MCP] 解析 UI 资源地址失败 ${resourceUri}`, error);
 	}
 }
 

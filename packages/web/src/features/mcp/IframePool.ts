@@ -19,15 +19,15 @@ export function iframeInstanceKey(resourceUri: string, group: string, serverId?:
  * 创建沙盒 iframe DOM 元素：
  * sandbox 禁同源（应用无法访问父页面 DOM/存储），仅保留脚本与表单；
  * _meta.ui.permissions → allow 特权声明。
- * HTML 由渲染管线经 pi.mcp-host 服务读取 ui:// 资源后以 srcdoc 注入
- * （experimental server 仅 Unix-socket，无 HTTP 代理路径）。
+ * 文档由渲染管线设置 src 为 app-server 的 ui-resources HTTP 端点
+ * （独立响应头使逐应用 CSP 生效；srcdoc 只能继承宿主页 CSP）。
  */
 export function createSandboxIframe(permissions: readonly string[] = []): HTMLIFrameElement {
 	const element = document.createElement("iframe");
 	element.className = "mcp-app-iframe";
 	element.setAttribute("sandbox", "allow-scripts allow-forms");
-	// 占位 srcdoc：等待渲染管线经 pi.mcp-host 服务读取 HTML 后替换为应用文档
-	element.setAttribute("srcdoc", "");
+	// 占位文档：等待渲染管线设置 ui-resources 端点 src
+	element.setAttribute("src", "about:blank");
 	if (permissions.length > 0) {
 		element.setAttribute("allow", permissions.join("; "));
 	}
