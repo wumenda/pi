@@ -1,4 +1,4 @@
-import { join, resolve } from "node:path";
+﻿import { join, resolve } from "node:path";
 import type { Context } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import type { HarnessEvent } from "@earendil-works/pi-agent-core";
@@ -20,14 +20,13 @@ import { loadMcpServerConfigs } from "./mcp-config.ts";
 import { createSessionRuntime, type SessionRuntime } from "./runtime.ts";
 import { createServerServices, type ServerServices } from "./services/server-services.ts";
 import { createSessionServices, type SessionServiceRuntime } from "./services/session-services.ts";
-import type { SessionStore } from "./sessions.ts";
+import { createSessionStore, type SessionStore } from "./sessions.ts";
 import { createToolEventRecorder, recordToolEvent, type ToolEventRecorder } from "./tool-events.ts";
 
 const log = createLogger("host");
 
 export interface AppServerHostDeps {
 	config: AppServerConfig;
-	store: SessionStore;
 	llm: AppServerLlm;
 }
 
@@ -89,6 +88,8 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 	// 存活会话的 MCP manager 登记：ui-resources 端点按需复用已连接实例读静态资源
 	const managers = new Set<McpServerManager>();
 	const workspaceDir = resolve(deps.config.dataDir, "workspace");
+	// 会话存储按 host 的 dataDir 构造：多用户隔离（Task 27）通过 per-user dataDir 派生实现
+	const store: SessionStore = createSessionStore({ dataDir: deps.config.dataDir, workspaceDir });
 	const toSummary = (metadata: JsonlSessionMetadata) => ({
 		serverId,
 		sessionId: metadata.id,
@@ -155,25 +156,25 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 	// 会话文件根：<dataDir>/sessions-workspace/<sessionId>；store.resolve 校验存在性（含路径注入拒绝）
 	const sessionFilesRoot = async (sessionId: string): Promise<string | null> => {
 		try {
-			await deps.store.resolve(sessionId);
+			await store.resolve(sessionId);
 			return resolve(deps.config.dataDir, "sessions-workspace", sessionId);
 		} catch {
 			return null;
 		}
 	};
 	const services = await createServerServices({
-		list: async () => (await deps.store.list()).map(toSummary),
-		create: async (createOptions) => toSummary(await deps.store.create(createOptions.id)),
+		list: async () => (await store.list()).map(toSummary),
+		create: async (createOptions) => toSummary(await store.create(createOptions.id)),
 		remove: async (sessionId) => {
 			await closeRuntime(sessionId);
-			await deps.store.delete(sessionId);
+			await store.delete(sessionId);
 		},
 	});
 	const host: ServerHost<JsonlSessionMetadata> = {
 		serverServices: services.host,
 		async resolveSession(sessionId) {
 			try {
-				const metadata = await deps.store.resolve(sessionId);
+				const metadata = await store.resolve(sessionId);
 				log.info(`resolveSession ${sessionId}: found (createdAt=${metadata.createdAt})`);
 				return metadata;
 			} catch (error) {
@@ -186,7 +187,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 			if (entry === undefined) {
 				const startedAt = Date.now();
 				log.info(`openSession ${metadata.id}: creating runtime`);
-				const session = await deps.store.open(metadata);
+				const session = await store.open(metadata);
 				let mcpManager: McpServerManager | undefined;
 				try {
 					const mcpConfigPath = deps.config.mcpConfigPath ?? join(deps.config.dataDir, "mcp.json");

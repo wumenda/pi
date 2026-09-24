@@ -3,7 +3,7 @@ import { createHttpServer, intersectCsp } from "../src/http.ts";
 
 function fakeDeps() {
 	return {
-		readUiResource: async (_request: { serverId: string; resourceUri: string }) => ({
+		readUiResource: async () => ({
 			mimeType: "text/html",
 			html: "<html>app</html>",
 			declaredCsp: null as string | null,

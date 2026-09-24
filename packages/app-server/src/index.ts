@@ -1,16 +1,15 @@
 import { randomUUID } from "node:crypto";
+import { join } from "node:path";
 import type { SessionMetadata } from "@earendil-works/pi-agent-core";
 import { Server, type ServerHost } from "@earendil-works/pi-server";
 import type { AppServerConfig } from "./config.ts";
 import { type AppServerHostHandle, createAppServerHost } from "./host.ts";
 import { createHttpServer } from "./http.ts";
 import type { AppServerLlm } from "./llm.ts";
-import type { SessionStore } from "./sessions.ts";
-import { createTokenWsListener } from "./token-ws-listener.ts";
+import { connectionUserId, createTokenWsListener } from "./token-ws-listener.ts";
 
 export interface AppServerDeps {
 	config: AppServerConfig;
-	store: SessionStore;
 	llm: AppServerLlm;
 }
 
@@ -59,18 +58,37 @@ function createStubHost(): ServerHost<SessionMetadata> {
 	};
 }
 
+/** per-user 连接路由的兜底 handler：users 模式下身份连接必有归属，此分支仅防御。 */
+function orphanConnectionHandler(): { onData(): void; onClose(): void; onError(error: Error): void } {
+	return { onData() {}, onClose() {}, onError() {} };
+}
+
 export function createAppServer(options: AppServerOptions = {}): AppServerHandle {
 	const serverId = options.serverId ?? randomUUID();
-	const token = options.deps?.config.token;
+	const config = options.deps?.config;
+	const users = config?.users;
 	const listener = createTokenWsListener({
 		port: options.wsPort ?? 0,
 		host: options.wsHost ?? "127.0.0.1",
-		...(token === undefined ? {} : { token }),
+		...(config?.token === undefined ? {} : { token: config.token }),
+		...(users === undefined ? {} : { users }),
 	});
 	let server: Server<SessionMetadata> | undefined;
 	let hostHandle: AppServerHostHandle | undefined;
+	/** users 模式：userId → per-user host + Server（连接按 upgrade 解析的 userId 路由）。 */
+	const userHosts = new Map<string, AppServerHostHandle>();
+	const userServers = new Map<string, Server<SessionMetadata>>();
 	let http: ReturnType<typeof createHttpServer> | undefined;
 	let httpPort: number | undefined;
+
+	/** 按请求用户取 host；单用户模式恒为主 host，users 模式按 userId 查（未装配返回 undefined）。 */
+	const hostFor = (userId: string | undefined): AppServerHostHandle | undefined => {
+		if (userId === undefined) return hostHandle;
+		return userHosts.get(userId);
+	};
+
+	const buildHostDeps = (dataDir: string) => ({ config: { ...config!, dataDir }, llm: options.deps!.llm });
+
 	return {
 		serverId,
 		get wsPort() {
@@ -83,29 +101,67 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 			return httpPort;
 		},
 		async start() {
-			if (server !== undefined) throw new Error("App server is already started");
-			if (options.deps !== undefined) {
-				const handle = await createAppServerHost(options.deps, serverId);
-				hostHandle = handle;
+			if (server !== undefined || userServers.size > 0) throw new Error("App server is already started");
+			if (options.deps !== undefined && config !== undefined) {
+				if (users === undefined) {
+					// 单用户模式（缺省）：单 host + 单 Server，dataDir 原样
+					const handle = await createAppServerHost({ config, llm: options.deps.llm }, serverId);
+					hostHandle = handle;
+					server = new Server(handle.host, { listeners: [listener], serverId });
+				} else {
+					// 多用户模式（Task 27）：每个唯一 userId 预建 per-user host + Server，
+					// 数据目录派生为 <dataDir>/users/<userId>；连接按 upgrade 解析的 userId 路由
+					for (const userId of new Set(Object.values(users))) {
+						const host = await createAppServerHost(
+							buildHostDeps(join(config.dataDir, "users", userId)),
+							serverId,
+						);
+						const userServer = new Server(host.host, { listeners: [], serverId });
+						await userServer.start();
+						userHosts.set(userId, host);
+						userServers.set(userId, userServer);
+					}
+					await listener.start((connection) => {
+						const entry = userServers.get(connectionUserId(connection) ?? "");
+						if (entry === undefined) {
+							Promise.resolve(connection.close()).catch(() => undefined);
+							return orphanConnectionHandler();
+						}
+						return entry.accept(connection);
+					});
+				}
+				const hostForDeps = {
+					readUiResource: async (
+						userId: string | undefined,
+						request: { serverId: string; resourceUri: string },
+					) => {
+						const target = hostFor(userId);
+						if (target === undefined) throw new Error(`no host for user: ${userId ?? "(anonymous)"}`);
+						return target.readUiResource(request);
+					},
+					listMcpTools: async (userId: string | undefined) => hostFor(userId)?.listMcpTools() ?? [],
+					sessionFilesRoot: async (userId: string | undefined, sessionId: string) =>
+						hostFor(userId)?.sessionFilesRoot(sessionId) ?? null,
+				};
 				http = createHttpServer(
 					{
-						httpPort: options.httpPort ?? options.deps.config.httpPort,
-						token: options.deps.config.token,
+						httpPort: options.httpPort ?? config.httpPort,
+						...(config.token === undefined ? {} : { token: config.token }),
+						...(users === undefined ? {} : { users }),
 					},
-					{
-						readUiResource: (request) => handle.readUiResource(request),
-						listMcpTools: () => handle.listMcpTools(),
-						sessionFilesRoot: (sessionId) => handle.sessionFilesRoot(sessionId),
-					},
+					hostForDeps,
 				);
 				await http.listen({
-					port: options.httpPort ?? options.deps.config.httpPort,
+					port: options.httpPort ?? config.httpPort,
 					host: options.httpHost ?? "127.0.0.1",
 				});
 				const address = http.addresses().find((entry) => entry.family === "IPv4") ?? http.addresses()[0];
 				httpPort = typeof address === "object" ? address.port : (options.httpPort ?? 0);
+				if (server !== undefined) await server.start();
+				return;
 			}
-			const host: ServerHost<SessionMetadata> = hostHandle !== undefined ? hostHandle.host : createStubHost();
+			// 无 deps：最小桩 + 单 Server
+			const host: ServerHost<SessionMetadata> = createStubHost();
 			server = new Server(host, { listeners: [listener], serverId });
 			await server.start();
 		},
@@ -114,15 +170,24 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 				const active = server;
 				server = undefined;
 				if (active !== undefined) await active.close();
-				else await listener.close();
+				else if (userServers.size > 0) {
+					for (const userServer of userServers.values()) await userServer.close().catch(() => undefined);
+					await listener.close();
+				} else {
+					await listener.close();
+				}
 			} finally {
-				const closing = hostHandle;
-				hostHandle = undefined;
 				const closingHttp = http;
 				http = undefined;
 				httpPort = undefined;
 				if (closingHttp !== undefined) await closingHttp.close().catch(() => undefined);
-				if (closing !== undefined) await closing.close();
+				const closingHost = hostHandle;
+				hostHandle = undefined;
+				if (closingHost !== undefined) await closingHost.close();
+				const closingUserHosts = [...userHosts.values()];
+				userHosts.clear();
+				userServers.clear();
+				for (const userHost of closingUserHosts) await userHost.close().catch(() => undefined);
 			}
 		},
 	};

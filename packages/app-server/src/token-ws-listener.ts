@@ -11,6 +11,7 @@ import { createServer, type Server as HttpServer } from "node:http";
 import { DEFAULT_MAX_FRAME_LENGTH } from "@earendil-works/pi-protocol";
 import type { ServerListener } from "@earendil-works/pi-server";
 import { type RawData, WebSocket, WebSocketServer } from "ws";
+import { resolveIdentity } from "./config.ts";
 
 const DEFAULT_WS_HOST = "127.0.0.1";
 const DEFAULT_GRACEFUL_CLOSE_TIMEOUT_MS = 5_000;
@@ -22,6 +23,8 @@ export interface TokenWsListenerOptions {
 	host?: string;
 	/** 访问令牌；undefined/空 = 匿名放行（开发回环缺省）。 */
 	token?: string;
+	/** 多用户映射（Task 27）：配置后按 token→userId 校验并把 userId 附在连接上。 */
+	users?: Record<string, string>;
 	maxPendingBytes?: number;
 	gracefulCloseTimeoutMs?: number;
 	/** Used to derive and validate maxPendingBytes. Must match the server when customized. */
@@ -41,6 +44,7 @@ interface ResolvedTokenWsListenerOptions {
 	port: number;
 	host: string;
 	token?: string;
+	users?: Record<string, string>;
 	gracefulCloseTimeoutMs: number;
 	maxPendingBytes: number;
 	maxPayload: number;
@@ -85,16 +89,27 @@ export class TokenWsListener implements ServerListener {
 			perMessageDeflate: false,
 			maxPayload: this.options.maxPayload,
 		});
-		wsServer.on("connection", (socket) => this.acceptSocket(socket));
 		wsServer.on("error", (error) => this.reportError(error));
 		httpServer.on("upgrade", (request, socket, head) => {
+			const urlToken = tokenFromUpgradeUrl(request.url);
+			if (this.options.users !== undefined) {
+				// 多用户模式（Task 27）：token 必须命中 users 映射，userId 附在连接上供 accept 路由
+				const identity = resolveIdentity(this.options.users, urlToken);
+				if (identity.kind !== "user") {
+					socket.write("HTTP/1.1 401 Unauthorized\r\nConnection: close\r\ncontent-length: 0\r\n\r\n");
+					socket.destroy();
+					return;
+				}
+				wsServer.handleUpgrade(request, socket, head, (wsSocket) => this.acceptSocket(wsSocket, identity.userId));
+				return;
+			}
 			const expected = this.options.token;
-			if (expected !== undefined && tokenFromUpgradeUrl(request.url) !== expected) {
+			if (expected !== undefined && urlToken !== expected) {
 				socket.write("HTTP/1.1 401 Unauthorized\r\nConnection: close\r\ncontent-length: 0\r\n\r\n");
 				socket.destroy();
 				return;
 			}
-			wsServer.handleUpgrade(request, socket, head, (wsSocket) => wsServer.emit("connection", wsSocket, request));
+			wsServer.handleUpgrade(request, socket, head, (wsSocket) => this.acceptSocket(wsSocket, undefined));
 		});
 
 		try {
@@ -140,7 +155,7 @@ export class TokenWsListener implements ServerListener {
 		await wsClosed;
 	}
 
-	private acceptSocket(socket: WebSocket): void {
+	private acceptSocket(socket: WebSocket, userId: string | undefined): void {
 		const accept = this.accept;
 		if (this.closing || !accept) {
 			socket.close();
@@ -151,6 +166,7 @@ export class TokenWsListener implements ServerListener {
 			this.options.gracefulCloseTimeoutMs,
 			this.options.maxPendingBytes,
 			(error) => this.reportError(error),
+			userId,
 		);
 		this.connections.add(connection);
 		const handler = accept(connection);
@@ -200,6 +216,8 @@ class WsByteConnection {
 	private readonly gracefulCloseTimeoutMs: number;
 	private readonly maxPendingBytes: number;
 	private readonly reportError: (error: Error) => void;
+	/** users 模式下由 upgrade 解析出的用户身份；单用户模式 undefined。 */
+	readonly userId?: string;
 	private closedValue = false;
 	private closing = false;
 	private writeTail: Promise<void> = Promise.resolve();
@@ -211,11 +229,13 @@ class WsByteConnection {
 		gracefulCloseTimeoutMs: number,
 		maxPendingBytes: number,
 		reportError: (error: Error) => void,
+		userId?: string,
 	) {
 		this.socket = socket;
 		this.gracefulCloseTimeoutMs = gracefulCloseTimeoutMs;
 		this.maxPendingBytes = maxPendingBytes;
 		this.reportError = reportError;
+		this.userId = userId;
 	}
 
 	get closed(): boolean {
@@ -310,6 +330,12 @@ export function createTokenWsListener(options: TokenWsListenerOptions): TokenWsL
 	return new TokenWsListener(options);
 }
 
+/** 读取连接携带的用户身份（users 模式下由 upgrade 解析；单用户/匿名连接 undefined）。 */
+export function connectionUserId(connection: unknown): string | undefined {
+	const userId = (connection as { userId?: unknown }).userId;
+	return typeof userId === "string" ? userId : undefined;
+}
+
 function resolveTokenWsListenerOptions(options: TokenWsListenerOptions): ResolvedTokenWsListenerOptions {
 	if (!Number.isInteger(options.port) || options.port < 0 || options.port > 65535) {
 		throw new TypeError("Server WebSocket port must be an integer between 0 and 65535");
@@ -336,6 +362,7 @@ function resolveTokenWsListenerOptions(options: TokenWsListenerOptions): Resolve
 		port: options.port,
 		host,
 		token: options.token,
+		users: options.users,
 		maxPendingBytes,
 		maxPayload: maxPendingBytes,
 		gracefulCloseTimeoutMs,

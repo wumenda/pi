@@ -14,7 +14,8 @@ import { createReadStream } from "node:fs";
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { basename, resolve, sep } from "node:path";
 import fastifyMultipart from "@fastify/multipart";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
+import { resolveIdentity } from "./config.ts";
 
 export interface UiResourcePayload {
 	mimeType: string;
@@ -33,10 +34,23 @@ export interface McpToolManifestEntry {
 }
 
 export interface HttpDeps {
-	readUiResource(request: { serverId: string; resourceUri: string }): Promise<UiResourcePayload>;
-	listMcpTools(): Promise<McpToolManifestEntry[]>;
+	/** ui:// 资源读取；userId 标识请求方用户（单用户模式 undefined），由装配层按用户路由 */
+	readUiResource(
+		userId: string | undefined,
+		request: { serverId: string; resourceUri: string },
+	): Promise<UiResourcePayload>;
+	listMcpTools(userId: string | undefined): Promise<McpToolManifestEntry[]>;
 	/** 会话文件根目录（uploads/downloads 安全边界）；未知会话返回 null */
-	sessionFilesRoot(sessionId: string): Promise<string | null>;
+	sessionFilesRoot(userId: string | undefined, sessionId: string): Promise<string | null>;
+}
+
+/** users 模式下经身份解析后的请求用户（单用户模式 undefined）。 */
+interface AuthenticatedRequest extends FastifyRequest {
+	userId?: string;
+}
+
+function requestUserId(request: FastifyRequest): string | undefined {
+	return (request as AuthenticatedRequest).userId;
 }
 
 /** 单文件大小上限（服务端硬顶；字段级 maxSizeMB 约束由模型/前端另行限制） */
@@ -78,7 +92,10 @@ export function intersectCsp(declared: string | null): string {
 	return merged.map(([name, values]) => [name, ...values].join(" ")).join("; ");
 }
 
-export function createHttpServer(options: { httpPort: number; token?: string }, deps: HttpDeps): FastifyInstance {
+export function createHttpServer(
+	options: { httpPort: number; token?: string; users?: Record<string, string> },
+	deps: HttpDeps,
+): FastifyInstance {
 	const app = Fastify({ logger: false });
 	app.register(fastifyMultipart, { limits: { fileSize: MAX_FILE_SIZE } });
 	// CORS：web 前端（vite 8788）跨源访问 HTTP 面（上传/下载/ui-resources）。
@@ -99,17 +116,27 @@ export function createHttpServer(options: { httpPort: number; token?: string }, 
 		reply.header("access-control-allow-origin", "*");
 		return payload;
 	});
-	// token 认证（APP_SERVER_TOKEN 配置后启用）：query ?token= 优先，其次 Authorization: Bearer。
+	// 认证与身份解析（query ?token= 优先，其次 Authorization: Bearer）：
+	// - users 模式（Task 27）：token 必须命中映射，解析出的 userId 挂在 request 上供路由；
+	// - 单用户模式（APP_SERVER_TOKEN 配置后启用）：仅校验 token；
 	// 401 响应经 onSend 钩子带 ACAO，浏览器可读到错误文案。query 传 token 属 ADR-0003 已知权衡
 	// （日志泄漏风险）：fastify logger 关闭，不记录 query。
 	const authToken = options.token;
-	if (authToken !== undefined && authToken !== "") {
+	const users = options.users;
+	if (users !== undefined || (authToken !== undefined && authToken !== "")) {
 		app.addHook("onRequest", async (request, reply) => {
 			const query = request.query as Record<string, unknown>;
 			const queryToken = typeof query.token === "string" && query.token.length > 0 ? query.token : undefined;
 			const header = request.headers.authorization;
 			const bearer = typeof header === "string" && header.startsWith("Bearer ") ? header.slice(7) : undefined;
-			if ((queryToken ?? bearer) !== authToken) {
+			const token = queryToken ?? bearer;
+			if (users !== undefined) {
+				const identity = resolveIdentity(users, token);
+				if (identity.kind === "reject") return reply.code(401).send({ error: "unauthorized" });
+				(request as AuthenticatedRequest).userId = identity.kind === "user" ? identity.userId : undefined;
+				return;
+			}
+			if (token !== authToken) {
 				return reply.code(401).send({ error: "unauthorized" });
 			}
 		});
@@ -120,7 +147,7 @@ export function createHttpServer(options: { httpPort: number; token?: string }, 
 			return reply.code(400).send({ error: "serverId and resourceUri are required" });
 		}
 		try {
-			const resource = await deps.readUiResource({ serverId, resourceUri });
+			const resource = await deps.readUiResource(requestUserId(request), { serverId, resourceUri });
 			return reply
 				.code(200)
 				.header("content-type", `${resource.mimeType}; charset=utf-8`)
@@ -132,8 +159,8 @@ export function createHttpServer(options: { httpPort: number; token?: string }, 
 			return reply.code(502).send({ error: error instanceof Error ? error.message : String(error) });
 		}
 	});
-	app.get("/api/v1/mcp-tools", async (_request, reply) => {
-		const tools = await deps.listMcpTools();
+	app.get("/api/v1/mcp-tools", async (request, reply) => {
+		const tools = await deps.listMcpTools(requestUserId(request));
 		return reply.code(200).header("cache-control", "no-store").send(tools);
 	});
 
@@ -145,7 +172,7 @@ export function createHttpServer(options: { httpPort: number; token?: string }, 
 
 	app.post("/api/v1/sessions/:sessionId/files", async (request, reply) => {
 		const { sessionId } = request.params as { sessionId: string };
-		const root = await deps.sessionFilesRoot(sessionId);
+		const root = await deps.sessionFilesRoot(requestUserId(request), sessionId);
 		if (root === null) return reply.code(404).send({ error: `unknown session: ${sessionId}` });
 		const saved: Array<{ filename: string; path: string }> = [];
 		try {
@@ -176,7 +203,7 @@ export function createHttpServer(options: { httpPort: number; token?: string }, 
 		if (relativePath === undefined || relativePath === "") {
 			return reply.code(400).send({ error: "path is required" });
 		}
-		const root = await deps.sessionFilesRoot(sessionId);
+		const root = await deps.sessionFilesRoot(requestUserId(request), sessionId);
 		if (root === null) return reply.code(404).send({ error: `unknown session: ${sessionId}` });
 		const resolvedPath = resolveWithin(root, relativePath);
 		if (resolvedPath === undefined) return reply.code(400).send({ error: "path escapes session root" });

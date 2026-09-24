@@ -1,21 +1,15 @@
-import { resolve } from "node:path";
 import { loadConfig } from "./config.ts";
 import { createAppServer } from "./index.ts";
 import { createAgentPlanLlm } from "./llm.ts";
 import { createLogger } from "./logger.ts";
-import { createSessionStore } from "./sessions.ts";
 
 const log = createLogger("main");
 const config = loadConfig();
 log.info(
-	`config: baseUrl=${config.agentPlanBaseUrl} model=${config.modelId} wsPort=${config.wsPort} httpPort=${config.httpPort} dataDir=${config.dataDir}`,
+	`config: baseUrl=${config.agentPlanBaseUrl} model=${config.modelId} wsPort=${config.wsPort} httpPort=${config.httpPort} dataDir=${config.dataDir} users=${config.users === undefined ? "single" : Object.keys(config.users).length}`,
 );
 const llm = createAgentPlanLlm(config.agentPlanBaseUrl, config.modelId);
-const store = createSessionStore({
-	dataDir: config.dataDir,
-	workspaceDir: resolve(config.dataDir, "workspace"),
-});
-const handle = createAppServer({ wsPort: config.wsPort, httpPort: config.httpPort, deps: { config, store, llm } });
+const handle = createAppServer({ wsPort: config.wsPort, httpPort: config.httpPort, deps: { config, llm } });
 await handle.start();
 console.log("app-server ready");
 console.log(`  serverId: ${handle.serverId}`);

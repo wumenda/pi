@@ -1,6 +1,6 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import { fauxAssistantMessage, fauxText } from "@earendil-works/pi-ai";
 import { Client } from "@earendil-works/pi-client";
@@ -9,7 +9,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config.ts";
 import { createAppServer } from "../src/index.ts";
 import { AgentController, SessionManagement, Transcript } from "../src/services/contracts.ts";
-import { createSessionStore } from "../src/sessions.ts";
 import { createFauxLlm } from "./faux-llm.ts";
 import { bindServerServices, bindSessionServices } from "./service-bindings.ts";
 
@@ -28,7 +27,6 @@ describe("app-server services", () => {
 		const root = tempDir();
 		const config = loadConfig({});
 		config.dataDir = join(root, "data");
-		const workspaceDir = resolve(config.dataDir, "workspace");
 		const faux = createFauxLlm();
 		const handle = createAppServer({
 			// 端口 0 = OS 分配：避免与开发实例的固定端口（WS 8790 / HTTP 8791）冲突
@@ -36,7 +34,6 @@ describe("app-server services", () => {
 			httpPort: 0,
 			deps: {
 				config,
-				store: createSessionStore({ dataDir: config.dataDir, workspaceDir }),
 				llm: { models: faux.models, model: faux.model },
 			},
 		});

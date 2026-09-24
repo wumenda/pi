@@ -14,7 +14,7 @@ beforeAll(async () => {
 	deps = {
 		readUiResource: async () => ({ mimeType: "text/html", html: "<html>x</html>", declaredCsp: null }),
 		listMcpTools: async () => [],
-		sessionFilesRoot: async (sessionId) =>
+		sessionFilesRoot: async (_userId, sessionId) =>
 			sessionId === "sid-1" ? join(dataDir, "sessions-workspace", sessionId) : null,
 	};
 });
