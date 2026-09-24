@@ -9,7 +9,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SkillPartInfo } from "../skills/skill-parse.ts";
 import { iframePool } from "./IframePool.ts";
 import { messageBridge } from "./MessageBridge.ts";
-import { ensureToolIframe, startHostProtocol } from "./pipeline.ts";
+import { ensureToolIframe, sendToolProgress, startHostProtocol } from "./pipeline.ts";
+import {
+	clearSeenProgress,
+	registerToolProgressListener,
+	type ToolProgressListener,
+	unregisterToolProgressListener,
+} from "./progress.ts";
 import { scanTranscript, type TranscriptEntryView } from "./scan.ts";
 import type { IframeInstance } from "./types.ts";
 
@@ -79,7 +85,7 @@ export function useIframeWorkspace(
 		startHostProtocol();
 	}, []);
 
-	// 会话切换：统一重置点——回收全部 iframe、清桥通道、清扫描去重集
+	// 会话切换：统一重置点——回收全部 iframe、清桥通道、清扫描去重集与 progress 指纹记忆
 	// （首挂载即同键，跳过空转；此后每次 sessionKey 变更执行一次全量回收）
 	useEffect(() => {
 		if (lastSessionKeyRef.current === sessionKey) return;
@@ -87,11 +93,23 @@ export function useIframeWorkspace(
 		iframePool.destroyAll();
 		messageBridge.detachAll();
 		processedRef.current.clear();
+		clearSeenProgress();
 		setPool(iframePool.snapshot());
 		setActiveUri(null);
 		setActiveGroupState(null);
 		setSkillInstances([]);
 	}, [sessionKey]);
+
+	// progress 实时转发监听：pi-app 的 transcript 订阅 → pipeline 投递（去重 + 按执行寻址）。
+	// 监听随组件生命周期注册（与会话无关）；跨会话隔离由会话切换处的指纹清空 +
+	// pipeline 的执行绑定寻址保证（旧执行的绑定已随 destroyAll 清除，进度自然丢弃）。
+	useEffect(() => {
+		const listener: ToolProgressListener = (toolCallId, payload) => sendToolProgress(toolCallId, payload);
+		registerToolProgressListener(listener);
+		return () => {
+			unregisterToolProgressListener(listener);
+		};
+	}, []);
 
 	// transcript 扫描：skill 实例建档 + tool 调用推进（按 toolCallId:status 去重）
 	useEffect(() => {

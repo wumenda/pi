@@ -1,6 +1,8 @@
 import type { JsonValue } from "@earendil-works/chord";
+import type { ToolExecutionEvent } from "../../services/contracts.ts";
 import { iframeInstanceKey, iframePool } from "./IframePool.ts";
 import { messageBridge, THEME_CHANGED_METHOD } from "./MessageBridge.ts";
+import { type ProgressPayload, seenProgress, shouldDeliverProgress } from "./progress.ts";
 import { type SkillReadContext, SOLO_GROUP_KEY } from "./types.ts";
 
 /** tool 调用推进状态（对齐参考应用 ToolPart.state.status 的子集语义） */
@@ -66,6 +68,8 @@ export interface HostContext {
 	callTool(name: string, args: JsonValue | null, serverId?: string): Promise<unknown>;
 	/** 读取 MCP Apps ui:// 资源（iframe srcdoc HTML，SEP-1865） */
 	getUiResource(serverId: string, resourceUri: string): Promise<{ mimeType: string; html: string }>;
+	/** 读取本会话已落盘的工具执行事件（冷启动 progress 恢复；未注入时返回空集） */
+	getToolEvents(): Promise<ToolExecutionEvent[]>;
 }
 
 let hostContext: HostContext = {
@@ -77,6 +81,7 @@ let hostContext: HostContext = {
 	getUiResource: async () => {
 		throw new Error("MCP UI 资源未接入：请通过 setHostContext 注入 getUiResource 实现");
 	},
+	getToolEvents: async () => [],
 };
 
 export function setHostContext(context: HostContext): void {
@@ -196,6 +201,9 @@ export function ensureToolIframe(call: ToolUiCall): void {
 	// 新建实例：经 pi.mcp-host 服务读取应用 HTML 后以 srcdoc 注入（异步；消息先排队）
 	if (isNew) {
 		void loadIframeHtml(sendKey, call.serverId, call.resourceUri);
+		// 冷启动恢复：既有重放（tool-input → tool-result）之后，补推该执行已落盘的
+		// progress 事件（同页面已实时收过的指纹被去重抑制；页面刷新后全部真正送达）
+		void replayRecordedProgress(call.toolCallId);
 	}
 	if (call.status === "pending" || call.status === "running") {
 		messageBridge.send(sendKey, "ui/notifications/tool-input", {
@@ -232,8 +240,54 @@ async function loadIframeHtml(key: string, serverId: string, resourceUri: string
 	}
 }
 
-let protocolStarted = false;
+/**
+ * 宿主 → 应用：转发一次 tool 执行进度（notifications/progress）。
+ * 先过指纹去重（同页面生命周期内同 (toolCallId, 指纹) 只投递一次，实时重发/
+ * 重扫/恢复重放共用此记忆），再按执行寻址实例键——同一执行的进度始终回其
+ * 绑定的 iframe（并发下不串实例）；找不到绑定实例（已回收/会话已切换）则
+ * 丢弃并 debug 记录：进度时效性强，过期投递无意义。
+ */
+export function sendToolProgress(toolCallId: string, payload: ProgressPayload): void {
+	if (!shouldDeliverProgress(seenProgress, toolCallId, payload)) return;
+	const sendKey = iframePool.keyForExecution(toolCallId);
+	if (sendKey === undefined) {
+		console.debug(`[MCP] progress 无绑定实例，丢弃：toolCallId=${toolCallId}`);
+		return;
+	}
+	messageBridge.send(sendKey, "notifications/progress", {
+		progress: payload.progress,
+		total: payload.total,
+		message: payload.message,
+		uiEvent: payload.uiEvent ?? null,
+	});
+}
 
+/**
+ * 冷启动恢复：新建 iframe（ensureToolIframe 的 isNew 路径）完成既有
+ * tool-input → tool-result 重放之后，经 pi.tool-events 服务拉取本会话已落盘的
+ * 执行事件，把该执行绑定的 progress 事件按时间顺序经 sendToolProgress 补推
+ * （同样过指纹去重）。拉取失败仅记录——进度缺失不阻塞终态 UI。
+ */
+async function replayRecordedProgress(toolCallId: string): Promise<void> {
+	let events: ToolExecutionEvent[];
+	try {
+		events = await hostContext.getToolEvents();
+	} catch (error) {
+		console.debug("[MCP] 拉取 tool-events 失败，跳过 progress 恢复", error);
+		return;
+	}
+	for (const event of events) {
+		if (event.kind !== "progress" || event.toolCallId !== toolCallId || event.progress === null) continue;
+		sendToolProgress(toolCallId, {
+			progress: event.progress,
+			total: event.total,
+			message: event.message,
+			uiEvent: event.uiEvent,
+		});
+	}
+}
+
+let protocolStarted = false;
 /** 本宿主唯一支持的 MCP Apps 协议版本（版本协商锚点；不兼容版本明确拒绝） */
 export const PROTOCOL_VERSION = "2025-06-18";
 

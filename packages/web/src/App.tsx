@@ -265,8 +265,9 @@ export function App(): ReactNode {
 			getSessionId: () => pi.activeSessionId,
 			callTool: (name, args, sid) => pi.callMcpTool(sid ?? null, name, args),
 			getUiResource: (sid, resourceUri) => pi.getMcpUiResource(sid, resourceUri),
+			getToolEvents: () => pi.getToolEvents(),
 		});
-	}, [pi.activeSessionId, pi.callMcpTool, pi.getMcpUiResource]);
+	}, [pi.activeSessionId, pi.callMcpTool, pi.getMcpUiResource, pi.getToolEvents]);
 
 	const entries: readonly TranscriptEntryLike[] = pi.transcript?.snapshot?.transcript ?? EMPTY_ENTRIES;
 	const workspace = useIframeWorkspace(entries, pi.activeSessionId ?? null);

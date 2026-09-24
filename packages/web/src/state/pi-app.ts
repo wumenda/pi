@@ -5,10 +5,13 @@ import type { ServerHello } from "@earendil-works/pi-protocol";
 import { isServerId } from "@earendil-works/pi-protocol";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPiClient } from "../api/pi.ts";
+import { getToolEvents as fetchToolEvents } from "../api/tool-events.ts";
+import { emitToolProgress, extractProgressPayload } from "../features/mcp/progress.ts";
 import type {
 	McpHostToolCallResult,
 	McpHostUiResource,
 	SessionSummary,
+	ToolExecutionEvent,
 	TranscriptState,
 } from "../services/contracts.ts";
 import { PiServices } from "../services/pi-services.ts";
@@ -43,6 +46,8 @@ export interface PiAppActions {
 	) => Promise<McpHostToolCallResult>;
 	/** Fetch an MCP Apps ui:// resource (iframe srcdoc payload) through the pi.mcp-host service. */
 	readonly getMcpUiResource: (serverId: string, resourceUri: string) => Promise<McpHostUiResource>;
+	/** Fetch recorded tool-execution events for the attached session (MCP Apps cold-start progress recovery). */
+	readonly getToolEvents: () => Promise<ToolExecutionEvent[]>;
 }
 
 interface Session {
@@ -154,6 +159,12 @@ export function usePiApp(): PiAppState & PiAppActions {
 					}
 					const eventType = value.event?.type;
 					if (eventType !== undefined) logDebug(`transcript event: ${eventType}`);
+					// MCP Apps progress 实时转发：tool_update 携带 details.progress 时
+					// 投递给注册的监听器（工作区注册，经 pipeline 去重后按执行寻址 iframe）
+					if (value.event?.type === "tool_update") {
+						const payload = extractProgressPayload(value.event.partialResult.details);
+						if (payload !== null) emitToolProgress(value.event.toolCallId, payload);
+					}
 					setState((previous) => ({ ...previous, transcript: value }));
 				});
 				logInfo("transcript subscribed (awaiting attach)");
@@ -270,6 +281,12 @@ export function usePiApp(): PiAppState & PiAppActions {
 		return services.mcpHost.getUiResource({ serverId, resourceUri }, BACKGROUND_CONTEXT);
 	}, []);
 
+	const getToolEvents = useCallback((): Promise<ToolExecutionEvent[]> => {
+		const services = servicesRef.current;
+		if (!services) return Promise.resolve([]);
+		return fetchToolEvents(services);
+	}, []);
+
 	return {
 		...state,
 		connect,
@@ -282,5 +299,6 @@ export function usePiApp(): PiAppState & PiAppActions {
 		answerAskUser,
 		callMcpTool,
 		getMcpUiResource,
+		getToolEvents,
 	};
 }
