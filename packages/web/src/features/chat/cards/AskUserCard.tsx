@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { downloadSessionFile, uploadSessionFiles } from "../../../api/files.ts";
-import { hostHttpBase, hostSessionId } from "../../mcp/pipeline.ts";
+import { hostHttpBase, hostSessionId, hostToken } from "../../mcp/pipeline.ts";
 import {
 	CUSTOM_LABEL,
 	collectDefaultValues,
@@ -305,7 +305,7 @@ function FieldView({
 		setUploading(true);
 		setUploadNote(undefined);
 		try {
-			const refs = await uploadSessionFiles(hostHttpBase(), sessionId, picked);
+			const refs = await uploadSessionFiles(hostHttpBase(), sessionId, picked, hostToken());
 			const sizeByName = new Map(picked.map((file) => [file.name, file.size]));
 			onChange([
 				...files,
@@ -629,7 +629,7 @@ function FileDownloadList({
 			return;
 		}
 		try {
-			for (const path of selected) await downloadSessionFile(httpBase, sessionId, path);
+			for (const path of selected) await downloadSessionFile(httpBase, sessionId, path, hostToken());
 			setDownloadNote("已开始下载所选文件");
 		} catch (e) {
 			setDownloadNote(e instanceof Error ? e.message : String(e));

@@ -30,7 +30,7 @@ export interface PiAppState {
 }
 
 export interface PiAppActions {
-	readonly connect: (url: string, serverId: string) => void;
+	readonly connect: (url: string, serverId: string, token?: string) => void;
 	readonly disconnect: () => void;
 	readonly createSession: () => Promise<void>;
 	readonly attachSession: (sessionId: string) => Promise<void>;
@@ -94,12 +94,13 @@ export function usePiApp(): PiAppState & PiAppActions {
 		};
 	}, []);
 
-	const connect = useCallback((url: string, serverId: string) => {
+	const connect = useCallback((url: string, serverId: string, token?: string) => {
 		const trimmedServerId = serverId.trim();
 		if (!isServerId(trimmedServerId)) {
 			setState((previous) => ({ ...previous, error: "Server ID must be a canonical lowercase UUIDv4." }));
 			return;
 		}
+		const trimmedToken = token?.trim();
 		setState((previous) => ({
 			...previous,
 			phase: "connecting",
@@ -110,7 +111,11 @@ export function usePiApp(): PiAppState & PiAppActions {
 			transcript: undefined,
 		}));
 
-		const client = createPiClient({ url: url.trim(), serverId: trimmedServerId });
+		const client = createPiClient({
+			url: url.trim(),
+			serverId: trimmedServerId,
+			...(trimmedToken === undefined || trimmedToken === "" ? {} : { token: trimmedToken }),
+		});
 		const services = new PiServices(client, {
 			onError: (error) => setState((previous) => ({ ...previous, error: error.message })),
 		});

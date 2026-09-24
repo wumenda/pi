@@ -249,6 +249,7 @@ export function App(): ReactNode {
 	const [mobileView, setMobileView] = useState<"workspace" | "chat">("chat");
 	const [url, setUrl] = useState("ws://127.0.0.1:8787");
 	const [httpBase, setHttpBase] = useState("http://127.0.0.1:8791");
+	const [token, setToken] = useState("");
 	const [serverId, setServerId] = useState("");
 	const [draft, setDraft] = useState("");
 	const [sending, setSending] = useState(false);
@@ -266,11 +267,12 @@ export function App(): ReactNode {
 			getTheme: () => (document.documentElement.dataset.theme === "dark" ? "dark" : "light"),
 			getSessionId: () => pi.activeSessionId,
 			getHttpBase: () => httpBase,
+			getToken: () => token,
 			callTool: (name, args, sid) => pi.callMcpTool(sid ?? null, name, args),
 			getUiResource: (sid, resourceUri) => pi.getMcpUiResource(sid, resourceUri),
 			getToolEvents: () => pi.getToolEvents(),
 		});
-	}, [pi.activeSessionId, pi.callMcpTool, pi.getMcpUiResource, pi.getToolEvents, httpBase]);
+	}, [pi.activeSessionId, pi.callMcpTool, pi.getMcpUiResource, pi.getToolEvents, httpBase, token]);
 
 	const entries: readonly TranscriptEntryLike[] = pi.transcript?.snapshot?.transcript ?? EMPTY_ENTRIES;
 	const workspace = useIframeWorkspace(entries, pi.activeSessionId ?? null);
@@ -318,7 +320,7 @@ export function App(): ReactNode {
 						className="state-view-form"
 						onSubmit={(event) => {
 							event.preventDefault();
-							pi.connect(url, serverId);
+							pi.connect(url, serverId, token);
 						}}
 					>
 						<label className="state-view-field">
@@ -347,6 +349,16 @@ export function App(): ReactNode {
 								value={serverId}
 								onChange={(event) => setServerId(event.target.value)}
 								placeholder="00000000-0000-4000-8000-000000000000"
+								spellCheck={false}
+							/>
+						</label>
+						<label className="state-view-field">
+							Token
+							<input
+								className="state-view-input"
+								value={token}
+								onChange={(event) => setToken(event.target.value)}
+								placeholder="APP_SERVER_TOKEN（未设置则留空）"
 								spellCheck={false}
 							/>
 						</label>

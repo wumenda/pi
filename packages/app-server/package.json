@@ -14,11 +14,13 @@
 		"@earendil-works/pi-protocol": "^0.87.0",
 		"@earendil-works/pi-server": "^0.87.0",
 		"@fastify/multipart": "10.1.1",
-		"fastify": "5.12.5"
+		"fastify": "5.12.5",
+		"ws": "8.21.3"
 	},
 	"devDependencies": {
 		"@earendil-works/pi-client": "^0.87.0",
 		"@types/node": "22.19.19",
+		"@types/ws": "8.18.1",
 		"tsx": "4.22.1",
 		"typescript": "5.9.3",
 		"vitest": "4.1.9"

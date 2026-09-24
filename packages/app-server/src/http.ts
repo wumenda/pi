@@ -78,18 +78,19 @@ export function intersectCsp(declared: string | null): string {
 	return merged.map(([name, values]) => [name, ...values].join(" ")).join("; ");
 }
 
-export function createHttpServer(_options: { httpPort: number }, deps: HttpDeps): FastifyInstance {
+export function createHttpServer(options: { httpPort: number; token?: string }, deps: HttpDeps): FastifyInstance {
 	const app = Fastify({ logger: false });
 	app.register(fastifyMultipart, { limits: { fileSize: MAX_FILE_SIZE } });
 	// CORS：web 前端（vite 8788）跨源访问 HTTP 面（上传/下载/ui-resources）。
 	// 回环开发面不带凭据，通配 origin 即可；token 认证（Task 26）接入后仍适用。
+	// 预检 OPTIONS 在 token 校验之前放行（浏览器预检不携带自定义凭据）。
 	app.addHook("onRequest", async (request, reply) => {
 		if (request.method === "OPTIONS") {
 			return reply
 				.code(204)
 				.header("access-control-allow-origin", "*")
 				.header("access-control-allow-methods", "GET, POST, OPTIONS")
-				.header("access-control-allow-headers", "content-type")
+				.header("access-control-allow-headers", "content-type, authorization")
 				.header("access-control-max-age", "600")
 				.send();
 		}
@@ -98,6 +99,21 @@ export function createHttpServer(_options: { httpPort: number }, deps: HttpDeps)
 		reply.header("access-control-allow-origin", "*");
 		return payload;
 	});
+	// token 认证（APP_SERVER_TOKEN 配置后启用）：query ?token= 优先，其次 Authorization: Bearer。
+	// 401 响应经 onSend 钩子带 ACAO，浏览器可读到错误文案。query 传 token 属 ADR-0003 已知权衡
+	// （日志泄漏风险）：fastify logger 关闭，不记录 query。
+	const authToken = options.token;
+	if (authToken !== undefined && authToken !== "") {
+		app.addHook("onRequest", async (request, reply) => {
+			const query = request.query as Record<string, unknown>;
+			const queryToken = typeof query.token === "string" && query.token.length > 0 ? query.token : undefined;
+			const header = request.headers.authorization;
+			const bearer = typeof header === "string" && header.startsWith("Bearer ") ? header.slice(7) : undefined;
+			if ((queryToken ?? bearer) !== authToken) {
+				return reply.code(401).send({ error: "unauthorized" });
+			}
+		});
+	}
 	app.get("/api/v1/ui-resources", async (request, reply) => {
 		const { serverId, resourceUri } = request.query as Record<string, string | undefined>;
 		if (serverId === undefined || serverId === "" || resourceUri === undefined || resourceUri === "") {

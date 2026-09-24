@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { SessionMetadata } from "@earendil-works/pi-agent-core";
 import { Server, type ServerHost } from "@earendil-works/pi-server";
-import { createWsListener } from "@earendil-works/pi-server/ws";
 import type { AppServerConfig } from "./config.ts";
 import { type AppServerHostHandle, createAppServerHost } from "./host.ts";
 import { createHttpServer } from "./http.ts";
 import type { AppServerLlm } from "./llm.ts";
 import type { SessionStore } from "./sessions.ts";
+import { createTokenWsListener } from "./token-ws-listener.ts";
 
 export interface AppServerDeps {
 	config: AppServerConfig;
@@ -61,9 +61,11 @@ function createStubHost(): ServerHost<SessionMetadata> {
 
 export function createAppServer(options: AppServerOptions = {}): AppServerHandle {
 	const serverId = options.serverId ?? randomUUID();
-	const listener = createWsListener({
+	const token = options.deps?.config.token;
+	const listener = createTokenWsListener({
 		port: options.wsPort ?? 0,
 		host: options.wsHost ?? "127.0.0.1",
+		...(token === undefined ? {} : { token }),
 	});
 	let server: Server<SessionMetadata> | undefined;
 	let hostHandle: AppServerHostHandle | undefined;
@@ -86,7 +88,10 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 				const handle = await createAppServerHost(options.deps, serverId);
 				hostHandle = handle;
 				http = createHttpServer(
-					{ httpPort: options.httpPort ?? options.deps.config.httpPort },
+					{
+						httpPort: options.httpPort ?? options.deps.config.httpPort,
+						token: options.deps.config.token,
+					},
 					{
 						readUiResource: (request) => handle.readUiResource(request),
 						listMcpTools: () => handle.listMcpTools(),

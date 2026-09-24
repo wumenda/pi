@@ -68,6 +68,8 @@ export interface HostContext {
 	getSessionId(): string | undefined;
 	/** app-server HTTP 基址（如 http://127.0.0.1:8791），iframe 经它加载 ui:// 文档 */
 	getHttpBase(): string;
+	/** 访问令牌（app-server APP_SERVER_TOKEN）；未配置/空 = 匿名，调用点不追加 token */
+	getToken?(): string | undefined;
 	/**
 	 * 反向 tools/call：经 pi.mcp-host 服务路由到 MCP server；
 	 * serverId 缺省时按唯一工具名路由（iframe 反向调用的兜底）。
@@ -106,6 +108,11 @@ export function hostHttpBase(): string {
 /** 当前会话 id（宿主注入；未连接/未注入时 undefined） */
 export function hostSessionId(): string | undefined {
 	return hostContext.getSessionId();
+}
+
+/** 访问令牌（宿主注入；未注入/未配置时 undefined，HTTP 调用不附带 token） */
+export function hostToken(): string | undefined {
+	return hostContext.getToken?.();
 }
 
 /**
@@ -253,9 +260,10 @@ export function ensureToolIframe(call: ToolUiCall): void {
  * ui:// 资源的 HTTP 加载地址：app-server 的 ui-resources 端点独立响应头
  * （content-type + 逐应用求交 CSP）对 iframe 生效。
  */
-export function uiResourceUrl(httpBase: string, serverId: string, resourceUri: string): string {
+export function uiResourceUrl(httpBase: string, serverId: string, resourceUri: string, token?: string): string {
 	const base = httpBase.replace(/\/+$/, "");
-	return `${base}/api/v1/ui-resources?serverId=${encodeURIComponent(serverId)}&resourceUri=${encodeURIComponent(resourceUri)}`;
+	const suffix = token === undefined || token === "" ? "" : `&token=${encodeURIComponent(token)}`;
+	return `${base}/api/v1/ui-resources?serverId=${encodeURIComponent(serverId)}&resourceUri=${encodeURIComponent(resourceUri)}${suffix}`;
 }
 
 /**
@@ -268,7 +276,10 @@ function loadIframeSrc(key: string, serverId: string, resourceUri: string): void
 	const instance = iframePool.get(key);
 	if (instance === undefined) return;
 	try {
-		instance.element.setAttribute("src", uiResourceUrl(hostContext.getHttpBase(), serverId, resourceUri));
+		instance.element.setAttribute(
+			"src",
+			uiResourceUrl(hostContext.getHttpBase(), serverId, resourceUri, hostContext.getToken?.()),
+		);
 	} catch (error) {
 		console.warn(`[MCP] 解析 UI 资源地址失败 ${resourceUri}`, error);
 	}
