@@ -39,7 +39,10 @@ export async function createSessionServices(
 				{ service: ToolEvents, mode: "singleton" },
 			]);
 			provider.provide(Transcript, transcript.service);
-			provider.provide(AgentController, createAgentController(runtime.lane, runtime.askUser));
+			provider.provide(
+				AgentController,
+				createAgentController(runtime.lane, runtime.askUser, runtime.staleRunOperationId),
+			);
 			provider.provide(McpHost, mcpHost);
 			provider.provide(ToolEvents, { events: () => recorder.events() });
 			const endpoint = createRemoteServiceEndpoint(provider);
