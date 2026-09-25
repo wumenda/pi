@@ -1,0 +1,262 @@
+/* 项目中心（.redesign-root 作用域内使用） */
+.redesign-root .workspace-page-body {
+  /* 顶部内边距必须为 0：sticky 头部最高只能到父容器内容盒顶边，
+     顶部留白改由头部自身承担，否则头部永远顶不到滚动区顶部 */
+  padding: 0 40px 32px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  height: 100%;
+}
+.redesign-root .project-center-head h1 {
+  margin: 0;
+  font-size: var(--font-page-title);
+  font-weight: 900;
+  color: var(--navy);
+  line-height: 1.2;
+}
+.redesign-root .project-center-head p {
+  margin: 6px 0 0;
+  font-size: var(--font-body-sm);
+  color: var(--muted);
+}
+.redesign-root .project-center-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  /* 头部吸顶：负边距通栏覆盖滚动容器左右内边距，滚过的内容从头下方穿过 */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0 -40px;
+  padding: 28px 40px 20px;
+  /* 与技能/工具库页头一致的可见条：白渐变 + 底分隔线，避免同色背景把内容"凭空"切断 */
+  background: linear-gradient(180deg, var(--th002), var(--th003));
+  border-bottom: 1px solid var(--line);
+}
+.redesign-root .project-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--th1203);
+  border-radius: 8px;
+  padding: 8px 16px;
+  background: var(--th1204);
+  color: var(--th004);
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.redesign-root .project-new-btn:hover {
+  background: var(--th1205);
+}
+/* 新建会话弹窗内容（antd Modal 门户渲染在 body，勿挂 .redesign-root 作用域） */
+.project-modal-hint {
+  margin: 0 0 12px;
+  color: var(--th1202);
+  font-size: 13px;
+}
+.project-modal-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.project-modal-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--th098);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--th002);
+  cursor: pointer;
+  text-align: left;
+}
+.project-modal-item:hover {
+  border-color: var(--th1203);
+  background: var(--th887);
+}
+.project-modal-item.is-selected {
+  border-color: var(--th1203);
+  background: var(--th887);
+}
+.project-modal-name {
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.project-modal-dir {
+  color: var(--th097);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  direction: rtl;
+  text-align: left;
+}
+.project-modal-browse {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.project-modal-selected {
+  color: var(--th1206);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.redesign-root .project-card {
+  border: 1px solid var(--th098);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  background: var(--th002);
+}
+.redesign-root .project-card:first-of-type {
+  /* 与吸顶页头之间留出空隙 */
+  margin-top: 16px;
+}
+.redesign-root .project-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.redesign-root .project-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 2px;
+  cursor: pointer;
+  color: inherit;
+}
+.redesign-root .project-collapse-icon {
+  color: var(--th097);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.redesign-root .project-collapse-icon.is-collapsed {
+  transform: rotate(-90deg);
+}
+.redesign-root .project-card-count {
+  color: var(--th097);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.redesign-root .project-card-head strong {
+  font-size: 16px;
+}
+.redesign-root .project-card-dir {
+  color: var(--th097);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  direction: rtl;
+  text-align: left;
+}
+.redesign-root .project-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--th1207);
+  border-radius: 8px;
+  padding: 6px 12px;
+  background: var(--th1208);
+  cursor: pointer;
+}
+.redesign-root .project-create-btn:hover {
+  background: var(--th1209);
+}
+.redesign-root .project-empty {
+  color: var(--th097);
+  font-size: 13px;
+  margin: 12px 0 0;
+}
+.redesign-root .session-rows {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.redesign-root .session-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.redesign-root .session-open {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  /* 右侧多留出悬浮铅笔图标的空位，避免箭头与其重叠 */
+  padding: 10px 30px 10px 12px;
+  background: var(--th126);
+  cursor: pointer;
+  text-align: left;
+}
+.redesign-root .session-open:hover {
+  border-color: var(--th1203);
+  background: var(--th887);
+}
+.redesign-root .session-open-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  color: var(--th097);
+}
+.redesign-root .session-type-tag {
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: var(--th1210);
+  color: var(--th1202);
+  flex-shrink: 0;
+}
+.redesign-root .session-meta {
+  font-size: 12px;
+}
+.redesign-root .session-actions {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+/* 铅笔图标绝对定位悬浮在「删除」左侧，不参与 flex 布局、不挤占会话名区域宽度 */
+.redesign-root .session-rename {
+  position: absolute;
+  right: calc(100% + 2px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--th097);
+  cursor: pointer;
+  padding: 2px;
+}
+.redesign-root .session-rename:hover {
+  color: var(--th1206);
+}
+.redesign-root .session-delete {
+  border: none;
+  background: none;
+  color: var(--th100);
+  cursor: pointer;
+  font-size: 13px;
+}

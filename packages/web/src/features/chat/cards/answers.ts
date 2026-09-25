@@ -1,16 +1,40 @@
 /**
- * ask_user 卡片数据解析与作答编码（纯函数，供组件复用）：
- * - parseAskUserInput：把工具调用入参校验为渲染契约，失败返回 undefined（降级为普通工具卡片）；
+ * ask_user 卡片数据解析与作答编码（纯函数，供组件与单测复用）：
+ * - parseAskUserInput：把 tool part 的 state.input 校验为渲染契约，失败返回 undefined（降级为普通工具卡片）；
  * - collectDefaultValues：按 defaultValue 初始化作答值；
  * - validateAnswers：必填校验，返回第一个错误提示；
- * - normalizeAnswers：作答值 → 结构化作答对象（作为 answerAskUser 负载回传模型）。
+ * - encodeAnswers：作答值 → opencode question reply 的 answers（单题，JSON 字符串承载结构化内容）。
  */
 
-import type { AskUserInput, AskUserType, CardAnswers, FieldInput, PageInput, UploadedFileValue } from "./types.ts";
+import type { QueryClient } from "@tanstack/react-query";
+import type { ToolPartLike } from "../../../api/events";
+import type { PendingQuestion } from "../../../types";
+import type { AskUserInput, AskUserType, CardAnswers, FieldInput, PageInput, UploadedFileValue } from "./types";
 
-/** pi 端 ask_user 工具按名称识别（MCP server 前缀 + ask_user_* 工具名） */
+/** opencode 为 MCP tool 加 `<server>_` 前缀（如 ask-user-question_ask_user_question） */
 export function isAskUserTool(calledTool: string): boolean {
 	return calledTool.includes("ask_user_");
+}
+
+/** 原生 question 工具（agent 可不经 ask_user_question 直接调用） */
+export const QUESTION_TOOL_NAME = "question";
+
+/**
+ * MCP 流占位签名：ask_user_question 的指令要求模型以固定单问题参数调用
+ * question 工具（ask_user_question/prompt.py build_question_tool_payload，
+ * 选项 label 固定为「等待用户作答」）。据此区分 MCP 流与直接调用。
+ */
+export function isPlaceholderQuestions(questions: PendingQuestion["questions"]): boolean {
+	return (
+		questions.length === 1 && questions[0]!.options.length === 1 && questions[0]!.options[0]!.label === "等待用户作答"
+	);
+}
+
+/** 该 tool part 是否为 pendingQuestion 指向的那次 question 工具调用（按 messageID+callID） */
+export function matchesPendingQuestion(part: ToolPartLike, pending: PendingQuestion): boolean {
+	if (!pending.tool) return false;
+	const p = part as ToolPartLike & { messageID?: unknown; callID?: unknown };
+	return p.messageID === pending.tool.messageID && p.callID === pending.tool.callID;
 }
 
 const TYPES: readonly AskUserType[] = [
@@ -27,17 +51,18 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 	return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-/** 结构校验失败原因 */
+/** 结构校验失败原因（mcp-ask-user-question.md §7 触发条件） */
 export type ParseFailReason =
 	| "not-object" // 输入整体非对象（数组 / null / 标量）
 	| "missing-title" // title 缺失或为空
 	| "bad-pages" // pages 缺失 / 空数组 / 无合法页（每页需非空 id + title）
 	| "page-missing-type" // 某页缺 type（页级 type 必填，无兜底）
-	| "page-bad-type"; // 某页 type 不在 6 种预设
+	| "page-bad-type"; // 某页 type 不在 7 种预设
 
 /**
- * 诊断 ask_user 输入为何校验失败：成功返回规范化契约；失败返回原因 + 原始参数
- * （供错误卡片展示摘要与编辑重发）。交互类型为页级（Page.type 必填），顶层不设 type。
+ * 诊断 ask_user 输入为何校验失败（mcp-ask-user-question.md §7）：
+ * 成功返回规范化契约；失败返回原因 + 原始参数（供错误卡片展示摘要与编辑重发）。
+ * 交互类型为页级（Page.type 必填），顶层不设 type。
  */
 export function diagnoseAskUserInput(
 	input: unknown,
@@ -48,7 +73,8 @@ export function diagnoseAskUserInput(
 	const rawPages = input.pages;
 	if (!Array.isArray(rawPages) || rawPages.length === 0) return { ok: false, reason: "bad-pages", raw: input };
 
-	// lossy schema 容错：模型按近似 schema 生成参数可能缺页/字段标识；无法派生标识的页/字段丢弃。
+	// lossy schema 容错：模型按近似 schema 生成参数可能缺页/字段标识（服务端 schema.py
+	// 已做同款派生，前端直接消费 tool 原始入参，需等价派生）；无法派生标识的页/字段丢弃。
 	const normalizeField = (f: unknown): FieldInput | null => {
 		if (!isRecord(f)) return null;
 		const fid =
@@ -121,15 +147,10 @@ export function answerableFields(page: PageInput): FieldInput[] {
 	return page.fields ?? [];
 }
 
-/** 按 defaultValue 初始化作答值（number 用 null 占位以便受控输入）；
- * table 页播种预设行（page.rows → __rows__，行浅拷贝防直接改动入参） */
+/** 按 defaultValue 初始化作答值（number 用 null 占位以便 InputNumber 受控） */
 export function collectDefaultValues(input: AskUserInput): CardAnswers {
 	const values: CardAnswers = {};
 	for (const page of input.pages) {
-		if (page.type === "table") {
-			values[page.id] = { __rows__: (page.rows ?? []).map((row) => ({ ...row })) };
-			continue;
-		}
 		const pageValues: Record<string, unknown> = {};
 		for (const field of answerableFields(page)) {
 			if (field.defaultValue !== undefined && field.defaultValue !== null) {
@@ -155,6 +176,15 @@ export function isEmptyValue(v: unknown): boolean {
 	return false;
 }
 
+/**
+ * 原生 question 每题答案是否空白（真源，供 QuestionCard 提交门控用）：
+ * 答案为 label 数组；无任何非空 label 即空白（覆盖空数组与 `[""]` 等空 label 情况，
+ * 语义与 ask_user 卡片的 isEmptyValue 对齐——同一「完成度」概念单一判定）。
+ */
+export function isAnswerBlank(answer: readonly string[]): boolean {
+	return answer.length === 0 || answer.every((s) => s.trim().length === 0);
+}
+
 /** 完成度错误：唯一校验真源 validateAnswersDetailed 的输出单元（供门控与内联提示同源派生）。 */
 export type CompletionError =
 	| { kind: "required"; fieldId: string; message: string }
@@ -163,24 +193,13 @@ export type CompletionError =
 	| { kind: "custom-empty"; fieldId: string; message: string }
 	| { kind: "table-min-rows"; fieldId: string; message: string }
 	| { kind: "table-cell"; fieldId: string; rowIndex: number; colId: string; message: string }
-	| { kind: "file-meta"; fieldId: string; fileIndex: number; metaId: string; message: string }
-	| { kind: "path-form"; fieldId: string; message: string };
-
-/** 工作区相对路径形态（file-download 选项/答案用）：/ 分隔，禁绝对路径、盘符、反斜杠与 .. 段 */
-export function isRelativeWorkspacePath(value: string): boolean {
-	if (value.length === 0) return false;
-	if (value.startsWith("/") || value.startsWith("\\")) return false;
-	if (/^[a-zA-Z]:/.test(value)) return false;
-	if (value.includes("\\")) return false;
-	if (value.split("/").includes("..")) return false;
-	return true;
-}
+	| { kind: "file-meta"; fieldId: string; fileIndex: number; metaId: string; message: string };
 
 /** 自定义占位 label：allowCustom 为真时追加的「自定义」选项 label（与渲染层共享，须一致） */
 export const CUSTOM_LABEL = "其他（自定义）";
 
 /**
- * 完整完成度校验：返回全部失败项（唯一真源）。
+ * 完整完成度校验：返回全部失败项（唯一真源，文档《设计规避》§3.1/§3.4/§3.5）。
  * 覆盖：fields 必填、file 数量（min/maxCount）、file 每文件 fileMeta 必填元字段、
  *       allowCustom 占位值（选了「自定义」但未填文本 → custom-empty）、table 必填列。
  *  `scope` 可选：仅校验指定页 id（多页翻页的「下一步」当页校验用）；
@@ -195,13 +214,9 @@ export function validateAnswersDetailed(
 	const errors: CompletionError[] = [];
 
 	for (const page of pages) {
-		// 页级交互类型；table 页走行编辑校验，file-download 页走下载清单校验，其余走逐字段校验
+		// 页级交互类型；table 页走行编辑校验，其余走逐字段校验
 		if (page.type === "table") {
 			collectTableErrors(page, values, errors);
-			continue;
-		}
-		if (page.type === "file-download") {
-			collectDownloadErrors(page, values, errors);
 			continue;
 		}
 		for (const field of answerableFields(page)) {
@@ -210,7 +225,7 @@ export function validateAnswersDetailed(
 				collectFileErrors(field, v, errors);
 				continue;
 			}
-			// allowCustom 占位值：选了「自定义」但配套自由文本未填 → 实质无效
+			// allowCustom 占位值：选了「自定义」但配套自由文本未填 → 实质无效（§3.4）
 			if (
 				input.allowCustom &&
 				(field.widget === "radio" || field.widget === "select") &&
@@ -232,8 +247,8 @@ export function validateAnswersDetailed(
 	return errors;
 }
 
-/** table 页错误：行数 minRows + 每行必填列 */
-function collectTableErrors(page: PageInput, values: CardAnswers, errors: CompletionError[]): void {
+/** table 页错误：行数 minRows + 每行必填列（§3.2 多载体分别判定，缺一不可） */
+function collectTableErrors(page: PageInput, values: CardAnswers, errors: CompletionError[]) {
 	const rows = values[page.id]?.__rows__;
 	const rowsArr = Array.isArray(rows) ? (rows as Record<string, unknown>[]) : [];
 	const minRows = page.rowOps?.minRows ?? 1;
@@ -261,8 +276,8 @@ function collectTableErrors(page: PageInput, values: CardAnswers, errors: Comple
 	}
 }
 
-/** file 字段错误：数量（min/maxCount）+ 每文件 fileMeta 必填元字段（数量达标≠数据完整） */
-function collectFileErrors(field: FieldInput, v: unknown, errors: CompletionError[]): void {
+/** file 字段错误：数量（min/maxCount）+ 每文件 fileMeta 必填元字段（§3.5 数量达标≠数据完整） */
+function collectFileErrors(field: FieldInput, v: unknown, errors: CompletionError[]) {
 	const files = Array.isArray(v) ? (v as UploadedFileValue[]) : [];
 	const minCount = field.constraints?.minCount ?? 1;
 	if (files.length < minCount) {
@@ -296,40 +311,9 @@ function collectFileErrors(field: FieldInput, v: unknown, errors: CompletionErro
 	}
 }
 
-/** file-download 页错误：minCount（默认 1）/ maxCount + 答案路径形态（工作区相对路径防御校验） */
-function collectDownloadErrors(page: PageInput, values: CardAnswers, errors: CompletionError[]): void {
-	for (const field of answerableFields(page)) {
-		const raw = values[page.id]?.[field.id];
-		const paths = Array.isArray(raw) ? (raw as unknown[]).filter((v): v is string => typeof v === "string") : [];
-		const minCount = field.constraints?.minCount ?? 1;
-		if (paths.length < minCount) {
-			errors.push({
-				kind: "minCount",
-				fieldId: field.id,
-				message: `「${field.label}」为必填项，请至少选择 ${minCount} 个文件`,
-			});
-		} else if (field.constraints?.maxCount != null && paths.length > field.constraints.maxCount) {
-			errors.push({
-				kind: "maxCount",
-				fieldId: field.id,
-				message: `「${field.label}」最多选择 ${field.constraints.maxCount} 个文件`,
-			});
-		}
-		for (const path of paths) {
-			if (!isRelativeWorkspacePath(path)) {
-				errors.push({
-					kind: "path-form",
-					fieldId: field.id,
-					message: `「${field.label}」答案须为工作区相对路径（/ 分隔，禁绝对路径与 .. 段），实际 ${JSON.stringify(path)}`,
-				});
-			}
-		}
-	}
-}
-
 /**
- * 必填校验：返回第一个错误提示文案；undefined 表示通过（validateAnswersDetailed 的薄封装；
- * 新代码请用 validateAnswersDetailed 获取完整错误集合）。
+ * 必填校验：返回第一个错误提示文案；undefined 表示通过（validateAnswersDetailed 的薄封装，
+ * 供既有调用点与单测保持兼容；新代码请用 validateAnswersDetailed 获取完整错误集合）。
  */
 export function validateAnswers(
 	input: AskUserInput,
@@ -340,27 +324,46 @@ export function validateAnswers(
 }
 
 /**
- * 合并自定义槽位并按页类型整形答案（供卡片提交与摘要共用）：
- * - table 页：答案为行数组直接挂页 id（契约 §4.4），丢弃 `__rows__` 槽位包装；
- * - 其余页：字段值 = CUSTOM_LABEL 时，用同字段的 `${id}__custom` 自由文本替换并丢弃槽位；
- *   未选中自定义时丢弃残留的 `__custom` 槽位。不做静默兜底——文本为空时保持占位值原样。
+ * 合并自定义槽位（供 encodeAnswers 与卡片摘要共用）：
+ * 字段值 = CUSTOM_LABEL 时，用同字段的 `${id}__custom` 自由文本替换并丢弃槽位；
+ * 未选中自定义时丢弃残留的 `__custom` 槽位。不做静默兜底——文本为空时保持占位值原样。
  */
-export function normalizeAnswers(input: AskUserInput, values: CardAnswers): CardAnswers {
+export function normalizeAnswers(values: CardAnswers): CardAnswers {
 	const out: CardAnswers = {};
-	for (const page of input.pages) {
-		const pageValues = values[page.id] ?? {};
-		if (page.type === "table") {
-			const rows = pageValues.__rows__;
-			// 答案形态为行数组（契约 §4.4）；CardAnswers 值域声明为对象，行数组在此收窄断言
-			out[page.id] = (Array.isArray(rows) ? rows : []) as unknown as Record<string, unknown>;
-			continue;
-		}
+	for (const [pageId, pageValues] of Object.entries(values)) {
 		const normalized: Record<string, unknown> = {};
 		for (const [key, v] of Object.entries(pageValues)) {
 			if (key.endsWith("__custom")) continue;
 			normalized[key] = v === CUSTOM_LABEL ? (pageValues[`${key}__custom`] ?? v) : v;
 		}
-		out[page.id] = normalized;
+		out[pageId] = normalized;
 	}
 	return out;
+}
+
+/**
+ * 作答值 → question reply 的 answers。
+ * 实际挂起点是单选项占位 question（见 ask_user_question/prompt.py），用户真实作答
+ * 以 JSON 字符串承载在 answer 中，作为 question 工具结果回传模型。
+ */
+export function encodeAnswers(values: CardAnswers): string[][] {
+	return [[JSON.stringify(normalizeAnswers(values))]];
+}
+
+/** 交互卡片提交/取消后延迟兜底刷新消息缓存的等待时长（ms） */
+export const MESSAGES_REFRESH_DELAY_MS = 1000;
+
+/**
+ * 交互卡片提交/取消成功后主动刷新会话消息缓存（SSE 丢事件自愈）：
+ * question 工具完成/取消状态的 message.part.updated 事件经 SSE 推送，断线/重连间隙
+ * 可能丢失且无回放，导致工具卡片永久停留在「执行中」。reply/reject HTTP 成功即说明
+ * opencode 侧已受理，此时立即 + 延迟各 invalidate 一次，让 React Query 以 opencode
+ * 侧真实 part 状态覆写本地缓存（延迟刷新兜住工具完成事件晚于 reply 返回的情况）。
+ */
+export function refreshMessagesAfterQuestionReply(queryClient: QueryClient, sessionId: string): void {
+	const invalidate = () => {
+		void queryClient.invalidateQueries({ queryKey: ["messages", sessionId] });
+	};
+	invalidate();
+	window.setTimeout(invalidate, MESSAGES_REFRESH_DELAY_MS);
 }

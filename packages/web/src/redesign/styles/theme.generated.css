@@ -1,0 +1,2437 @@
+/* 生成物：由 scripts/generate_dark_theme.py 产出，勿手改。重新生成：python scripts/generate_dark_theme.py --apply */
+/* --thN：亮色 = 原 CSS 字面量（零回归），暗色 = 上下文映射；语义变量在暗色块重定义 */
+:root {
+  --th001: #f7fbff; /* surface #f7fbff */
+  --th002: #ffffff; /* surface #ffffff */
+  --th003: #f6fbff; /* surface #f6fbff */
+  --th004: #ffffff; /* text #ffffff */
+  --th005: #2d69ff; /* surface #2d69ff */
+  --th006: #4c64ff; /* surface #4c64ff */
+  --th007: rgba(45, 105, 255, 0.28); /* shadow rgba(45, 105, 255, 0.28) */
+  --th008: #2d5cff; /* text #2d5cff */
+  --th009: #0c38d3; /* text #0c38d3 */
+  --th010: #f8fbff; /* surface #f8fbff */
+  --th011: #2d69ff; /* line #2d69ff */
+  --th012: rgba(45, 105, 255, 0.12); /* shadow rgba(45, 105, 255, 0.12) */
+  --th013: #8a99c4; /* text #8a99c4 */
+  --th014: #9aa8cc; /* text #9aa8cc */
+  --th015: #aac4f0; /* line #aac4f0 */
+  --th016: rgba(45, 105, 255, 0.22); /* shadow rgba(45, 105, 255, 0.22) */
+  --th017: #2d69ff; /* text #2d69ff */
+  --th018: #edf5ff; /* surface #edf5ff */
+  --th019: rgba(42, 91, 170, 0.05); /* shadow rgba(42, 91, 170, 0.05) */
+  --th020: #f4f8ff; /* surface #f4f8ff */
+  --th021: #eef3fb; /* line #eef3fb */
+  --th022: #1b2a66; /* text #1b2a66 */
+  --th023: #14205f; /* text #14205f */
+  --th024: rgba(42, 91, 170, 0.16); /* shadow rgba(42, 91, 170, 0.16) */
+  --th025: #46588a; /* text #46588a */
+  --th026: #6b7ba8; /* text #6b7ba8 */
+  --th027: #b45309; /* text #b45309 */
+  --th028: #fef3c7; /* surface #fef3c7 */
+  --th029: #f1f4fa; /* surface #f1f4fa */
+  --th030: #6b7280; /* text #6b7280 */
+  --th031: #eef1f6; /* surface #eef1f6 */
+  --th032: #2563eb; /* text #2563eb */
+  --th033: #dbeafe; /* surface #dbeafe */
+  --th034: #15803d; /* text #15803d */
+  --th035: #dcfce7; /* surface #dcfce7 */
+  --th036: #b91c1c; /* text #b91c1c */
+  --th037: #fee2e2; /* surface #fee2e2 */
+  --th038: #f0f6ff; /* surface #f0f6ff */
+  --th039: #5d6d9c; /* text #5d6d9c */
+  --th040: rgba(42, 91, 170, 0.1); /* shadow rgba(42, 91, 170, 0.1) */
+  --th041: rgba(11, 27, 110, 0.32); /* surface rgba(11, 27, 110, 0.32) */
+  --th042: rgba(42, 91, 170, 0.14); /* shadow rgba(42, 91, 170, 0.14) */
+  --th043: #eef3fb; /* surface #eef3fb */
+  --th044: #2c3a6b; /* text #2c3a6b */
+  --th045: rgba(11, 27, 110, 0.36); /* surface rgba(11, 27, 110, 0.36) */
+  --th046: rgba(42, 91, 170, 0.2); /* shadow rgba(42, 91, 170, 0.2) */
+  --th047: #16a34a; /* text #16a34a */
+  --th048: #d8e4f7; /* surface #d8e4f7 */
+  --th049: #fbfdff; /* surface #fbfdff */
+  --th050: #a8c3f0; /* svg #a8c3f0 */
+  --th051: #2d69ff; /* svg #2d69ff */
+  --th052: rgba(45, 105, 255, 0.32); /* shadow rgba(45, 105, 255, 0.32) */
+  --th053: rgba(255, 255, 255, 0.94); /* surface rgba(255, 255, 255, 0.94) */
+  --th054: rgba(42, 91, 170, 0.08); /* shadow rgba(42, 91, 170, 0.08) */
+  --th055: rgba(42, 91, 170, 0.06); /* shadow rgba(42, 91, 170, 0.06) */
+  --th056: #93a5cc; /* text #93a5cc */
+  --th057: #d97706; /* text #d97706 */
+  --th058: #dc2626; /* text #dc2626 */
+  --th059: #64748b; /* text #64748b */
+  --th060: #3168ff; /* surface #3168ff */
+  --th061: #1fb6ff; /* surface #1fb6ff */
+  --th062: rgba(49, 104, 255, 0.1); /* shadow rgba(49, 104, 255, 0.1) */
+  --th063: rgba(42, 91, 170, 0.04); /* shadow rgba(42, 91, 170, 0.04) */
+  --th064: #a8c8ff; /* line #a8c8ff */
+  --th065: #fffbf5; /* surface #fffbf5 */
+  --th066: #fffaf2; /* surface #fffaf2 */
+  --th067: #f0e0c8; /* line #f0e0c8 */
+  --th068: #f5ead0; /* surface #f5ead0 */
+  --th069: #b88820; /* text #b88820 */
+  --th070: #eef4ff; /* surface #eef4ff */
+  --th071: #dce8ff; /* surface #dce8ff */
+  --th072: #c0c8d4; /* text #c0c8d4 */
+  --th073: #f0f2f5; /* surface #f0f2f5 */
+  --th074: #e8f7ed; /* surface #e8f7ed */
+  --th075: rgba(7, 23, 95, 0.32); /* surface rgba(7, 23, 95, 0.32) */
+  --th076: rgba(7, 23, 95, 0.1); /* shadow rgba(7, 23, 95, 0.1) */
+  --th077: #1f5ae0; /* surface #1f5ae0 */
+  --th078: rgba(49, 104, 255, 0.3); /* shadow rgba(49, 104, 255, 0.3) */
+  --th079: rgba(255, 255, 255, 0.25); /* surface rgba(255, 255, 255, 0.25) */
+  --th080: #faffff; /* surface #faffff */
+  --th081: #dc2626; /* line #dc2626 */
+  --th082: #fef2f2; /* surface #fef2f2 */
+  --th083: rgba(0, 0, 0, 0.2); /* shadow rgba(0, 0, 0, 0.2) */
+  --th084: #16a34a; /* surface #16a34a */
+  --th085: #cbd5e1; /* surface #cbd5e1 */
+  --th086: #dbe7fb; /* line #dbe7fb */
+  --th087: rgba(42, 91, 170, 0.12); /* shadow rgba(42, 91, 170, 0.12) */
+  --th088: #3168ff; /* text #3168ff */
+  --th089: #07175f; /* text #07175f */
+  --th090: rgba(255, 255, 255, 0.95); /* surface rgba(255, 255, 255, 0.95) */
+  --th091: #dae6fa; /* line #dae6fa */
+  --th092: rgba(35, 74, 132, 0.08); /* shadow rgba(35, 74, 132, 0.08) */
+  --th093: #415291; /* text #415291 */
+  --th094: #f0f5fd; /* surface #f0f5fd */
+  --th095: #f6f9fe; /* surface #f6f9fe */
+  --th096: #dce7fa; /* surface #dce7fa */
+  --th097: #8a97a5; /* text #8a97a5 */
+  --th098: #e3e9f0; /* line #e3e9f0 */
+  --th099: #14213d; /* text #14213d */
+  --th100: #c2504d; /* text #c2504d */
+  --th1000: #f7f2ff; /* surface #f7f2ff */
+  --th1001: #7c3aed; /* text #7c3aed */
+  --th1002: #eee4ff; /* surface #eee4ff */
+  --th1003: rgba(249, 115, 22, 0.25); /* line rgba(249, 115, 22, 0.25) */
+  --th1004: #ffead5; /* surface #ffead5 */
+  --th1005: rgba(244, 248, 255, 0.9); /* surface rgba(244, 248, 255, 0.9) */
+  --th1006: rgba(49, 104, 255, 0.22); /* shadow rgba(49, 104, 255, 0.22) */
+  --th1007: #435897; /* text #435897 */
+  --th1008: rgba(49, 104, 255, 0.18); /* shadow rgba(49, 104, 255, 0.18) */
+  --th1009: #9b6dff; /* surface #9b6dff */
+  --th101: #e3edfb; /* line #e3edfb */
+  --th1010: #7756ff; /* surface #7756ff */
+  --th1011: #4b9dff; /* surface #4b9dff */
+  --th1012: #5c76ff; /* surface #5c76ff */
+  --th1013: #36c7a9; /* surface #36c7a9 */
+  --th1014: #51d6b8; /* surface #51d6b8 */
+  --th1015: #426dff; /* surface #426dff */
+  --th1016: #658bff; /* surface #658bff */
+  --th1017: #9ab8ff; /* line #9ab8ff */
+  --th1018: #1740bb; /* text #1740bb */
+  --th1019: rgba(235, 244, 255, 0.88); /* surface rgba(235, 244, 255, 0.88) */
+  --th102: rgba(255, 255, 255, 0.72); /* surface rgba(255, 255, 255, 0.72) */
+  --th1020: #b9cef4; /* line #b9cef4 */
+  --th1021: #2a5cff; /* text #2a5cff */
+  --th1022: #4c78ff; /* text #4c78ff */
+  --th1023: #255dff; /* text #255dff */
+  --th1024: rgba(244, 248, 255, 0.86); /* surface rgba(244, 248, 255, 0.86) */
+  --th1025: #243783; /* text #243783 */
+  --th1026: rgba(235, 244, 255, 0.84); /* surface rgba(235, 244, 255, 0.84) */
+  --th1027: rgba(220, 252, 231, 0.82); /* surface rgba(220, 252, 231, 0.82) */
+  --th1028: #14532d; /* text #14532d */
+  --th1029: #6d28d9; /* text #6d28d9 */
+  --th103: #134dff; /* text #134dff */
+  --th1030: rgba(236, 253, 245, 0.9); /* surface rgba(236, 253, 245, 0.9) */
+  --th1031: rgba(15, 118, 110, 0.16); /* line rgba(15, 118, 110, 0.16) */
+  --th1032: rgba(245, 158, 11, 0.2); /* line rgba(245, 158, 11, 0.2) */
+  --th1033: rgba(219, 234, 254, 0.7); /* surface rgba(219, 234, 254, 0.7) */
+  --th1034: #9aa3b2; /* text #9aa3b2 */
+  --th1035: #e6efff; /* surface #e6efff */
+  --th1036: rgba(248, 251, 255, 0.55); /* surface rgba(248, 251, 255, 0.55) */
+  --th1037: rgba(219, 234, 254, 0.55); /* surface rgba(219, 234, 254, 0.55) */
+  --th1038: rgba(201, 221, 245, 0.55); /* surface rgba(201, 221, 245, 0.55) */
+  --th1039: rgba(219, 234, 254, 0.78); /* surface rgba(219, 234, 254, 0.78) */
+  --th104: #e3edff; /* surface #e3edff */
+  --th1040: #0f1f45; /* surface #0f1f45 */
+  --th1041: rgba(15, 31, 69, 0.18); /* shadow rgba(15, 31, 69, 0.18) */
+  --th1042: #0f1f45; /* line #0f1f45 */
+  --th1043: rgba(56, 132, 255, 0.55); /* shadow rgba(56, 132, 255, 0.55) */
+  --th1044: rgba(56, 132, 255, 0.5); /* shadow rgba(56, 132, 255, 0.5) */
+  --th1045: rgba(148, 163, 184, 0.12); /* surface rgba(148, 163, 184, 0.12) */
+  --th1046: rgba(148, 163, 184, 0.3); /* surface rgba(148, 163, 184, 0.3) */
+  --th1047: rgba(59, 130, 246, 0.14); /* surface rgba(59, 130, 246, 0.14) */
+  --th1048: rgba(37, 99, 235, 0.35); /* shadow rgba(37, 99, 235, 0.35) */
+  --th1049: rgba(39, 78, 145, 0.06); /* shadow rgba(39, 78, 145, 0.06) */
+  --th105: rgba(112, 154, 255, 0.18); /* shadow rgba(112, 154, 255, 0.18) */
+  --th1050: #7182b0; /* text #7182b0 */
+  --th1051: #7b8ab4; /* text #7b8ab4 */
+  --th1052: #8292bb; /* text #8292bb */
+  --th1053: #8cb0ff; /* line #8cb0ff */
+  --th1054: rgba(49, 104, 255, 0.08); /* shadow rgba(49, 104, 255, 0.08) */
+  --th1055: #6072a7; /* text #6072a7 */
+  --th1056: #91a0c5; /* text #91a0c5 */
+  --th1057: #b8caea; /* surface #b8caea */
+  --th1058: #e0e9f7; /* line #e0e9f7 */
+  --th1059: #4c7cff; /* line #4c7cff */
+  --th106: #0b1b6e; /* text #0b1b6e */
+  --th1060: #3168ff; /* shadow #3168ff */
+  --th1061: #304479; /* text #304479 */
+  --th1062: #8493bb; /* text #8493bb */
+  --th1063: #bde8cd; /* line #bde8cd */
+  --th1064: #167748; /* text #167748 */
+  --th1065: #edf9f1; /* surface #edf9f1 */
+  --th1066: #f2d79c; /* line #f2d79c */
+  --th1067: #a46300; /* text #a46300 */
+  --th1068: #fff8e6; /* surface #fff8e6 */
+  --th1069: #b9cdfc; /* line #b9cdfc */
+  --th107: rgba(49, 104, 255, 0.4); /* line rgba(49, 104, 255, 0.4) */
+  --th1070: #2558d6; /* text #2558d6 */
+  --th1071: #7282ae; /* text #7282ae */
+  --th1072: #6980b7; /* text #6980b7 */
+  --th1073: #e2ebf8; /* line #e2ebf8 */
+  --th1074: rgba(80, 133, 210, 0.045); /* surface rgba(80, 133, 210, 0.045) */
+  --th1075: #245dd8; /* svg #245dd8 */
+  --th1076: #7698dd; /* svg #7698dd */
+  --th1077: #73a0f3; /* svg #73a0f3 */
+  --th1078: #22a06b; /* svg #22a06b */
+  --th1079: #5d70a4; /* svg #5d70a4 */
+  --th108: rgba(45, 86, 146, 0.1); /* shadow rgba(45, 86, 146, 0.1) */
+  --th1080: #245dd8; /* surface #245dd8 */
+  --th1081: #7698dd; /* surface #7698dd */
+  --th1082: #22a06b; /* surface #22a06b */
+  --th1083: #6e80b1; /* text #6e80b1 */
+  --th1084: #173077; /* text #173077 */
+  --th1085: #e2eaf7; /* line #e2eaf7 */
+  --th1086: #6d7ead; /* text #6d7ead */
+  --th1087: #2d4078; /* text #2d4078 */
+  --th1088: #bfd1fb; /* line #bfd1fb */
+  --th1089: #e1e9f6; /* line #e1e9f6 */
+  --th109: #e0ecff; /* surface #e0ecff */
+  --th1090: #6b7baa; /* text #6b7baa */
+  --th1091: #8090b8; /* text #8090b8 */
+  --th1092: #f3f7fd; /* surface #f3f7fd */
+  --th1093: #35487d; /* text #35487d */
+  --th1094: #122b70; /* text #122b70 */
+  --th1095: #8a98bd; /* text #8a98bd */
+  --th1096: #dfe8f6; /* line #dfe8f6 */
+  --th1097: #7585b0; /* text #7585b0 */
+  --th1098: #263d78; /* text #263d78 */
+  --th1099: #7180a7; /* text #7180a7 */
+  --th110: #1d4ed8; /* text #1d4ed8 */
+  --th1100: #6878a6; /* text #6878a6 */
+  --th1101: #526aa5; /* text #526aa5 */
+  --th1102: #53689f; /* text #53689f */
+  --th1103: #e3ebf7; /* line #e3ebf7 */
+  --th1104: #5270ad; /* text #5270ad */
+  --th1105: #52658f; /* text #52658f */
+  --th1106: #c8d7f0; /* line #c8d7f0 */
+  --th1107: #315389; /* text #315389 */
+  --th1108: #7ea4f5; /* line #7ea4f5 */
+  --th1109: #e5edf8; /* line #e5edf8 */
+  --th111: #f3f4f6; /* surface #f3f4f6 */
+  --th1110: #6b7ca4; /* text #6b7ca4 */
+  --th1111: #173b93; /* text #173b93 */
+  --th1112: #176c47; /* text #176c47 */
+  --th1113: #f1fbf5; /* surface #f1fbf5 */
+  --th1114: #aab8d4; /* surface #aab8d4 */
+  --th1115: #e6edf8; /* line #e6edf8 */
+  --th1116: #6f80a7; /* text #6f80a7 */
+  --th1117: #6b7ba3; /* text #6b7ba3 */
+  --th1118: #183675; /* text #183675 */
+  --th1119: #f0ddaf; /* line #f0ddaf */
+  --th112: #475569; /* text #475569 */
+  --th1120: #8a5a00; /* text #8a5a00 */
+  --th1121: #715f3c; /* text #715f3c */
+  --th1122: #c68719; /* text #c68719 */
+  --th1123: #5a75ad; /* text #5a75ad */
+  --th1124: #cfe0ff; /* line #cfe0ff */
+  --th1125: #2b58ba; /* text #2b58ba */
+  --th1126: #425b8e; /* text #425b8e */
+  --th1127: #173e96; /* text #173e96 */
+  --th1128: #adc7ff; /* line #adc7ff */
+  --th1129: #4a67a2; /* text #4a67a2 */
+  --th113: #f1f5f9; /* surface #f1f5f9 */
+  --th1130: #0b3ba5; /* text #0b3ba5 */
+  --th1131: #536b9b; /* text #536b9b */
+  --th1132: #6478a7; /* text #6478a7 */
+  --th1133: #7282a7; /* text #7282a7 */
+  --th1134: #17377e; /* text #17377e */
+  --th1135: #22a06b; /* text #22a06b */
+  --th1136: #61739f; /* text #61739f */
+  --th1137: #193775; /* text #193775 */
+  --th1138: #79bda0; /* line #79bda0 */
+  --th1139: #22a06b; /* shadow #22a06b */
+  --th114: #c5d3ed; /* text #c5d3ed */
+  --th1140: #6680b6; /* text #6680b6 */
+  --th1141: #dff5e8; /* surface #dff5e8 */
+  --th1142: #566b98; /* text #566b98 */
+  --th1143: #244682; /* text #244682 */
+  --th1144: #60729b; /* text #60729b */
+  --th1145: #3d75d7; /* text #3d75d7 */
+  --th1146: #566a96; /* text #566a96 */
+  --th1147: #5471a7; /* text #5471a7 */
+  --th1148: #fff3cc; /* surface #fff3cc */
+  --th1149: #e4ecf7; /* line #e4ecf7 */
+  --th115: rgba(7, 23, 95, 0.25); /* surface rgba(7, 23, 95, 0.25) */
+  --th1150: #6376a2; /* text #6376a2 */
+  --th1151: #16367a; /* text #16367a */
+  --th1152: #f0d69b; /* line #f0d69b */
+  --th1153: #fff9e9; /* surface #fff9e9 */
+  --th1154: #a9ddbf; /* line #a9ddbf */
+  --th1155: #eefaf3; /* surface #eefaf3 */
+  --th1156: #8a610e; /* text #8a610e */
+  --th1157: #654b17; /* text #654b17 */
+  --th1158: #166044; /* text #166044 */
+  --th1159: #735f37; /* text #735f37 */
+  --th116: rgba(7, 23, 95, 0.15); /* shadow rgba(7, 23, 95, 0.15) */
+  --th1160: #f3fbf6; /* surface #f3fbf6 */
+  --th1161: #168052; /* text #168052 */
+  --th1162: #155d42; /* text #155d42 */
+  --th1163: #557865; /* text #557865 */
+  --th1164: #175d44; /* text #175d44 */
+  --th1165: #567563; /* text #567563 */
+  --th1166: #61739e; /* text #61739e */
+  --th1167: #1f55dd; /* line #1f55dd */
+  --th1168: #255be6; /* surface #255be6 */
+  --th1169: #b9d3ff; /* line #b9d3ff */
+  --th117: rgba(45, 105, 255, 0.25); /* shadow rgba(45, 105, 255, 0.25) */
+  --th1170: #2457c5; /* text #2457c5 */
+  --th1171: #dbe6f3; /* line #dbe6f3 */
+  --th1172: rgba(31, 72, 125, 0.06); /* shadow rgba(31, 72, 125, 0.06) */
+  --th1173: #17345f; /* text #17345f */
+  --th1174: #c2413a; /* text #c2413a */
+  --th1175: #f7fff9; /* surface #f7fff9 */
+  --th1176: #e6edf5; /* line #e6edf5 */
+  --th1177: #285f9e; /* text #285f9e */
+  --th1178: #f5f8fc; /* surface #f5f8fc */
+  --th1179: #53657d; /* text #53657d */
+  --th118: #6366f1; /* text #6366f1 */
+  --th1180: #edf1f6; /* line #edf1f6 */
+  --th1181: #293b55; /* text #293b55 */
+  --th1182: #7a8a9e; /* text #7a8a9e */
+  --th1183: #f6f9fd; /* surface #f6f9fd */
+  --th1184: #102a56; /* text #102a56 */
+  --th1185: #cddbf1; /* line #cddbf1 */
+  --th1186: #536987; /* text #536987 */
+  --th1187: rgba(37, 99, 235, 0.141); /* shadow rgba(37, 99, 235, 0.141) */
+  --th1188: rgba(24, 61, 112, 0.059); /* shadow rgba(24, 61, 112, 0.059) */
+  --th1189: #e2eaf5; /* line #e2eaf5 */
+  --th119: #eef2ff; /* surface #eef2ff */
+  --th1190: #16396d; /* text #16396d */
+  --th1191: #94a8c4; /* text #94a8c4 */
+  --th1192: #526987; /* text #526987 */
+  --th1193: rgba(248, 251, 255, 0.922); /* surface rgba(248, 251, 255, 0.922) */
+  --th1194: #77a7f6; /* line #77a7f6 */
+  --th1195: rgba(37, 99, 235, 0.078); /* shadow rgba(37, 99, 235, 0.078) */
+  --th1196: #193c6d; /* text #193c6d */
+  --th1197: #667b99; /* text #667b99 */
+  --th1198: #b9ddc6; /* line #b9ddc6 */
+  --th1199: rgba(15, 75, 46, 0.06); /* shadow rgba(15, 75, 46, 0.06) */
+  --th120: #c7d2fe; /* line #c7d2fe */
+  --th1200: rgba(153, 27, 27, 0.06); /* shadow rgba(153, 27, 27, 0.06) */
+  --th1201: #173b65; /* text #173b65 */
+  --th1202: #5b6b7b; /* text #5b6b7b */
+  --th1203: #2f6bff; /* line #2f6bff */
+  --th1204: #2f6bff; /* surface #2f6bff */
+  --th1205: #245fe0; /* surface #245fe0 */
+  --th1206: #2f6bff; /* text #2f6bff */
+  --th1207: #d6dee7; /* line #d6dee7 */
+  --th1208: #f5f8fb; /* surface #f5f8fb */
+  --th1209: #eaf1f8; /* surface #eaf1f8 */
+  --th121: rgba(45, 105, 255, 0.35); /* shadow rgba(45, 105, 255, 0.35) */
+  --th1210: #eef2f6; /* surface #eef2f6 */
+  --th122: rgba(49, 104, 255, 0.3); /* line rgba(49, 104, 255, 0.3) */
+  --th123: rgba(45, 86, 146, 0.08); /* shadow rgba(45, 86, 146, 0.08) */
+  --th124: #f0fdf4; /* surface #f0fdf4 */
+  --th125: #bbf7d0; /* line #bbf7d0 */
+  --th126: #f8fafc; /* surface #f8fafc */
+  --th127: #fafcff; /* surface #fafcff */
+  --th128: rgba(7, 23, 95, 0.85); /* surface rgba(7, 23, 95, 0.85) */
+  --th129: rgba(7, 23, 95, 0.25); /* shadow rgba(7, 23, 95, 0.25) */
+  --th130: #0891b2; /* surface #0891b2 */
+  --th131: rgba(8, 145, 178, 0.28); /* shadow rgba(8, 145, 178, 0.28) */
+  --th132: #e2e8f0; /* line #e2e8f0 */
+  --th133: #eef2f7; /* line #eef2f7 */
+  --th134: #0891b2; /* text #0891b2 */
+  --th135: #c2410c; /* text #c2410c */
+  --th136: #334155; /* text #334155 */
+  --th137: #07175f; /* surface #07175f */
+  --th138: #dbe7fb; /* surface #dbe7fb */
+  --th139: #5d6d9c; /* surface #5d6d9c */
+  --th140: rgba(201, 221, 245, 0.72); /* line rgba(201, 221, 245, 0.72) */
+  --th141: #2563eb; /* line #2563eb */
+  --th142: rgba(248, 251, 255, 0.86); /* surface rgba(248, 251, 255, 0.86) */
+  --th143: rgba(22, 163, 74, 0.26); /* line rgba(22, 163, 74, 0.26) */
+  --th144: #16a34a; /* line #16a34a */
+  --th145: #166534; /* text #166534 */
+  --th146: rgba(220, 38, 38, 0.28); /* line rgba(220, 38, 38, 0.28) */
+  --th147: #991b1b; /* text #991b1b */
+  --th148: rgba(201, 221, 245, 0.82); /* line rgba(201, 221, 245, 0.82) */
+  --th149: rgba(255, 255, 255, 0.92); /* surface rgba(255, 255, 255, 0.92) */
+  --th150: rgba(201, 221, 245, 0.7); /* line rgba(201, 221, 245, 0.7) */
+  --th151: rgba(248, 251, 255, 0.68); /* surface rgba(248, 251, 255, 0.68) */
+  --th152: rgba(37, 99, 235, 0.38); /* line rgba(37, 99, 235, 0.38) */
+  --th153: rgba(239, 246, 255, 0.94); /* surface rgba(239, 246, 255, 0.94) */
+  --th154: rgba(220, 38, 38, 0.48); /* line rgba(220, 38, 38, 0.48) */
+  --th155: rgba(220, 38, 38, 0.72); /* line rgba(220, 38, 38, 0.72) */
+  --th156: #dc2626; /* shadow #dc2626 */
+  --th157: rgba(22, 163, 74, 0.34); /* line rgba(22, 163, 74, 0.34) */
+  --th158: rgba(22, 163, 74, 0.54); /* line rgba(22, 163, 74, 0.54) */
+  --th159: #183456; /* text #183456 */
+  --th160: #e2e8f0; /* surface #e2e8f0 */
+  --th161: #315178; /* text #315178 */
+  --th162: #1747cc; /* text #1747cc */
+  --th163: rgba(201, 221, 245, 0.76); /* line rgba(201, 221, 245, 0.76) */
+  --th164: rgba(248, 251, 255, 0.8); /* surface rgba(248, 251, 255, 0.8) */
+  --th165: #53649f; /* text #53649f */
+  --th166: rgba(245, 158, 11, 0.34); /* line rgba(245, 158, 11, 0.34) */
+  --th167: #fffbeb; /* surface #fffbeb */
+  --th168: rgba(220, 38, 38, 0.56); /* line rgba(220, 38, 38, 0.56) */
+  --th169: #7f1d1d; /* text #7f1d1d */
+  --th170: rgba(22, 163, 74, 0.28); /* line rgba(22, 163, 74, 0.28) */
+  --th171: rgba(255, 255, 255, 0.8); /* surface rgba(255, 255, 255, 0.8) */
+  --th172: rgba(201, 221, 245, 0.58); /* line rgba(201, 221, 245, 0.58) */
+  --th173: rgba(255, 255, 255, 0.85); /* surface rgba(255, 255, 255, 0.85) */
+  --th174: rgba(239, 68, 68, 0.32); /* line rgba(239, 68, 68, 0.32) */
+  --th175: rgba(254, 242, 242, 0.7); /* surface rgba(254, 242, 242, 0.7) */
+  --th176: rgba(239, 68, 68, 0.14); /* surface rgba(239, 68, 68, 0.14) */
+  --th177: #047857; /* text #047857 */
+  --th178: rgba(16, 185, 129, 0.14); /* surface rgba(16, 185, 129, 0.14) */
+  --th179: #0f2d5c; /* text #0f2d5c */
+  --th180: #eff6ff; /* surface #eff6ff */
+  --th181: #f8fcff; /* surface #f8fcff */
+  --th182: #f4f9ff; /* surface #f4f9ff */
+  --th183: #eef6ff; /* surface #eef6ff */
+  --th184: rgba(67, 149, 255, 0.18); /* surface rgba(67, 149, 255, 0.18) */
+  --th185: rgba(242, 248, 255, 0.94); /* surface rgba(242, 248, 255, 0.94) */
+  --th186: rgba(58, 115, 255, 0.12); /* surface rgba(58, 115, 255, 0.12) */
+  --th187: rgba(208, 223, 247, 0.72); /* line rgba(208, 223, 247, 0.72) */
+  --th188: rgba(45, 86, 146, 0.06); /* shadow rgba(45, 86, 146, 0.06) */
+  --th189: rgba(45, 86, 146, 0.11); /* shadow rgba(45, 86, 146, 0.11) */
+  --th190: #111f72; /* text #111f72 */
+  --th191: #6575ac; /* text #6575ac */
+  --th192: #7a77ff; /* surface #7a77ff */
+  --th193: #20d3ff; /* surface #20d3ff */
+  --th194: rgba(39, 104, 255, 0.2); /* shadow rgba(39, 104, 255, 0.2) */
+  --th195: #18276f; /* text #18276f */
+  --th196: #5564aa; /* text #5564aa */
+  --th197: #edf4ff; /* surface #edf4ff */
+  --th198: rgba(237, 246, 255, 0.55); /* surface rgba(237, 246, 255, 0.55) */
+  --th199: #2861ff; /* text #2861ff */
+  --th200: #ff3d48; /* surface #ff3d48 */
+  --th201: #14226c; /* text #14226c */
+  --th202: rgba(255, 255, 255, 0.82); /* surface rgba(255, 255, 255, 0.82) */
+  --th203: #102661; /* surface #102661 */
+  --th204: #3d9be8; /* surface #3d9be8 */
+  --th205: #6072aa; /* text #6072aa */
+  --th206: rgba(91, 151, 234, 0.05); /* surface rgba(91, 151, 234, 0.05) */
+  --th207: rgba(0, 0, 0, 0.5); /* surface rgba(0, 0, 0, 0.5) */
+  --th208: rgba(67, 154, 255, 0.15); /* surface rgba(67, 154, 255, 0.15) */
+  --th209: #0c1a68; /* text #0c1a68 */
+  --th210: #1c5aff; /* text #1c5aff */
+  --th211: rgba(235, 244, 255, 0.86); /* surface rgba(235, 244, 255, 0.86) */
+  --th212: #1261ff; /* text #1261ff */
+  --th213: #4e71ba; /* text #4e71ba */
+  --th214: #07136a; /* text #07136a */
+  --th215: #273687; /* text #273687 */
+  --th216: #344890; /* text #344890 */
+  --th217: #b8c9ef; /* surface #b8c9ef */
+  --th218: rgba(49, 104, 255, 0.12); /* shadow rgba(49, 104, 255, 0.12) */
+  --th219: rgba(49, 104, 255, 0.45); /* line rgba(49, 104, 255, 0.45) */
+  --th220: rgba(49, 104, 255, 0.2); /* surface rgba(49, 104, 255, 0.2) */
+  --th221: rgba(49, 104, 255, 0.18); /* surface rgba(49, 104, 255, 0.18) */
+  --th222: rgba(255, 255, 255, 0.9); /* shadow rgba(255, 255, 255, 0.9) */
+  --th223: rgba(200, 219, 247, 0.78); /* line rgba(200, 219, 247, 0.78) */
+  --th224: rgba(255, 255, 255, 0.58); /* surface rgba(255, 255, 255, 0.58) */
+  --th225: rgba(47, 93, 157, 0.08); /* shadow rgba(47, 93, 157, 0.08) */
+  --th226: #3f78ff; /* text #3f78ff */
+  --th227: #8fb4ff; /* surface #8fb4ff */
+  --th228: #2563eb; /* surface #2563eb */
+  --th229: #22c5d8; /* surface #22c5d8 */
+  --th230: #5b7cff; /* surface #5b7cff */
+  --th231: rgba(49, 104, 255, 0.24); /* line rgba(49, 104, 255, 0.24) */
+  --th232: rgba(255, 255, 255, 0.78); /* surface rgba(255, 255, 255, 0.78) */
+  --th233: rgba(43, 96, 172, 0.14); /* shadow rgba(43, 96, 172, 0.14) */
+  --th234: rgba(49, 104, 255, 0.44); /* surface rgba(49, 104, 255, 0.44) */
+  --th235: rgba(31, 182, 255, 0.18); /* surface rgba(31, 182, 255, 0.18) */
+  --th236: rgba(200, 219, 247, 0.7); /* line rgba(200, 219, 247, 0.7) */
+  --th237: rgba(255, 255, 255, 0.6); /* surface rgba(255, 255, 255, 0.6) */
+  --th238: #7fa9ff; /* surface #7fa9ff */
+  --th239: #2ed0e6; /* surface #2ed0e6 */
+  --th240: rgba(222, 236, 255, 0.78); /* surface rgba(222, 236, 255, 0.78) */
+  --th241: rgba(53, 92, 156, 0.12); /* shadow rgba(53, 92, 156, 0.12) */
+  --th242: #8db4ff; /* surface #8db4ff */
+  --th243: #d7e5ff; /* surface #d7e5ff */
+  --th244: #2d72ff; /* surface #2d72ff */
+  --th245: #24cce6; /* surface #24cce6 */
+  --th246: rgba(45, 114, 255, 0.45); /* shadow rgba(45, 114, 255, 0.45) */
+  --th247: #3571ff; /* text #3571ff */
+  --th248: rgba(37, 96, 174, 0.13); /* shadow rgba(37, 96, 174, 0.13) */
+  --th249: #dceaff; /* surface #dceaff */
+  --th250: rgba(39, 86, 156, 0.16); /* shadow rgba(39, 86, 156, 0.16) */
+  --th251: #081865; /* text #081865 */
+  --th252: #dce7f8; /* line #dce7f8 */
+  --th253: #0e1e70; /* text #0e1e70 */
+  --th254: rgba(255, 255, 255, 0.86); /* surface rgba(255, 255, 255, 0.86) */
+  --th255: rgba(42, 91, 170, 0.07); /* shadow rgba(42, 91, 170, 0.07) */
+  --th256: rgba(49, 104, 255, 0.42); /* line rgba(49, 104, 255, 0.42) */
+  --th257: #3168ff; /* line #3168ff */
+  --th258: rgba(49, 104, 255, 0.16); /* shadow rgba(49, 104, 255, 0.16) */
+  --th259: #08b997; /* text #08b997 */
+  --th260: #def8f1; /* surface #def8f1 */
+  --th261: #e8efff; /* surface #e8efff */
+  --th262: #874dff; /* text #874dff */
+  --th263: #f2e9ff; /* surface #f2e9ff */
+  --th264: #ff7f16; /* text #ff7f16 */
+  --th265: #fff0df; /* surface #fff0df */
+  --th266: #f2a10d; /* text #f2a10d */
+  --th267: #fff5dc; /* surface #fff5dc */
+  --th268: #7280b4; /* text #7280b4 */
+  --th269: #eef1fa; /* surface #eef1fa */
+  --th270: #52639e; /* text #52639e */
+  --th271: #d9e5f8; /* line #d9e5f8 */
+  --th272: #8a99c6; /* text #8a99c6 */
+  --th273: #f3f7ff; /* surface #f3f7ff */
+  --th274: rgba(217, 229, 248, 0.96); /* line rgba(217, 229, 248, 0.96) */
+  --th275: rgba(255, 255, 255, 0.98); /* surface rgba(255, 255, 255, 0.98) */
+  --th276: #eef5ff; /* surface #eef5ff */
+  --th277: #10206c; /* text #10206c */
+  --th278: #7b8bbd; /* text #7b8bbd */
+  --th279: rgba(49, 104, 255, 0.18); /* line rgba(49, 104, 255, 0.18) */
+  --th280: rgba(238, 245, 255, 0.86); /* surface rgba(238, 245, 255, 0.86) */
+  --th281: #6d7fb0; /* text #6d7fb0 */
+  --th282: #356dff; /* surface #356dff */
+  --th283: #2654f2; /* surface #2654f2 */
+  --th284: rgba(49, 104, 255, 0.28); /* shadow rgba(49, 104, 255, 0.28) */
+  --th285: rgba(49, 104, 255, 0.34); /* shadow rgba(49, 104, 255, 0.34) */
+  --th286: rgba(255, 255, 255, 0.35); /* line rgba(255, 255, 255, 0.35) */
+  --th287: #ffffff; /* line #ffffff */
+  --th288: #2f5dd7; /* text #2f5dd7 */
+  --th289: rgba(218, 231, 250, 0.9); /* line rgba(218, 231, 250, 0.9) */
+  --th290: rgba(242, 247, 255, 0.92); /* surface rgba(242, 247, 255, 0.92) */
+  --th291: rgba(248, 251, 255, 0.82); /* surface rgba(248, 251, 255, 0.82) */
+  --th292: #1230c0; /* text #1230c0 */
+  --th293: #12246f; /* text #12246f */
+  --th294: #6676a6; /* text #6676a6 */
+  --th295: #10216b; /* text #10216b */
+  --th296: #f9fcff; /* surface #f9fcff */
+  --th297: #f5f9ff; /* surface #f5f9ff */
+  --th298: rgba(88, 157, 255, 0.1); /* surface rgba(88, 157, 255, 0.1) */
+  --th299: rgba(255, 255, 255, 0.9); /* surface rgba(255, 255, 255, 0.9) */
+  --th300: #dde8fa; /* line #dde8fa */
+  --th301: #445796; /* text #445796 */
+  --th302: #dfe9fb; /* line #dfe9fb */
+  --th303: #aac1eb; /* surface #aac1eb */
+  --th304: #6879ac; /* text #6879ac */
+  --th305: #9aadcf; /* text #9aadcf */
+  --th306: #263677; /* text #263677 */
+  --th307: #7a89b7; /* text #7a89b7 */
+  --th308: #39b980; /* surface #39b980 */
+  --th309: rgba(37, 99, 235, 0.12); /* surface rgba(37, 99, 235, 0.12) */
+  --th310: rgba(247, 250, 255, 0.98); /* surface rgba(247, 250, 255, 0.98) */
+  --th311: rgba(37, 99, 235, 0.18); /* shadow rgba(37, 99, 235, 0.18) */
+  --th312: rgba(37, 99, 235, 0.1); /* surface rgba(37, 99, 235, 0.1) */
+  --th313: #22b8cf; /* surface #22b8cf */
+  --th314: #8290b6; /* text #8290b6 */
+  --th315: rgba(37, 99, 235, 0.12); /* shadow rgba(37, 99, 235, 0.12) */
+  --th316: rgba(37, 99, 235, 0.18); /* line rgba(37, 99, 235, 0.18) */
+  --th317: rgba(37, 99, 235, 0.16); /* shadow rgba(37, 99, 235, 0.16) */
+  --th318: #cbdaf3; /* surface #cbdaf3 */
+  --th319: rgba(220, 38, 38, 0.22); /* line rgba(220, 38, 38, 0.22) */
+  --th320: rgba(255, 255, 255, 0.96); /* surface rgba(255, 255, 255, 0.96) */
+  --th321: rgba(255, 247, 247, 0.9); /* surface rgba(255, 247, 247, 0.9) */
+  --th322: #bfdbfe; /* line #bfdbfe */
+  --th323: #0f766e; /* text #0f766e */
+  --th324: #99f6e4; /* line #99f6e4 */
+  --th325: #ecfeff; /* surface #ecfeff */
+  --th326: rgba(22, 163, 74, 0.3); /* line rgba(22, 163, 74, 0.3) */
+  --th327: #fecaca; /* line #fecaca */
+  --th328: #dbe4f0; /* line #dbe4f0 */
+  --th329: #d8e5fb; /* line #d8e5fb */
+  --th330: rgba(37, 99, 235, 0.035); /* surface rgba(37, 99, 235, 0.035) */
+  --th331: rgba(239, 246, 255, 0.9); /* shadow rgba(239, 246, 255, 0.9) */
+  --th332: #e0ebfb; /* line #e0ebfb */
+  --th333: #26437f; /* text #26437f */
+  --th334: rgba(37, 99, 235, 0.05); /* shadow rgba(37, 99, 235, 0.05) */
+  --th335: #eaf2ff; /* surface #eaf2ff */
+  --th336: rgba(22, 163, 74, 0.22); /* line rgba(22, 163, 74, 0.22) */
+  --th337: rgba(240, 253, 244, 0.92); /* surface rgba(240, 253, 244, 0.92) */
+  --th338: rgba(254, 242, 242, 0.94); /* surface rgba(254, 242, 242, 0.94) */
+  --th339: rgba(245, 158, 11, 0.28); /* line rgba(245, 158, 11, 0.28) */
+  --th340: rgba(255, 251, 235, 0.94); /* surface rgba(255, 251, 235, 0.94) */
+  --th341: #f1f6ff; /* surface #f1f6ff */
+  --th342: #1854ff; /* text #1854ff */
+  --th343: #cfe0fa; /* line #cfe0fa */
+  --th344: #dfeafa; /* line #dfeafa */
+  --th345: #93b7ff; /* line #93b7ff */
+  --th346: #245dff; /* text #245dff */
+  --th347: #13a97b; /* text #13a97b */
+  --th348: #7a52e8; /* text #7a52e8 */
+  --th349: #f07822; /* text #f07822 */
+  --th350: #1c9fb7; /* text #1c9fb7 */
+  --th351: #db8e00; /* text #db8e00 */
+  --th352: #f7faff; /* surface #f7faff */
+  --th353: #203174; /* text #203174 */
+  --th354: #6a7aad; /* text #6a7aad */
+  --th355: #d7e4f8; /* line #d7e4f8 */
+  --th356: #c9d8f2; /* surface #c9d8f2 */
+  --th357: #ccfbf1; /* surface #ccfbf1 */
+  --th358: #fff7ed; /* surface #fff7ed */
+  --th359: #31458c; /* text #31458c */
+  --th360: #11a374; /* text #11a374 */
+  --th361: #e7f8f1; /* surface #e7f8f1 */
+  --th362: #22a86f; /* text #22a86f */
+  --th363: #7d91c2; /* svg #7d91c2 */
+  --th364: #18a86f; /* text #18a86f */
+  --th365: #29b978; /* surface #29b978 */
+  --th366: #5d7cff; /* surface #5d7cff */
+  --th367: #d9e3f5; /* surface #d9e3f5 */
+  --th368: #c8d3e8; /* surface #c8d3e8 */
+  --th369: #e1ebfa; /* line #e1ebfa */
+  --th370: #1854ff; /* line #1854ff */
+  --th371: rgba(71, 122, 214, 0.026); /* surface rgba(71, 122, 214, 0.026) */
+  --th372: #dce8fb; /* line #dce8fb */
+  --th373: #fed7aa; /* line #fed7aa */
+  --th374: #9a3412; /* text #9a3412 */
+  --th375: rgba(255, 247, 237, 0.96); /* surface rgba(255, 247, 237, 0.96) */
+  --th376: rgba(249, 115, 22, 0.1); /* shadow rgba(249, 115, 22, 0.1) */
+  --th377: rgba(37, 99, 235, 0.08); /* svg rgba(37, 99, 235, 0.08) */
+  --th378: #2563eb; /* svg #2563eb */
+  --th379: #31446f; /* text #31446f */
+  --th380: rgba(248, 251, 255, 0.6); /* svg rgba(248, 251, 255, 0.6) */
+  --th381: rgba(196, 215, 243, 0.78); /* svg rgba(196, 215, 243, 0.78) */
+  --th382: rgba(242, 247, 255, 0.6); /* svg rgba(242, 247, 255, 0.6) */
+  --th383: rgba(232, 249, 255, 0.5); /* svg rgba(232, 249, 255, 0.5) */
+  --th384: rgba(240, 253, 244, 0.5); /* svg rgba(240, 253, 244, 0.5) */
+  --th385: rgba(255, 255, 255, 0.62); /* svg rgba(255, 255, 255, 0.62) */
+  --th386: #6b7baa; /* svg #6b7baa */
+  --th387: #0b1b6e; /* svg #0b1b6e */
+  --th388: #53649f; /* svg #53649f */
+  --th389: rgba(255, 255, 255, 0.94); /* svg rgba(255, 255, 255, 0.94) */
+  --th390: #22c55e; /* svg #22c55e */
+  --th391: rgba(239, 246, 255, 0.72); /* svg rgba(239, 246, 255, 0.72) */
+  --th392: #6f95e8; /* svg #6f95e8 */
+  --th393: #3f63cf; /* svg #3f63cf */
+  --th394: #16a34a; /* svg #16a34a */
+  --th395: #ffffff; /* svg #ffffff */
+  --th396: #ef4444; /* svg #ef4444 */
+  --th397: rgba(240, 253, 244, 0.86); /* svg rgba(240, 253, 244, 0.86) */
+  --th398: rgba(255, 255, 255, 0.82); /* svg rgba(255, 255, 255, 0.82) */
+  --th399: #d8e5fb; /* svg #d8e5fb */
+  --th400: #245dff; /* svg #245dff */
+  --th401: rgba(239, 68, 68, 0.18); /* shadow rgba(239, 68, 68, 0.18) */
+  --th402: rgba(255, 255, 255, 0.96); /* svg rgba(255, 255, 255, 0.96) */
+  --th403: #fecaca; /* svg #fecaca */
+  --th404: rgba(239, 68, 68, 0.12); /* shadow rgba(239, 68, 68, 0.12) */
+  --th405: #991b1b; /* svg #991b1b */
+  --th406: #f59e0b; /* text #f59e0b */
+  --th407: #ef4444; /* text #ef4444 */
+  --th408: #f97316; /* text #f97316 */
+  --th409: #94a3b8; /* text #94a3b8 */
+  --th410: rgba(15, 23, 42, 0.14); /* shadow rgba(15, 23, 42, 0.14) */
+  --th411: rgba(255, 255, 255, 0.92); /* svg rgba(255, 255, 255, 0.92) */
+  --th412: rgba(34, 197, 94, 0.18); /* shadow rgba(34, 197, 94, 0.18) */
+  --th413: rgba(240, 253, 244, 0.96); /* svg rgba(240, 253, 244, 0.96) */
+  --th414: #86efac; /* svg #86efac */
+  --th415: #15803d; /* svg #15803d */
+  --th416: rgba(254, 249, 195, 0.96); /* svg rgba(254, 249, 195, 0.96) */
+  --th417: #fde68a; /* svg #fde68a */
+  --th418: rgba(255, 247, 237, 0.97); /* svg rgba(255, 247, 237, 0.97) */
+  --th419: #fdba74; /* svg #fdba74 */
+  --th420: #b45309; /* svg #b45309 */
+  --th421: rgba(37, 99, 235, 0.1); /* svg rgba(37, 99, 235, 0.1) */
+  --th422: rgba(37, 99, 235, 0.28); /* svg rgba(37, 99, 235, 0.28) */
+  --th423: rgba(37, 99, 235, 0.24); /* shadow rgba(37, 99, 235, 0.24) */
+  --th424: #f97316; /* svg #f97316 */
+  --th425: rgba(37, 99, 235, 0.16); /* svg rgba(37, 99, 235, 0.16) */
+  --th426: #bfdbfe; /* svg #bfdbfe */
+  --th427: #fed7aa; /* svg #fed7aa */
+  --th428: #bbf7d0; /* svg #bbf7d0 */
+  --th429: rgba(255, 255, 255, 0.97); /* surface rgba(255, 255, 255, 0.97) */
+  --th430: rgba(42, 91, 170, 0.13); /* shadow rgba(42, 91, 170, 0.13) */
+  --th431: #e8effb; /* line #e8effb */
+  --th432: rgba(255, 255, 255, 0.72); /* svg rgba(255, 255, 255, 0.72) */
+  --th433: #d7e4f8; /* svg #d7e4f8 */
+  --th434: rgba(255, 255, 255, 0.9); /* svg rgba(255, 255, 255, 0.9) */
+  --th435: #c7d9f5; /* svg #c7d9f5 */
+  --th436: #eff6ff; /* svg #eff6ff */
+  --th437: #fff5f5; /* svg #fff5f5 */
+  --th438: rgba(37, 99, 235, 0.028); /* surface rgba(37, 99, 235, 0.028) */
+  --th439: rgba(190, 209, 238, 0.85); /* svg rgba(190, 209, 238, 0.85) */
+  --th440: rgba(239, 246, 255, 0.48); /* svg rgba(239, 246, 255, 0.48) */
+  --th441: rgba(191, 219, 254, 0.55); /* svg rgba(191, 219, 254, 0.55) */
+  --th442: rgba(240, 253, 250, 0.38); /* svg rgba(240, 253, 250, 0.38) */
+  --th443: rgba(186, 230, 253, 0.48); /* svg rgba(186, 230, 253, 0.48) */
+  --th444: #64748b; /* svg #64748b */
+  --th445: rgba(239, 68, 68, 0.2); /* shadow rgba(239, 68, 68, 0.2) */
+  --th446: #334155; /* svg #334155 */
+  --th447: rgba(255, 255, 255, 0.95); /* svg rgba(255, 255, 255, 0.95) */
+  --th448: rgba(255, 255, 255, 0.74); /* svg rgba(255, 255, 255, 0.74) */
+  --th449: rgba(191, 219, 254, 0.75); /* svg rgba(191, 219, 254, 0.75) */
+  --th450: rgba(37, 99, 235, 0.08); /* shadow rgba(37, 99, 235, 0.08) */
+  --th451: #60a5fa; /* svg #60a5fa */
+  --th452: rgba(219, 234, 254, 0.52); /* svg rgba(219, 234, 254, 0.52) */
+  --th453: #4f7fd8; /* svg #4f7fd8 */
+  --th454: #7ba6ee; /* svg #7ba6ee */
+  --th455: rgba(251, 146, 60, 0.2); /* svg rgba(251, 146, 60, 0.2) */
+  --th456: rgba(239, 68, 68, 0.12); /* svg rgba(239, 68, 68, 0.12) */
+  --th457: rgba(254, 242, 242, 0.72); /* svg rgba(254, 242, 242, 0.72) */
+  --th458: rgba(254, 242, 242, 0.42); /* svg rgba(254, 242, 242, 0.42) */
+  --th459: rgba(255, 247, 247, 0.92); /* svg rgba(255, 247, 247, 0.92) */
+  --th460: rgba(239, 68, 68, 0.34); /* svg rgba(239, 68, 68, 0.34) */
+  --th461: rgba(37, 99, 235, 0.024); /* surface rgba(37, 99, 235, 0.024) */
+  --th462: rgba(255, 255, 255, 0.84); /* svg rgba(255, 255, 255, 0.84) */
+  --th463: rgba(190, 209, 238, 0.9); /* svg rgba(190, 209, 238, 0.9) */
+  --th464: rgba(255, 255, 255, 0.8); /* svg rgba(255, 255, 255, 0.8) */
+  --th465: rgba(191, 219, 254, 0.72); /* svg rgba(191, 219, 254, 0.72) */
+  --th466: rgba(37, 99, 235, 0.1); /* shadow rgba(37, 99, 235, 0.1) */
+  --th467: rgba(239, 68, 68, 0.14); /* shadow rgba(239, 68, 68, 0.14) */
+  --th468: #f0fdf4; /* svg #f0fdf4 */
+  --th469: #fca5a5; /* svg #fca5a5 */
+  --th470: rgba(248, 251, 255, 0.96); /* svg rgba(248, 251, 255, 0.96) */
+  --th471: rgba(239, 246, 255, 0.7); /* svg rgba(239, 246, 255, 0.7) */
+  --th472: #d8e6fb; /* svg #d8e6fb */
+  --th473: rgba(235, 243, 255, 0.76); /* svg rgba(235, 243, 255, 0.76) */
+  --th474: rgba(238, 247, 255, 0.74); /* svg rgba(238, 247, 255, 0.74) */
+  --th475: rgba(243, 247, 255, 0.82); /* svg rgba(243, 247, 255, 0.82) */
+  --th476: rgba(232, 249, 255, 0.78); /* svg rgba(232, 249, 255, 0.78) */
+  --th477: #4b74d8; /* svg #4b74d8 */
+  --th478: #25a861; /* svg #25a861 */
+  --th479: #ff5d45; /* svg #ff5d45 */
+  --th480: #ff9a36; /* svg #ff9a36 */
+  --th481: #20b8d7; /* svg #20b8d7 */
+  --th482: #7d63ff; /* svg #7d63ff */
+  --th483: #b7c4d9; /* svg #b7c4d9 */
+  --th484: #3168ff; /* svg #3168ff */
+  --th485: #f8fbff; /* svg #f8fbff */
+  --th486: #8fb2ff; /* svg #8fb2ff */
+  --th487: rgba(245, 255, 248, 0.72); /* svg rgba(245, 255, 248, 0.72) */
+  --th488: rgba(247, 251, 255, 0.72); /* svg rgba(247, 251, 255, 0.72) */
+  --th489: #f59e0b; /* svg #f59e0b */
+  --th490: #4b74d8; /* surface #4b74d8 */
+  --th491: #25a861; /* surface #25a861 */
+  --th492: #ff5d45; /* surface #ff5d45 */
+  --th493: #20b8d7; /* surface #20b8d7 */
+  --th494: #ff9a36; /* surface #ff9a36 */
+  --th495: #7d63ff; /* surface #7d63ff */
+  --th496: #53649f; /* surface #53649f */
+  --th497: #f2f7ff; /* surface #f2f7ff */
+  --th498: #ecf3ff; /* surface #ecf3ff */
+  --th499: #bcd2f4; /* svg #bcd2f4 */
+  --th500: #ea580c; /* text #ea580c */
+  --th501: #f2f6ff; /* surface #f2f6ff */
+  --th502: #86efac; /* line #86efac */
+  --th503: #22c55e; /* shadow #22c55e */
+  --th504: #f97316; /* shadow #f97316 */
+  --th505: #3b82f6; /* shadow #3b82f6 */
+  --th506: rgba(239, 246, 255, 0.96); /* surface rgba(239, 246, 255, 0.96) */
+  --th507: rgba(34, 197, 94, 0.08); /* shadow rgba(34, 197, 94, 0.08) */
+  --th508: #e6eefb; /* line #e6eefb */
+  --th509: #8bb8ff; /* line #8bb8ff */
+  --th510: #2563eb; /* shadow #2563eb */
+  --th511: #fff7f7; /* surface #fff7f7 */
+  --th512: #fde68a; /* line #fde68a */
+  --th513: rgba(38, 85, 150, 0.16); /* line rgba(38, 85, 150, 0.16) */
+  --th514: rgba(244, 249, 255, 0.82); /* surface rgba(244, 249, 255, 0.82) */
+  --th515: rgba(32, 184, 215, 0.12); /* surface rgba(32, 184, 215, 0.12) */
+  --th516: rgba(24, 61, 112, 0.1); /* shadow rgba(24, 61, 112, 0.1) */
+  --th517: #112b4f; /* text #112b4f */
+  --th518: rgba(37, 99, 235, 0.55); /* surface rgba(37, 99, 235, 0.55) */
+  --th519: rgba(37, 99, 235, 0); /* surface rgba(37, 99, 235, 0) */
+  --th520: #213a58; /* text #213a58 */
+  --th521: rgba(138, 166, 210, 0.18); /* line rgba(138, 166, 210, 0.18) */
+  --th522: rgba(245, 248, 255, 0.72); /* surface rgba(245, 248, 255, 0.72) */
+  --th523: #25365f; /* text #25365f */
+  --th524: rgba(37, 99, 235, 0.14); /* line rgba(37, 99, 235, 0.14) */
+  --th525: #17306f; /* text #17306f */
+  --th526: rgba(37, 99, 235, 0.08); /* surface rgba(37, 99, 235, 0.08) */
+  --th527: rgba(37, 99, 235, 0.02); /* surface rgba(37, 99, 235, 0.02) */
+  --th528: rgba(37, 99, 235, 0.03); /* surface rgba(37, 99, 235, 0.03) */
+  --th529: rgba(248, 251, 255, 0.6); /* surface rgba(248, 251, 255, 0.6) */
+  --th530: rgba(138, 166, 210, 0.22); /* line rgba(138, 166, 210, 0.22) */
+  --th531: rgba(37, 99, 235, 0.35); /* surface rgba(37, 99, 235, 0.35) */
+  --th532: rgba(37, 99, 235, 0.05); /* surface rgba(37, 99, 235, 0.05) */
+  --th533: rgba(13, 138, 122, 0.4); /* surface rgba(13, 138, 122, 0.4) */
+  --th534: rgba(13, 138, 122, 0.05); /* surface rgba(13, 138, 122, 0.05) */
+  --th535: rgba(107, 78, 224, 0.4); /* surface rgba(107, 78, 224, 0.4) */
+  --th536: rgba(107, 78, 224, 0.05); /* surface rgba(107, 78, 224, 0.05) */
+  --th537: rgba(37, 99, 235, 0.3); /* line rgba(37, 99, 235, 0.3) */
+  --th538: rgba(24, 61, 112, 0.08); /* shadow rgba(24, 61, 112, 0.08) */
+  --th539: rgba(13, 138, 122, 0.12); /* surface rgba(13, 138, 122, 0.12) */
+  --th540: #0d8a7a; /* text #0d8a7a */
+  --th541: rgba(107, 78, 224, 0.12); /* surface rgba(107, 78, 224, 0.12) */
+  --th542: #6b4ee0; /* text #6b4ee0 */
+  --th543: rgba(138, 166, 210, 0.28); /* line rgba(138, 166, 210, 0.28) */
+  --th544: rgba(15, 31, 92, 0.04); /* shadow rgba(15, 31, 92, 0.04) */
+  --th545: #8590a8; /* text #8590a8 */
+  --th546: rgba(138, 166, 210, 0.3); /* line rgba(138, 166, 210, 0.3) */
+  --th547: rgba(238, 242, 250, 0.9); /* surface rgba(238, 242, 250, 0.9) */
+  --th548: rgba(37, 99, 235, 0.06); /* surface rgba(37, 99, 235, 0.06) */
+  --th549: rgba(138, 166, 210, 0.6); /* line rgba(138, 166, 210, 0.6) */
+  --th550: rgba(255, 255, 255, 0.74); /* surface rgba(255, 255, 255, 0.74) */
+  --th551: rgba(244, 249, 255, 0.9); /* surface rgba(244, 249, 255, 0.9) */
+  --th552: rgba(239, 68, 68, 0.08); /* surface rgba(239, 68, 68, 0.08) */
+  --th553: #f5f8ff; /* surface #f5f8ff */
+  --th554: #7181ad; /* text #7181ad */
+  --th555: #173b76; /* text #173b76 */
+  --th556: #ef4444; /* line #ef4444 */
+  --th557: #fff8f8; /* surface #fff8f8 */
+  --th558: #f6f9ff; /* surface #f6f9ff */
+  --th559: #f59e0b; /* line #f59e0b */
+  --th560: #fffaf0; /* surface #fffaf0 */
+  --th561: #466087; /* text #466087 */
+  --th562: #ecfdf5; /* surface #ecfdf5 */
+  --th563: rgba(37, 99, 235, 0.16); /* line rgba(37, 99, 235, 0.16) */
+  --th564: #6b7eab; /* text #6b7eab */
+  --th565: rgba(244, 249, 255, 0.86); /* surface rgba(244, 249, 255, 0.86) */
+  --th566: rgba(239, 246, 255, 0.78); /* surface rgba(239, 246, 255, 0.78) */
+  --th567: rgba(15, 23, 42, 0.1); /* line rgba(15, 23, 42, 0.1) */
+  --th568: rgba(15, 23, 42, 0.08); /* line rgba(15, 23, 42, 0.08) */
+  --th569: rgba(239, 246, 255, 0.9); /* surface rgba(239, 246, 255, 0.9) */
+  --th570: rgba(15, 23, 42, 0.06); /* surface rgba(15, 23, 42, 0.06) */
+  --th571: #dc2626; /* svg #dc2626 */
+  --th572: rgba(220, 38, 38, 0.08); /* svg rgba(220, 38, 38, 0.08) */
+  --th573: rgba(220, 38, 38, 0.055); /* svg rgba(220, 38, 38, 0.055) */
+  --th574: rgba(220, 38, 38, 0.035); /* svg rgba(220, 38, 38, 0.035) */
+  --th575: #1f2937; /* svg #1f2937 */
+  --th576: #111827; /* svg #111827 */
+  --th577: #b91c1c; /* svg #b91c1c */
+  --th578: #94a3b8; /* svg #94a3b8 */
+  --th579: #f8fafc; /* svg #f8fafc */
+  --th580: #1747cc; /* svg #1747cc */
+  --th581: #fee2e2; /* svg #fee2e2 */
+  --th582: rgba(249, 115, 22, 0.1); /* surface rgba(249, 115, 22, 0.1) */
+  --th583: rgba(34, 197, 94, 0.1); /* surface rgba(34, 197, 94, 0.1) */
+  --th584: rgba(22, 163, 74, 0.12); /* surface rgba(22, 163, 74, 0.12) */
+  --th585: rgba(220, 252, 231, 0.88); /* surface rgba(220, 252, 231, 0.88) */
+  --th586: rgba(22, 163, 74, 0.14); /* line rgba(22, 163, 74, 0.14) */
+  --th587: rgba(37, 99, 235, 0.1); /* line rgba(37, 99, 235, 0.1) */
+  --th588: rgba(201, 221, 245, 0.78); /* line rgba(201, 221, 245, 0.78) */
+  --th589: #102661; /* text #102661 */
+  --th590: rgba(37, 99, 235, 0.4); /* line rgba(37, 99, 235, 0.4) */
+  --th591: rgba(37, 99, 235, 0.12); /* line rgba(37, 99, 235, 0.12) */
+  --th592: rgba(248, 251, 255, 0.88); /* surface rgba(248, 251, 255, 0.88) */
+  --th593: rgba(37, 99, 235, 0.28); /* line rgba(37, 99, 235, 0.28) */
+  --th594: rgba(37, 99, 235, 0.22); /* shadow rgba(37, 99, 235, 0.22) */
+  --th595: rgba(37, 99, 235, 0.22); /* line rgba(37, 99, 235, 0.22) */
+  --th596: rgba(248, 251, 255, 0.72); /* surface rgba(248, 251, 255, 0.72) */
+  --th597: rgba(37, 99, 235, 0.42); /* line rgba(37, 99, 235, 0.42) */
+  --th598: rgba(22, 163, 74, 0.5); /* line rgba(22, 163, 74, 0.5) */
+  --th599: rgba(22, 163, 74, 0.12); /* shadow rgba(22, 163, 74, 0.12) */
+  --th600: rgba(248, 251, 255, 0.78); /* surface rgba(248, 251, 255, 0.78) */
+  --th601: rgba(201, 221, 245, 0.9); /* line rgba(201, 221, 245, 0.9) */
+  --th602: #9a6200; /* text #9a6200 */
+  --th603: rgba(37, 99, 235, 0.15); /* line rgba(37, 99, 235, 0.15) */
+  --th604: rgba(248, 251, 255, 0.92); /* surface rgba(248, 251, 255, 0.92) */
+  --th605: rgba(239, 246, 255, 0.92); /* surface rgba(239, 246, 255, 0.92) */
+  --th606: rgba(20, 184, 166, 0.14); /* surface rgba(20, 184, 166, 0.14) */
+  --th607: #526d94; /* text #526d94 */
+  --th608: #0f172a; /* text #0f172a */
+  --th609: #245dff; /* line #245dff */
+  --th610: #245dff; /* surface #245dff */
+  --th611: #1d4ed8; /* surface #1d4ed8 */
+  --th612: #1d4ed8; /* line #1d4ed8 */
+  --th613: #f1f5fb; /* surface #f1f5fb */
+  --th614: #1e3a8a; /* text #1e3a8a */
+  --th615: #c7d8f7; /* line #c7d8f7 */
+  --th616: rgba(36, 93, 255, 0.12); /* shadow rgba(36, 93, 255, 0.12) */
+  --th617: #94a3b8; /* line #94a3b8 */
+  --th618: rgba(220, 252, 231, 0.6); /* surface rgba(220, 252, 231, 0.6) */
+  --th619: rgba(34, 197, 94, 0.3); /* line rgba(34, 197, 94, 0.3) */
+  --th620: #1e40af; /* text #1e40af */
+  --th621: #4d609b; /* text #4d609b */
+  --th622: rgba(220, 252, 231, 0.5); /* surface rgba(220, 252, 231, 0.5) */
+  --th623: rgba(34, 197, 94, 0.25); /* line rgba(34, 197, 94, 0.25) */
+  --th624: #dbe6f5; /* line #dbe6f5 */
+  --th625: #f8faff; /* surface #f8faff */
+  --th626: #f1f5fe; /* surface #f1f5fe */
+  --th627: rgba(36, 93, 255, 0.15); /* shadow rgba(36, 93, 255, 0.15) */
+  --th628: #d5e4fb; /* line #d5e4fb */
+  --th629: #e1ecff; /* surface #e1ecff */
+  --th630: rgba(37, 99, 235, 0.2); /* line rgba(37, 99, 235, 0.2) */
+  --th631: rgba(148, 163, 184, 0.2); /* line rgba(148, 163, 184, 0.2) */
+  --th632: #fbfcfe; /* surface #fbfcfe */
+  --th633: rgba(254, 249, 195, 0.6); /* surface rgba(254, 249, 195, 0.6) */
+  --th634: rgba(234, 179, 8, 0.25); /* line rgba(234, 179, 8, 0.25) */
+  --th635: #854d0e; /* text #854d0e */
+  --th636: rgba(37, 99, 235, 0.35); /* line rgba(37, 99, 235, 0.35) */
+  --th637: rgba(254, 249, 195, 0.5); /* surface rgba(254, 249, 195, 0.5) */
+  --th638: rgba(234, 179, 8, 0.4); /* line rgba(234, 179, 8, 0.4) */
+  --th639: rgba(37, 99, 235, 0.5); /* line rgba(37, 99, 235, 0.5) */
+  --th640: rgba(234, 179, 8, 0.3); /* line rgba(234, 179, 8, 0.3) */
+  --th641: #eaf1ff; /* surface #eaf1ff */
+  --th642: rgba(185, 28, 28, 0.1); /* surface rgba(185, 28, 28, 0.1) */
+  --th643: rgba(22, 163, 74, 0.24); /* line rgba(22, 163, 74, 0.24) */
+  --th644: #22c55e; /* surface #22c55e */
+  --th645: rgba(239, 246, 255, 0.5); /* surface rgba(239, 246, 255, 0.5) */
+  --th646: #cbd5e1; /* line #cbd5e1 */
+  --th647: rgba(148, 163, 184, 0.5); /* line rgba(148, 163, 184, 0.5) */
+  --th648: rgba(239, 246, 255, 0.6); /* surface rgba(239, 246, 255, 0.6) */
+  --th649: #eef2f7; /* surface #eef2f7 */
+  --th650: rgba(148, 163, 184, 0.24); /* line rgba(148, 163, 184, 0.24) */
+  --th651: #e0f2fe; /* surface #e0f2fe */
+  --th652: #075985; /* text #075985 */
+  --th653: rgba(148, 163, 184, 0.34); /* line rgba(148, 163, 184, 0.34) */
+  --th654: #60a5fa; /* line #60a5fa */
+  --th655: rgba(37, 99, 235, 0.11); /* shadow rgba(37, 99, 235, 0.11) */
+  --th656: rgba(248, 251, 255, 0.9); /* surface rgba(248, 251, 255, 0.9) */
+  --th657: rgba(220, 252, 231, 0.9); /* surface rgba(220, 252, 231, 0.9) */
+  --th658: rgba(254, 243, 199, 0.94); /* surface rgba(254, 243, 199, 0.94) */
+  --th659: rgba(239, 246, 255, 0.7); /* surface rgba(239, 246, 255, 0.7) */
+  --th660: rgba(37, 99, 235, 0.11); /* line rgba(37, 99, 235, 0.11) */
+  --th661: rgba(254, 226, 226, 0.92); /* surface rgba(254, 226, 226, 0.92) */
+  --th662: rgba(254, 243, 199, 0.92); /* surface rgba(254, 243, 199, 0.92) */
+  --th663: rgba(226, 232, 240, 0.9); /* surface rgba(226, 232, 240, 0.9) */
+  --th664: #49679a; /* text #49679a */
+  --th665: rgba(239, 246, 255, 0.82); /* surface rgba(239, 246, 255, 0.82) */
+  --th666: rgba(220, 38, 38, 0.2); /* line rgba(220, 38, 38, 0.2) */
+  --th667: rgba(16, 185, 129, 0.2); /* line rgba(16, 185, 129, 0.2) */
+  --th668: #10b981; /* line #10b981 */
+  --th669: rgba(100, 116, 139, 0.2); /* line rgba(100, 116, 139, 0.2) */
+  --th670: rgba(34, 197, 94, 0.12); /* surface rgba(34, 197, 94, 0.12) */
+  --th671: rgba(22, 163, 74, 0.08); /* surface rgba(22, 163, 74, 0.08) */
+  --th672: rgba(22, 163, 74, 0.16); /* line rgba(22, 163, 74, 0.16) */
+  --th673: #54708f; /* text #54708f */
+  --th674: rgba(249, 115, 22, 0.24); /* line rgba(249, 115, 22, 0.24) */
+  --th675: rgba(255, 247, 237, 0.84); /* surface rgba(255, 247, 237, 0.84) */
+  --th676: #f97316; /* surface #f97316 */
+  --th677: rgba(22, 163, 74, 0.2); /* line rgba(22, 163, 74, 0.2) */
+  --th678: rgba(236, 253, 245, 0.8); /* surface rgba(236, 253, 245, 0.8) */
+  --th679: #1e3a5f; /* text #1e3a5f */
+  --th680: rgba(22, 163, 74, 0.1); /* surface rgba(22, 163, 74, 0.1) */
+  --th681: rgba(22, 163, 74, 0.18); /* line rgba(22, 163, 74, 0.18) */
+  --th682: rgba(245, 158, 11, 0.1); /* surface rgba(245, 158, 11, 0.1) */
+  --th683: rgba(245, 158, 11, 0.18); /* line rgba(245, 158, 11, 0.18) */
+  --th684: rgba(249, 115, 22, 0.18); /* line rgba(249, 115, 22, 0.18) */
+  --th685: rgba(100, 116, 139, 0.1); /* surface rgba(100, 116, 139, 0.1) */
+  --th686: rgba(100, 116, 139, 0.16); /* line rgba(100, 116, 139, 0.16) */
+  --th687: rgba(238, 246, 255, 0.94); /* surface rgba(238, 246, 255, 0.94) */
+  --th688: rgba(236, 253, 245, 0.72); /* surface rgba(236, 253, 245, 0.72) */
+  --th689: rgba(220, 252, 231, 0.92); /* surface rgba(220, 252, 231, 0.92) */
+  --th690: rgba(236, 253, 245, 0.82); /* surface rgba(236, 253, 245, 0.82) */
+  --th691: rgba(37, 99, 235, 0.24); /* line rgba(37, 99, 235, 0.24) */
+  --th692: rgba(244, 249, 255, 0.92); /* surface rgba(244, 249, 255, 0.92) */
+  --th693: rgba(37, 99, 235, 0.2); /* surface rgba(37, 99, 235, 0.2) */
+  --th694: rgba(245, 158, 11, 0.12); /* surface rgba(245, 158, 11, 0.12) */
+  --th695: rgba(245, 158, 11, 0.24); /* line rgba(245, 158, 11, 0.24) */
+  --th696: rgba(220, 38, 38, 0.1); /* surface rgba(220, 38, 38, 0.1) */
+  --th697: rgba(248, 251, 255, 0.76); /* surface rgba(248, 251, 255, 0.76) */
+  --th698: rgba(37, 99, 235, 0.48); /* line rgba(37, 99, 235, 0.48) */
+  --th699: rgba(100, 116, 139, 0.08); /* surface rgba(100, 116, 139, 0.08) */
+  --th700: rgba(100, 116, 139, 0.24); /* line rgba(100, 116, 139, 0.24) */
+  --th701: rgba(239, 246, 255, 0.8); /* surface rgba(239, 246, 255, 0.8) */
+  --th702: rgba(254, 242, 242, 0.82); /* surface rgba(254, 242, 242, 0.82) */
+  --th703: rgba(220, 38, 38, 0.16); /* line rgba(220, 38, 38, 0.16) */
+  --th704: rgba(249, 115, 22, 0.16); /* line rgba(249, 115, 22, 0.16) */
+  --th705: rgba(37, 99, 235, 0.36); /* line rgba(37, 99, 235, 0.36) */
+  --th706: rgba(255, 255, 255, 0.88); /* surface rgba(255, 255, 255, 0.88) */
+  --th707: rgba(30, 64, 175, 0.06); /* shadow rgba(30, 64, 175, 0.06) */
+  --th708: rgba(239, 246, 255, 0.95); /* surface rgba(239, 246, 255, 0.95) */
+  --th709: rgba(30, 64, 175, 0.12); /* shadow rgba(30, 64, 175, 0.12) */
+  --th710: #f3f8ff; /* surface #f3f8ff */
+  --th711: rgba(219, 234, 254, 0.32); /* surface rgba(219, 234, 254, 0.32) */
+  --th712: rgba(37, 99, 235, 0.32); /* shadow rgba(37, 99, 235, 0.32) */
+  --th713: rgba(37, 99, 235, 0.2); /* svg rgba(37, 99, 235, 0.2) */
+  --th714: rgba(15, 23, 42, 0.1); /* shadow rgba(15, 23, 42, 0.1) */
+  --th715: rgba(255, 247, 237, 0.96); /* svg rgba(255, 247, 237, 0.96) */
+  --th716: rgba(249, 115, 22, 0.34); /* svg rgba(249, 115, 22, 0.34) */
+  --th717: rgba(254, 242, 242, 0.96); /* svg rgba(254, 242, 242, 0.96) */
+  --th718: rgba(220, 38, 38, 0.34); /* svg rgba(220, 38, 38, 0.34) */
+  --th719: rgba(37, 99, 235, 0.66); /* svg rgba(37, 99, 235, 0.66) */
+  --th720: #112b4f; /* svg #112b4f */
+  --th721: #1d4ed8; /* svg #1d4ed8 */
+  --th722: #c2410c; /* svg #c2410c */
+  --th723: rgba(255, 247, 237, 0.86); /* surface rgba(255, 247, 237, 0.86) */
+  --th724: #e8f0fb; /* line #e8f0fb */
+  --th725: rgba(100, 116, 139, 0.18); /* line rgba(100, 116, 139, 0.18) */
+  --th726: rgba(100, 116, 139, 0.28); /* line rgba(100, 116, 139, 0.28) */
+  --th727: rgba(248, 251, 255, 0.66); /* surface rgba(248, 251, 255, 0.66) */
+  --th728: rgba(147, 184, 255, 0.38); /* line rgba(147, 184, 255, 0.38) */
+  --th729: rgba(248, 251, 255, 0.68); /* svg rgba(248, 251, 255, 0.68) */
+  --th730: rgba(37, 99, 235, 0.32); /* svg rgba(37, 99, 235, 0.32) */
+  --th731: #315178; /* svg #315178 */
+  --th732: #5b8dff; /* svg #5b8dff */
+  --th733: #14b8a6; /* svg #14b8a6 */
+  --th734: rgba(37, 99, 235, 0.26); /* svg rgba(37, 99, 235, 0.26) */
+  --th735: rgba(24, 61, 112, 0.12); /* shadow rgba(24, 61, 112, 0.12) */
+  --th736: #183456; /* svg #183456 */
+  --th737: rgba(240, 253, 250, 0.94); /* svg rgba(240, 253, 250, 0.94) */
+  --th738: rgba(20, 184, 166, 0.32); /* svg rgba(20, 184, 166, 0.32) */
+  --th739: rgba(239, 246, 255, 0.96); /* svg rgba(239, 246, 255, 0.96) */
+  --th740: rgba(37, 99, 235, 0.42); /* svg rgba(37, 99, 235, 0.42) */
+  --th741: rgba(255, 251, 235, 0.94); /* svg rgba(255, 251, 235, 0.94) */
+  --th742: rgba(245, 158, 11, 0.32); /* svg rgba(245, 158, 11, 0.32) */
+  --th743: rgba(226, 239, 255, 0.95); /* surface rgba(226, 239, 255, 0.95) */
+  --th744: rgba(37, 99, 235, 0.18); /* surface rgba(37, 99, 235, 0.18) */
+  --th745: rgba(20, 184, 166, 0.5); /* surface rgba(20, 184, 166, 0.5) */
+  --th746: rgba(148, 163, 184, 0.22); /* line rgba(148, 163, 184, 0.22) */
+  --th747: rgba(20, 184, 166, 0.28); /* line rgba(20, 184, 166, 0.28) */
+  --th748: rgba(37, 99, 235, 0.26); /* line rgba(37, 99, 235, 0.26) */
+  --th749: #243b64; /* text #243b64 */
+  --th750: #0f9f83; /* text #0f9f83 */
+  --th751: rgba(201, 221, 245, 0.8); /* line rgba(201, 221, 245, 0.8) */
+  --th752: rgba(241, 245, 249, 0.7); /* surface rgba(241, 245, 249, 0.7) */
+  --th753: rgba(254, 242, 242, 0.85); /* surface rgba(254, 242, 242, 0.85) */
+  --th754: rgba(240, 253, 244, 0.85); /* surface rgba(240, 253, 244, 0.85) */
+  --th755: rgba(248, 251, 255, 0.85); /* surface rgba(248, 251, 255, 0.85) */
+  --th756: rgba(20, 184, 166, 0.18); /* line rgba(20, 184, 166, 0.18) */
+  --th757: rgba(255, 255, 255, 0.76); /* surface rgba(255, 255, 255, 0.76) */
+  --th758: rgba(239, 246, 255, 0.86); /* surface rgba(239, 246, 255, 0.86) */
+  --th759: rgba(20, 184, 166, 0.12); /* surface rgba(20, 184, 166, 0.12) */
+  --th760: rgba(24, 61, 112, 0.09); /* shadow rgba(24, 61, 112, 0.09) */
+  --th761: rgba(248, 251, 255, 0.96); /* surface rgba(248, 251, 255, 0.96) */
+  --th762: rgba(238, 246, 255, 0.92); /* surface rgba(238, 246, 255, 0.92) */
+  --th763: rgba(37, 99, 235, 0.04); /* surface rgba(37, 99, 235, 0.04) */
+  --th764: rgba(37, 99, 235, 0.82); /* line rgba(37, 99, 235, 0.82) */
+  --th765: #5b7aa8; /* svg #5b7aa8 */
+  --th766: rgba(255, 255, 255, 0.88); /* svg rgba(255, 255, 255, 0.88) */
+  --th767: #10b981; /* svg #10b981 */
+  --th768: #8b5cf6; /* svg #8b5cf6 */
+  --th769: #8aa9d6; /* svg #8aa9d6 */
+  --th770: rgba(24, 61, 112, 0.14); /* shadow rgba(24, 61, 112, 0.14) */
+  --th771: #173b76; /* svg #173b76 */
+  --th772: #526d94; /* svg #526d94 */
+  --th773: #bcd0fb; /* line #bcd0fb */
+  --th774: #e8f1ff; /* surface #e8f1ff */
+  --th775: #bfd3ff; /* line #bfd3ff */
+  --th776: #8fb0ff; /* line #8fb0ff */
+  --th777: #14b8a6; /* surface #14b8a6 */
+  --th778: rgba(37, 99, 235, 0.22); /* surface rgba(37, 99, 235, 0.22) */
+  --th779: rgba(255, 255, 255, 0.7); /* surface rgba(255, 255, 255, 0.7) */
+  --th780: rgba(191, 219, 254, 0.72); /* surface rgba(191, 219, 254, 0.72) */
+  --th781: rgba(226, 232, 240, 0.7); /* surface rgba(226, 232, 240, 0.7) */
+  --th782: #0f2f5f; /* text #0f2f5f */
+  --th783: rgba(24, 61, 112, 0.18); /* shadow rgba(24, 61, 112, 0.18) */
+  --th784: rgba(37, 99, 235, 0.09); /* line rgba(37, 99, 235, 0.09) */
+  --th785: #93b8ff; /* line #93b8ff */
+  --th786: rgba(30, 58, 95, 0.22); /* svg rgba(30, 58, 95, 0.22) */
+  --th787: #1e3a5f; /* svg #1e3a5f */
+  --th788: #0f766e; /* svg #0f766e */
+  --th789: #38bdf8; /* svg #38bdf8 */
+  --th790: #0369a1; /* svg #0369a1 */
+  --th791: #0891b2; /* svg #0891b2 */
+  --th792: #1e40af; /* svg #1e40af */
+  --th793: #f1f5f9; /* svg #f1f5f9 */
+  --th794: #e2e8f0; /* svg #e2e8f0 */
+  --th795: #0f172a; /* svg #0f172a */
+  --th796: #475569; /* svg #475569 */
+  --th797: rgba(37, 99, 235, 0.06); /* svg rgba(37, 99, 235, 0.06) */
+  --th798: #ea580c; /* svg #ea580c */
+  --th799: #cbd5e1; /* svg #cbd5e1 */
+  --th800: #fef3c7; /* svg #fef3c7 */
+  --th801: rgba(59, 130, 246, 0.04); /* svg rgba(59, 130, 246, 0.04) */
+  --th802: rgba(37, 99, 235, 0.18); /* svg rgba(37, 99, 235, 0.18) */
+  --th803: rgba(220, 38, 38, 0.16); /* shadow rgba(220, 38, 38, 0.16) */
+  --th804: rgba(239, 246, 255, 0.97); /* svg rgba(239, 246, 255, 0.97) */
+  --th805: rgba(239, 68, 68, 0.32); /* svg rgba(239, 68, 68, 0.32) */
+  --th806: rgba(22, 163, 74, 0.32); /* svg rgba(22, 163, 74, 0.32) */
+  --th807: #166534; /* svg #166534 */
+  --th808: rgba(220, 38, 38, 0.32); /* svg rgba(220, 38, 38, 0.32) */
+  --th809: rgba(245, 158, 11, 0.34); /* svg rgba(245, 158, 11, 0.34) */
+  --th810: #92400e; /* svg #92400e */
+  --th811: rgba(239, 246, 255, 0.88); /* surface rgba(239, 246, 255, 0.88) */
+  --th812: rgba(37, 99, 235, 0.14); /* surface rgba(37, 99, 235, 0.14) */
+  --th813: rgba(24, 61, 112, 0.16); /* shadow rgba(24, 61, 112, 0.16) */
+  --th814: rgba(249, 115, 22, 0.22); /* line rgba(249, 115, 22, 0.22) */
+  --th815: rgba(255, 247, 237, 0.9); /* surface rgba(255, 247, 237, 0.9) */
+  --th816: rgba(249, 115, 22, 0.14); /* surface rgba(249, 115, 22, 0.14) */
+  --th817: rgba(240, 253, 244, 0.9); /* surface rgba(240, 253, 244, 0.9) */
+  --th818: rgba(22, 163, 74, 0.13); /* surface rgba(22, 163, 74, 0.13) */
+  --th819: rgba(220, 38, 38, 0.18); /* line rgba(220, 38, 38, 0.18) */
+  --th820: rgba(254, 242, 242, 0.84); /* surface rgba(254, 242, 242, 0.84) */
+  --th821: rgba(37, 99, 235, 0.75); /* line rgba(37, 99, 235, 0.75) */
+  --th822: #1747cc; /* surface #1747cc */
+  --th823: rgba(37, 99, 235, 0.2); /* shadow rgba(37, 99, 235, 0.2) */
+  --th824: rgba(239, 246, 255, 0.76); /* surface rgba(239, 246, 255, 0.76) */
+  --th825: rgba(249, 115, 22, 0.24); /* svg rgba(249, 115, 22, 0.24) */
+  --th826: rgba(239, 68, 68, 0.28); /* svg rgba(239, 68, 68, 0.28) */
+  --th827: rgba(34, 197, 94, 0.28); /* svg rgba(34, 197, 94, 0.28) */
+  --th828: rgba(15, 23, 42, 0.08); /* shadow rgba(15, 23, 42, 0.08) */
+  --th829: #1e3a5f; /* surface #1e3a5f */
+  --th830: #38bdf8; /* surface #38bdf8 */
+  --th831: #d97706; /* surface #d97706 */
+  --th832: #94a3b8; /* surface #94a3b8 */
+  --th833: #fbfdff; /* svg #fbfdff */
+  --th834: rgba(201, 221, 245, 0.75); /* svg rgba(201, 221, 245, 0.75) */
+  --th835: rgba(37, 99, 235, 0.035); /* svg rgba(37, 99, 235, 0.035) */
+  --th836: rgba(232, 243, 255, 0.52); /* svg rgba(232, 243, 255, 0.52) */
+  --th837: #c9ddf5; /* svg #c9ddf5 */
+  --th838: #eaf4ff; /* svg #eaf4ff */
+  --th839: #9cc2f0; /* svg #9cc2f0 */
+  --th840: #d7e7fb; /* svg #d7e7fb */
+  --th841: #1d3557; /* svg #1d3557 */
+  --th842: #7dd3fc; /* svg #7dd3fc */
+  --th843: #d97706; /* svg #d97706 */
+  --th844: rgba(220, 38, 38, 0.18); /* shadow rgba(220, 38, 38, 0.18) */
+  --th845: rgba(245, 158, 11, 0.18); /* shadow rgba(245, 158, 11, 0.18) */
+  --th846: rgba(100, 116, 139, 0.16); /* shadow rgba(100, 116, 139, 0.16) */
+  --th847: rgba(139, 92, 246, 0.18); /* shadow rgba(139, 92, 246, 0.18) */
+  --th848: rgba(201, 221, 245, 0.9); /* svg rgba(201, 221, 245, 0.9) */
+  --th849: #2f5f9f; /* svg #2f5f9f */
+  --th850: #6f99cc; /* svg #6f99cc */
+  --th851: #dbeafe; /* svg #dbeafe */
+  --th852: #f2f8ff; /* svg #f2f8ff */
+  --th853: #49679a; /* svg #49679a */
+  --th854: #2f5f9f; /* text #2f5f9f */
+  --th855: rgba(37, 99, 235, 0.15); /* shadow rgba(37, 99, 235, 0.15) */
+  --th856: rgba(245, 158, 11, 0.14); /* shadow rgba(245, 158, 11, 0.14) */
+  --th857: rgba(139, 92, 246, 0.14); /* shadow rgba(139, 92, 246, 0.14) */
+  --th858: #fff7ed; /* svg #fff7ed */
+  --th859: #f5f3ff; /* svg #f5f3ff */
+  --th860: #6d28d9; /* svg #6d28d9 */
+  --th861: rgba(201, 221, 245, 0.82); /* svg rgba(201, 221, 245, 0.82) */
+  --th862: rgba(201, 221, 245, 0.85); /* line rgba(201, 221, 245, 0.85) */
+  --th863: rgba(248, 251, 255, 0.94); /* surface rgba(248, 251, 255, 0.94) */
+  --th864: rgba(147, 184, 255, 0.22); /* line rgba(147, 184, 255, 0.22) */
+  --th865: rgba(255, 247, 237, 0.76); /* surface rgba(255, 247, 237, 0.76) */
+  --th866: #92400e; /* text #92400e */
+  --th867: rgba(147, 184, 255, 0.26); /* line rgba(147, 184, 255, 0.26) */
+  --th868: rgba(30, 64, 175, 0.1); /* shadow rgba(30, 64, 175, 0.1) */
+  --th869: rgba(245, 158, 11, 0.32); /* line rgba(245, 158, 11, 0.32) */
+  --th870: rgba(236, 253, 245, 0.88); /* surface rgba(236, 253, 245, 0.88) */
+  --th871: rgba(22, 163, 74, 0.65); /* line rgba(22, 163, 74, 0.65) */
+  --th872: rgba(236, 253, 245, 0.98); /* surface rgba(236, 253, 245, 0.98) */
+  --th873: rgba(16, 185, 129, 0.22); /* line rgba(16, 185, 129, 0.22) */
+  --th874: #dc2626; /* surface #dc2626 */
+  --th875: rgba(220, 38, 38, 0.34); /* line rgba(220, 38, 38, 0.34) */
+  --th876: rgba(147, 184, 255, 0.24); /* line rgba(147, 184, 255, 0.24) */
+  --th877: rgba(30, 64, 175, 0.08); /* shadow rgba(30, 64, 175, 0.08) */
+  --th878: rgba(245, 158, 11, 0.25); /* line rgba(245, 158, 11, 0.25) */
+  --th879: rgba(15, 23, 42, 0.18); /* surface rgba(15, 23, 42, 0.18) */
+  --th880: rgba(24, 61, 112, 0.26); /* shadow rgba(24, 61, 112, 0.26) */
+  --th881: rgba(37, 99, 235, 0.08); /* line rgba(37, 99, 235, 0.08) */
+  --th882: rgba(147, 184, 255, 0.2); /* line rgba(147, 184, 255, 0.2) */
+  --th883: #f59e0b; /* surface #f59e0b */
+  --th884: rgba(220, 38, 38, 0.36); /* line rgba(220, 38, 38, 0.36) */
+  --th885: #edf3fc; /* line #edf3fc */
+  --th886: #ffedd5; /* surface #ffedd5 */
+  --th887: #f0f5ff; /* surface #f0f5ff */
+  --th888: #27c6dc; /* surface #27c6dc */
+  --th889: rgba(201, 221, 245, 0.64); /* line rgba(201, 221, 245, 0.64) */
+  --th890: rgba(20, 76, 150, 0.12); /* shadow rgba(20, 76, 150, 0.12) */
+  --th891: #7c3aed; /* surface #7c3aed */
+  --th892: #0284c7; /* surface #0284c7 */
+  --th893: #22d3ee; /* surface #22d3ee */
+  --th894: #fb7185; /* surface #fb7185 */
+  --th895: rgba(239, 246, 255, 0.98); /* surface rgba(239, 246, 255, 0.98) */
+  --th896: rgba(245, 158, 11, 0.26); /* line rgba(245, 158, 11, 0.26) */
+  --th897: rgba(255, 251, 235, 0.86); /* surface rgba(255, 251, 235, 0.86) */
+  --th898: #7b8bb7; /* text #7b8bb7 */
+  --th899: #1a3d7c; /* text #1a3d7c */
+  --th900: rgba(245, 158, 11, 0.22); /* line rgba(245, 158, 11, 0.22) */
+  --th901: rgba(255, 251, 235, 0.9); /* surface rgba(255, 251, 235, 0.9) */
+  --th902: #526b9d; /* text #526b9d */
+  --th903: #6078a9; /* text #6078a9 */
+  --th904: #f97316; /* line #f97316 */
+  --th905: #f9fbff; /* surface #f9fbff */
+  --th906: rgba(15, 23, 42, 0.06); /* shadow rgba(15, 23, 42, 0.06) */
+  --th907: rgba(14, 165, 233, 0.04); /* surface rgba(14, 165, 233, 0.04) */
+  --th908: #5a6e96; /* text #5a6e96 */
+  --th909: rgba(239, 68, 68, 0.36); /* line rgba(239, 68, 68, 0.36) */
+  --th910: rgba(16, 185, 129, 0.32); /* line rgba(16, 185, 129, 0.32) */
+  --th911: rgba(240, 249, 255, 0.66); /* surface rgba(240, 249, 255, 0.66) */
+  --th912: #065f46; /* text #065f46 */
+  --th913: rgba(16, 185, 129, 0.24); /* line rgba(16, 185, 129, 0.24) */
+  --th914: rgba(16, 185, 129, 0.12); /* surface rgba(16, 185, 129, 0.12) */
+  --th915: rgba(248, 250, 252, 0.9); /* surface rgba(248, 250, 252, 0.9) */
+  --th916: rgba(241, 245, 253, 0.6); /* surface rgba(241, 245, 253, 0.6) */
+  --th917: #46587a; /* text #46587a */
+  --th918: rgba(248, 250, 252, 0.8); /* surface rgba(248, 250, 252, 0.8) */
+  --th919: rgba(15, 23, 42, 0.05); /* line rgba(15, 23, 42, 0.05) */
+  --th920: #334e7d; /* text #334e7d */
+  --th921: #7e8db1; /* text #7e8db1 */
+  --th922: rgba(240, 249, 255, 0.6); /* surface rgba(240, 249, 255, 0.6) */
+  --th923: rgba(14, 165, 233, 0.18); /* line rgba(14, 165, 233, 0.18) */
+  --th924: #0f172a; /* surface #0f172a */
+  --th925: #7dd3fc; /* text #7dd3fc */
+  --th926: #475e8a; /* text #475e8a */
+  --th927: rgba(239, 68, 68, 0.42); /* line rgba(239, 68, 68, 0.42) */
+  --th928: rgba(254, 226, 226, 0.58); /* surface rgba(254, 226, 226, 0.58) */
+  --th929: rgba(16, 185, 129, 0.3); /* line rgba(16, 185, 129, 0.3) */
+  --th930: rgba(209, 250, 229, 0.35); /* surface rgba(209, 250, 229, 0.35) */
+  --th931: rgba(239, 68, 68, 0.16); /* surface rgba(239, 68, 68, 0.16) */
+  --th932: rgba(16, 185, 129, 0.18); /* surface rgba(16, 185, 129, 0.18) */
+  --th933: #ef4444; /* surface #ef4444 */
+  --th934: #34d399; /* surface #34d399 */
+  --th935: #10b981; /* surface #10b981 */
+  --th936: #fbfcff; /* surface #fbfcff */
+  --th937: rgba(15, 23, 42, 0.06); /* svg rgba(15, 23, 42, 0.06) */
+  --th938: rgba(15, 23, 42, 0.45); /* svg rgba(15, 23, 42, 0.45) */
+  --th939: rgba(16, 185, 129, 0.1); /* svg rgba(16, 185, 129, 0.1) */
+  --th940: rgba(239, 68, 68, 0.4); /* shadow rgba(239, 68, 68, 0.4) */
+  --th941: #5a6e96; /* svg #5a6e96 */
+  --th942: rgba(254, 243, 199, 0.4); /* surface rgba(254, 243, 199, 0.4) */
+  --th943: rgba(254, 226, 226, 0.68); /* surface rgba(254, 226, 226, 0.68) */
+  --th944: rgba(254, 202, 202, 0.36); /* surface rgba(254, 202, 202, 0.36) */
+  --th945: rgba(209, 250, 229, 0.5); /* surface rgba(209, 250, 229, 0.5) */
+  --th946: rgba(167, 243, 208, 0.3); /* surface rgba(167, 243, 208, 0.3) */
+  --th947: #c9ddf5; /* surface #c9ddf5 */
+  --th948: #5d6d9c; /* line #5d6d9c */
+  --th949: #1d4fc7; /* text #1d4fc7 */
+  --th950: rgba(37, 99, 235, 0.46); /* line rgba(37, 99, 235, 0.46) */
+  --th951: #d97706; /* line #d97706 */
+  --th952: rgba(16, 185, 129, 0.4); /* shadow rgba(16, 185, 129, 0.4) */
+  --th953: #047857; /* svg #047857 */
+  --th954: rgba(15, 118, 110, 0.1); /* shadow rgba(15, 118, 110, 0.1) */
+  --th955: rgba(13, 148, 136, 0.32); /* line rgba(13, 148, 136, 0.32) */
+  --th956: #f0fdfa; /* surface #f0fdfa */
+  --th957: #f7fffd; /* surface #f7fffd */
+  --th958: #0d9488; /* surface #0d9488 */
+  --th959: rgba(220, 38, 38, 0.3); /* line rgba(220, 38, 38, 0.3) */
+  --th960: #3b82f6; /* text #3b82f6 */
+  --th961: #8fb5ff; /* line #8fb5ff */
+  --th962: rgba(37, 99, 235, 0.09); /* shadow rgba(37, 99, 235, 0.09) */
+  --th963: #fca5a5; /* line #fca5a5 */
+  --th964: #fff5f5; /* surface #fff5f5 */
+  --th965: #fdba74; /* line #fdba74 */
+  --th966: #d8e4f5; /* line #d8e4f5 */
+  --th967: #9cbcff; /* line #9cbcff */
+  --th968: #245dff; /* shadow #245dff */
+  --th969: #163b7a; /* text #163b7a */
+  --th970: #1858d8; /* text #1858d8 */
+  --th971: #e7efff; /* surface #e7efff */
+  --th972: #506489; /* text #506489 */
+  --th973: #7788a8; /* text #7788a8 */
+  --th974: #183567; /* text #183567 */
+  --th975: rgba(36, 93, 255, 0.18); /* line rgba(36, 93, 255, 0.18) */
+  --th976: rgba(248, 251, 255, 0.98); /* surface rgba(248, 251, 255, 0.98) */
+  --th977: rgba(36, 93, 255, 0.14); /* line rgba(36, 93, 255, 0.14) */
+  --th978: #b65f00; /* text #b65f00 */
+  --th979: #fff7e8; /* surface #fff7e8 */
+  --th980: #f3d69c; /* line #f3d69c */
+  --th981: #edf6ff; /* surface #edf6ff */
+  --th982: rgba(70, 151, 255, 0.16); /* surface rgba(70, 151, 255, 0.16) */
+  --th983: rgba(91, 151, 234, 0.045); /* surface rgba(91, 151, 234, 0.045) */
+  --th984: rgba(0, 0, 0, 0.55); /* surface rgba(0, 0, 0, 0.55) */
+  --th985: #6172a8; /* text #6172a8 */
+  --th986: rgba(235, 244, 255, 0.9); /* surface rgba(235, 244, 255, 0.9) */
+  --th987: #1455ff; /* text #1455ff */
+  --th988: rgba(49, 104, 255, 0.28); /* line rgba(49, 104, 255, 0.28) */
+  --th989: #293d8a; /* text #293d8a */
+  --th990: #2966ff; /* text #2966ff */
+  --th991: rgba(39, 86, 156, 0.18); /* shadow rgba(39, 86, 156, 0.18) */
+  --th992: #23d1e6; /* surface #23d1e6 */
+  --th993: #26d0f2; /* surface #26d0f2 */
+  --th994: rgba(49, 104, 255, 0.35); /* shadow rgba(49, 104, 255, 0.35) */
+  --th995: #f0fdf9; /* surface #f0fdf9 */
+  --th996: #059669; /* text #059669 */
+  --th997: #dff8ef; /* surface #dff8ef */
+  --th998: #dfeaff; /* surface #dfeaff */
+  --th999: rgba(139, 92, 246, 0.24); /* line rgba(139, 92, 246, 0.24) */
+}
+
+:root[data-theme='dark'] {
+  --th001: #0b1424; /* surface #f7fbff */
+  --th002: #141c2f; /* surface #ffffff */
+  --th003: #131b21; /* surface #f6fbff */
+  --th004: #ffffff; /* text #ffffff */
+  --th005: #192543; /* surface #2d69ff */
+  --th006: #191f43; /* surface #4c64ff */
+  --th007: rgba(45, 105, 255, 0.28); /* shadow rgba(45, 105, 255, 0.28) */
+  --th008: #7f99f5; /* text #2d5cff */
+  --th009: #9dade7; /* text #0c38d3 */
+  --th010: #131921; /* surface #f8fbff */
+  --th011: #95a3c6; /* line #2d69ff */
+  --th012: rgba(45, 105, 255, 0.12); /* shadow rgba(45, 105, 255, 0.12) */
+  --th013: #a7b2d3; /* text #8a99c4 */
+  --th014: #a7b3d3; /* text #9aa8cc */
+  --th015: rgba(135, 158, 197, 0.18); /* line #aac4f0 */
+  --th016: rgba(45, 105, 255, 0.22); /* shadow rgba(45, 105, 255, 0.22) */
+  --th017: #7fa0f5; /* text #2d69ff */
+  --th018: #131a22; /* surface #edf5ff */
+  --th019: rgba(42, 91, 170, 0.05); /* shadow rgba(42, 91, 170, 0.05) */
+  --th020: #131821; /* surface #f4f8ff */
+  --th021: rgba(135, 159, 197, 0.18); /* line #eef3fb */
+  --th022: #a9b3db; /* text #1b2a66 */
+  --th023: #a6afde; /* text #14205f */
+  --th024: rgba(42, 91, 170, 0.16); /* shadow rgba(42, 91, 170, 0.16) */
+  --th025: #b4bbd0; /* text #46588a */
+  --th026: #98a3c2; /* text #6b7ba8 */
+  --th027: #e7bd9d; /* text #b45309 */
+  --th028: #433a19; /* surface #fef3c7 */
+  --th029: #131822; /* surface #f1f4fa */
+  --th030: #989da4; /* text #6b7280 */
+  --th031: #131922; /* surface #eef1f6 */
+  --th032: #6692f1; /* text #2563eb */
+  --th033: #141a23; /* surface #dbeafe */
+  --th034: #a3e1ba; /* text #15803d */
+  --th035: rgba(44, 237, 110, 0.14); /* surface #dcfce7 */
+  --th036: #e1a2a2; /* text #b91c1c */
+  --th037: rgba(247, 33, 33, 0.14); /* surface #fee2e2 */
+  --th038: #131922; /* surface #f0f6ff */
+  --th039: #b7bccd; /* text #5d6d9c */
+  --th040: rgba(42, 91, 170, 0.1); /* shadow rgba(42, 91, 170, 0.1) */
+  --th041: rgba(11, 27, 110, 0.32); /* surface rgba(11, 27, 110, 0.32) */
+  --th042: rgba(42, 91, 170, 0.14); /* shadow rgba(42, 91, 170, 0.14) */
+  --th043: #131922; /* surface #eef3fb */
+  --th044: #b0b8d4; /* text #2c3a6b */
+  --th045: rgba(11, 27, 110, 0.36); /* surface rgba(11, 27, 110, 0.36) */
+  --th046: rgba(42, 91, 170, 0.2); /* shadow rgba(42, 91, 170, 0.2) */
+  --th047: #a1e2b9; /* text #16a34a */
+  --th048: #192943; /* surface #d8e4f7 */
+  --th049: #131a21; /* surface #fbfdff */
+  --th050: #192943; /* svg #a8c3f0 */
+  --th051: #192543; /* svg #2d69ff */
+  --th052: rgba(45, 105, 255, 0.32); /* shadow rgba(45, 105, 255, 0.32) */
+  --th053: rgba(18, 24, 33, 0.94); /* surface rgba(255, 255, 255, 0.94) */
+  --th054: rgba(42, 91, 170, 0.08); /* shadow rgba(42, 91, 170, 0.08) */
+  --th055: rgba(42, 91, 170, 0.06); /* shadow rgba(42, 91, 170, 0.06) */
+  --th056: #a5b4d4; /* text #93a5cc */
+  --th057: #e7c49d; /* text #d97706 */
+  --th058: #e66363; /* text #dc2626 */
+  --th059: #bbc1c9; /* text #64748b */
+  --th060: #192443; /* surface #3168ff */
+  --th061: #193543; /* surface #1fb6ff */
+  --th062: rgba(49, 104, 255, 0.1); /* shadow rgba(49, 104, 255, 0.1) */
+  --th063: rgba(42, 91, 170, 0.04); /* shadow rgba(42, 91, 170, 0.04) */
+  --th064: rgba(135, 157, 197, 0.18); /* line #a8c8ff */
+  --th065: rgba(255, 163, 26, 0.14); /* surface #fffbf5 */
+  --th066: rgba(255, 167, 26, 0.14); /* surface #fffaf2 */
+  --th067: rgba(197, 172, 135, 0.18); /* line #f0e0c8 */
+  --th068: #433619; /* surface #f5ead0 */
+  --th069: #e0cda4; /* text #b88820 */
+  --th070: #131822; /* surface #eef4ff */
+  --th071: #141923; /* surface #dce8ff */
+  --th072: #b0bac9; /* text #c0c8d4 */
+  --th073: #131922; /* surface #f0f2f5 */
+  --th074: rgba(85, 196, 122, 0.14); /* surface #e8f7ed */
+  --th075: rgba(7, 23, 95, 0.32); /* surface rgba(7, 23, 95, 0.32) */
+  --th076: rgba(7, 23, 95, 0.1); /* shadow rgba(7, 23, 95, 0.1) */
+  --th077: #1d53ce; /* surface #1f5ae0 */
+  --th078: rgba(49, 104, 255, 0.3); /* shadow rgba(49, 104, 255, 0.3) */
+  --th079: rgba(18, 24, 33, 0.25); /* surface rgba(255, 255, 255, 0.25) */
+  --th080: rgba(26, 255, 255, 0.14); /* surface #faffff */
+  --th081: #c69595; /* line #dc2626 */
+  --th082: rgba(239, 42, 42, 0.14); /* surface #fef2f2 */
+  --th083: rgba(0, 0, 0, 0.2); /* shadow rgba(0, 0, 0, 0.2) */
+  --th084: #149142; /* surface #16a34a */
+  --th085: #242d38; /* surface #cbd5e1 */
+  --th086: rgba(135, 158, 197, 0.18); /* line #dbe7fb */
+  --th087: rgba(2, 6, 16, 0.5); /* shadow rgba(42, 91, 170, 0.12) */
+  --th088: #82a1f5; /* text #3168ff */
+  --th089: #c3d0f4; /* text #07175f */
+  --th090: rgba(18, 24, 33, 0.95); /* surface rgba(255, 255, 255, 0.95) */
+  --th091: rgba(135, 158, 197, 0.18); /* line #dae6fa */
+  --th092: rgba(35, 74, 132, 0.08); /* shadow rgba(35, 74, 132, 0.08) */
+  --th093: #b1b8d2; /* text #415291 */
+  --th094: #131922; /* surface #f0f5fd */
+  --th095: #131821; /* surface #f6f9fe */
+  --th096: #141923; /* surface #dce7fa */
+  --th097: #b2bbc4; /* text #8a97a5 */
+  --th098: rgba(135, 163, 197, 0.18); /* line #e3e9f0 */
+  --th099: #acbad7; /* text #14213d */
+  --th100: #d48482; /* text #c2504d */
+  --th1000: #181321; /* surface #f7f2ff */
+  --th1001: #a87bf3; /* text #7c3aed */
+  --th1002: #191322; /* surface #eee4ff */
+  --th1003: rgba(198, 169, 149, 0.25); /* line rgba(249, 115, 22, 0.25) */
+  --th1004: #432e19; /* surface #ffead5 */
+  --th1005: rgba(19, 24, 33, 0.9); /* surface rgba(244, 248, 255, 0.9) */
+  --th1006: rgba(49, 104, 255, 0.22); /* shadow rgba(49, 104, 255, 0.22) */
+  --th1007: #b1bad2; /* text #435897 */
+  --th1008: rgba(49, 104, 255, 0.18); /* shadow rgba(49, 104, 255, 0.18) */
+  --th1009: #261943; /* surface #9b6dff */
+  --th101: rgba(135, 161, 197, 0.18); /* line #e3edfb */
+  --th1010: #211943; /* surface #7756ff */
+  --th1011: #192c43; /* surface #4b9dff */
+  --th1012: #192043; /* surface #5c76ff */
+  --th1013: #32b79b; /* surface #36c7a9 */
+  --th1014: #194339; /* surface #51d6b8 */
+  --th1015: #192343; /* surface #426dff */
+  --th1016: #192343; /* surface #658bff */
+  --th1017: rgba(135, 153, 197, 0.18); /* line #9ab8ff */
+  --th1018: #a0b1e3; /* text #1740bb */
+  --th1019: rgba(19, 26, 34, 0.88); /* surface rgba(235, 244, 255, 0.88) */
+  --th102: rgba(18, 24, 33, 0.72); /* surface rgba(255, 255, 255, 0.72) */
+  --th1020: rgba(135, 157, 197, 0.18); /* line #b9cef4 */
+  --th1021: #7c98f4; /* text #2a5cff */
+  --th1022: #84a0f5; /* text #4c78ff */
+  --th1023: #7797f4; /* text #255dff */
+  --th1024: rgba(19, 24, 33, 0.86); /* surface rgba(244, 248, 255, 0.86) */
+  --th1025: #a9b3da; /* text #243783 */
+  --th1026: rgba(19, 26, 34, 0.84); /* surface rgba(235, 244, 255, 0.84) */
+  --th1027: rgba(44, 237, 110, 0.14); /* surface rgba(220, 252, 231, 0.82) */
+  --th1028: #a8dcbc; /* text #14532d */
+  --th1029: #9665e4; /* text #6d28d9 */
+  --th103: #6789f3; /* text #134dff */
+  --th1030: rgba(47, 233, 146, 0.14); /* surface rgba(236, 253, 245, 0.9) */
+  --th1031: rgba(149, 198, 194, 0.16); /* line rgba(15, 118, 110, 0.16) */
+  --th1032: rgba(198, 180, 149, 0.2); /* line rgba(245, 158, 11, 0.2) */
+  --th1033: rgba(20, 26, 35, 0.7); /* surface rgba(219, 234, 254, 0.7) */
+  --th1034: #b4bac6; /* text #9aa3b2 */
+  --th1035: #131922; /* surface #e6efff */
+  --th1036: rgba(19, 25, 33, 0.55); /* surface rgba(248, 251, 255, 0.55) */
+  --th1037: rgba(20, 26, 35, 0.55); /* surface rgba(219, 234, 254, 0.55) */
+  --th1038: rgba(25, 44, 67, 0.55); /* surface rgba(201, 221, 245, 0.55) */
+  --th1039: rgba(20, 26, 35, 0.78); /* surface rgba(219, 234, 254, 0.78) */
+  --th104: #131922; /* surface #e3edff */
+  --th1040: #0f1f45; /* surface #0f1f45 */
+  --th1041: rgba(15, 31, 69, 0.18); /* shadow rgba(15, 31, 69, 0.18) */
+  --th1042: #95a3c6; /* line #0f1f45 */
+  --th1043: rgba(56, 132, 255, 0.55); /* shadow rgba(56, 132, 255, 0.55) */
+  --th1044: rgba(56, 132, 255, 0.5); /* shadow rgba(56, 132, 255, 0.5) */
+  --th1045: rgba(38, 45, 53, 0.12); /* surface rgba(148, 163, 184, 0.12) */
+  --th1046: rgba(38, 45, 53, 0.3); /* surface rgba(148, 163, 184, 0.3) */
+  --th1047: rgba(25, 41, 67, 0.14); /* surface rgba(59, 130, 246, 0.14) */
+  --th1048: rgba(37, 99, 235, 0.35); /* shadow rgba(37, 99, 235, 0.35) */
+  --th1049: rgba(39, 78, 145, 0.06); /* shadow rgba(39, 78, 145, 0.06) */
+  --th105: rgba(112, 154, 255, 0.18); /* shadow rgba(112, 154, 255, 0.18) */
+  --th1050: #9faaca; /* text #7182b0 */
+  --th1051: #a9b2ce; /* text #7b8ab4 */
+  --th1052: #a9b4d0; /* text #8292bb */
+  --th1053: rgba(135, 154, 197, 0.18); /* line #8cb0ff */
+  --th1054: rgba(49, 104, 255, 0.08); /* shadow rgba(49, 104, 255, 0.08) */
+  --th1055: #8e9bc0; /* text #6072a7 */
+  --th1056: #a8b4d1; /* text #91a0c5 */
+  --th1057: #1a2842; /* surface #b8caea */
+  --th1058: rgba(135, 159, 197, 0.18); /* line #e0e9f7 */
+  --th1059: #95a2c6; /* line #4c7cff */
+  --th106: #b7c5f0; /* text #0b1b6e */
+  --th1060: #3168ff; /* shadow #3168ff */
+  --th1061: #afb9d4; /* text #304479 */
+  --th1062: #aab4d0; /* text #8493bb */
+  --th1063: rgba(135, 197, 158, 0.18); /* line #bde8cd */
+  --th1064: #a4dfc3; /* text #167748 */
+  --th1065: rgba(83, 198, 121, 0.14); /* surface #edf9f1 */
+  --th1066: rgba(197, 177, 135, 0.18); /* line #f2d79c */
+  --th1067: #e7c99d; /* text #a46300 */
+  --th1068: rgba(255, 191, 26, 0.14); /* surface #fff8e6 */
+  --th1069: rgba(135, 153, 197, 0.18); /* line #b9cdfc */
+  --th107: rgba(149, 162, 198, 0.4); /* line rgba(49, 104, 255, 0.4) */
+  --th1070: #a4b5e0; /* text #2558d6 */
+  --th1071: #9faac8; /* text #7282ae */
+  --th1072: #99a9ce; /* text #6980b7 */
+  --th1073: rgba(135, 160, 197, 0.18); /* line #e2ebf8 */
+  --th1074: rgba(25, 42, 67, 0.045); /* surface rgba(80, 133, 210, 0.045) */
+  --th1075: #a3b7e0; /* svg #245dd8 */
+  --th1076: #192743; /* svg #7698dd */
+  --th1077: #192843; /* svg #73a0f3 */
+  --th1078: #a6dec6; /* svg #22a06b */
+  --th1079: #8b98be; /* svg #5d70a4 */
+  --th108: rgba(45, 86, 146, 0.1); /* shadow rgba(45, 86, 146, 0.1) */
+  --th1080: #2155c7; /* surface #245dd8 */
+  --th1081: #192743; /* surface #7698dd */
+  --th1082: #1e8f60; /* surface #22a06b */
+  --th1083: #9ca9ca; /* text #6e80b1 */
+  --th1084: #a5b4df; /* text #173077 */
+  --th1085: rgba(135, 158, 197, 0.18); /* line #e2eaf7 */
+  --th1086: #9ba6c7; /* text #6d7ead */
+  --th1087: #aeb8d5; /* text #2d4078 */
+  --th1088: rgba(135, 153, 197, 0.18); /* line #bfd1fb */
+  --th1089: rgba(135, 158, 197, 0.18); /* line #e1e9f6 */
+  --th109: #131923; /* surface #e0ecff */
+  --th1090: #98a3c4; /* text #6b7baa */
+  --th1091: #aab5cf; /* text #8090b8 */
+  --th1092: #131922; /* surface #f3f7fd */
+  --th1093: #b0bad3; /* text #35487d */
+  --th1094: #a3b3e1; /* text #122b70 */
+  --th1095: #aab4cf; /* text #8a98bd */
+  --th1096: rgba(135, 159, 197, 0.18); /* line #dfe8f6 */
+  --th1097: #a2adca; /* text #7585b0 */
+  --th1098: #acb8d8; /* text #263d78 */
+  --th1099: #9da7c2; /* text #7180a7 */
+  --th110: #a1b2e2; /* text #1d4ed8 */
+  --th1100: #95a0c0; /* text #6878a6 */
+  --th1101: #b3bcd0; /* text #526aa5 */
+  --th1102: #b4bccf; /* text #53689f */
+  --th1103: rgba(135, 160, 197, 0.18); /* line #e3ebf7 */
+  --th1104: #8298c4; /* text #5270ad */
+  --th1105: #b6bdcd; /* text #52658f */
+  --th1106: rgba(135, 158, 197, 0.18); /* line #c8d7f0 */
+  --th1107: #aebdd6; /* text #315389 */
+  --th1108: rgba(135, 154, 197, 0.18); /* line #7ea4f5 */
+  --th1109: rgba(135, 161, 197, 0.18); /* line #e5edf8 */
+  --th111: #131822; /* surface #f3f4f6 */
+  --th1110: #97a3bf; /* text #6b7ca4 */
+  --th1111: #a3b5e1; /* text #173b93 */
+  --th1112: #a6dec5; /* text #176c47 */
+  --th1113: rgba(77, 204, 128, 0.14); /* surface #f1fbf5 */
+  --th1114: #222a3a; /* surface #aab8d4 */
+  --th1115: rgba(135, 159, 197, 0.18); /* line #e6edf8 */
+  --th1116: #9ba7c2; /* text #6f80a7 */
+  --th1117: #97a2be; /* text #6b7ba3 */
+  --th1118: #a6b8de; /* text #183675 */
+  --th1119: rgba(197, 179, 135, 0.18); /* line #f0ddaf */
+  --th112: #bac0ca; /* text #475569 */
+  --th1120: #e7cd9d; /* text #8a5a00 */
+  --th1121: #cfc6b5; /* text #715f3c */
+  --th1122: #e3cba1; /* text #c68719 */
+  --th1123: #8a9dc5; /* text #5a75ad */
+  --th1124: rgba(135, 157, 197, 0.18); /* line #cfe0ff */
+  --th1125: #a7b8dd; /* text #2b58ba */
+  --th1126: #b2bcd1; /* text #425b8e */
+  --th1127: #a2b6e1; /* text #173e96 */
+  --th1128: rgba(135, 154, 197, 0.18); /* line #adc7ff */
+  --th1129: #b2bcd2; /* text #4a67a2 */
+  --th113: #131b22; /* surface #f1f5f9 */
+  --th1130: #9db4e7; /* text #0b3ba5 */
+  --th1131: #b5bdcf; /* text #536b9b */
+  --th1132: #92a0c1; /* text #6478a7 */
+  --th1133: #9ea9c2; /* text #7282a7 */
+  --th1134: #a4b7df; /* text #17377e */
+  --th1135: #a6dec6; /* text #22a06b */
+  --th1136: #8d9aba; /* text #61739f */
+  --th1137: #a6b8de; /* text #193775 */
+  --th1138: #95c6b1; /* line #79bda0 */
+  --th1139: #22a06b; /* shadow #22a06b */
+  --th114: #9ab2e0; /* text #c5d3ed */
+  --th1140: #96a8cd; /* text #6680b6 */
+  --th1141: #1b412a; /* surface #dff5e8 */
+  --th1142: #b6bdce; /* text #566b98 */
+  --th1143: #aabbda; /* text #244682 */
+  --th1144: #b8becc; /* text #60729b */
+  --th1145: #789fe3; /* text #3d75d7 */
+  --th1146: #b6bdcd; /* text #566a96 */
+  --th1147: #b4bed0; /* text #5471a7 */
+  --th1148: #433919; /* surface #fff3cc */
+  --th1149: rgba(135, 161, 197, 0.18); /* line #e4ecf7 */
+  --th115: rgba(7, 23, 95, 0.25); /* surface rgba(7, 23, 95, 0.25) */
+  --th1150: #909dbd; /* text #6376a2 */
+  --th1151: #a4b7e0; /* text #16367a */
+  --th1152: rgba(197, 178, 135, 0.18); /* line #f0d69b */
+  --th1153: rgba(255, 192, 26, 0.14); /* surface #fff9e9 */
+  --th1154: rgba(135, 197, 161, 0.18); /* line #a9ddbf */
+  --th1155: rgba(78, 203, 130, 0.14); /* surface #eefaf3 */
+  --th1156: #e5ce9f; /* text #8a610e */
+  --th1157: #ddcba7; /* text #654b17 */
+  --th1158: #a7ddc8; /* text #166044 */
+  --th1159: #d1c7b3; /* text #735f37 */
+  --th116: rgba(7, 23, 95, 0.15); /* shadow rgba(7, 23, 95, 0.15) */
+  --th1160: rgba(83, 198, 126, 0.14); /* surface #f3fbf6 */
+  --th1161: #a4e0c6; /* text #168052 */
+  --th1162: #a7ddc9; /* text #155d42 */
+  --th1163: #bac9c1; /* text #557865 */
+  --th1164: #a8dcc9; /* text #175d44 */
+  --th1165: #bbc8c1; /* text #567563 */
+  --th1166: #8d9ab9; /* text #61739e */
+  --th1167: #95a3c6; /* line #1f55dd */
+  --th1168: #1950dd; /* surface #255be6 */
+  --th1169: rgba(135, 158, 197, 0.18); /* line #b9d3ff */
+  --th117: rgba(45, 105, 255, 0.25); /* shadow rgba(45, 105, 255, 0.25) */
+  --th1170: #a4b7df; /* text #2457c5 */
+  --th1171: rgba(135, 163, 197, 0.18); /* line #dbe6f3 */
+  --th1172: rgba(31, 72, 125, 0.06); /* shadow rgba(31, 72, 125, 0.06) */
+  --th1173: #a8bddc; /* text #17345f */
+  --th1174: #d9adab; /* text #c2413a */
+  --th1175: rgba(26, 255, 83, 0.14); /* surface #f7fff9 */
+  --th1176: rgba(135, 164, 197, 0.18); /* line #e6edf5 */
+  --th1177: #a8c0db; /* text #285f9e */
+  --th1178: #131921; /* surface #f5f8fc */
+  --th1179: #b9c1ca; /* text #53657d */
+  --th118: #8588f4; /* text #6366f1 */
+  --th1180: rgba(135, 162, 197, 0.18); /* line #edf1f6 */
+  --th1181: #b3bfd1; /* text #293b55 */
+  --th1182: #a3aebc; /* text #7a8a9e */
+  --th1183: #131921; /* surface #f6f9fd */
+  --th1184: #a4badf; /* text #102a56 */
+  --th1185: rgba(135, 159, 197, 0.18); /* line #cddbf1 */
+  --th1186: #b8c0cc; /* text #536987 */
+  --th1187: rgba(37, 99, 235, 0.141); /* shadow rgba(37, 99, 235, 0.141) */
+  --th1188: rgba(24, 61, 112, 0.059); /* shadow rgba(24, 61, 112, 0.059) */
+  --th1189: rgba(135, 161, 197, 0.18); /* line #e2eaf5 */
+  --th119: #131622; /* surface #eef2ff */
+  --th1190: #a5bcde; /* text #16396d */
+  --th1191: #aabad0; /* text #94a8c4 */
+  --th1192: #b7c0cc; /* text #526987 */
+  --th1193: rgba(19, 25, 33, 0.922); /* surface rgba(248, 251, 255, 0.922) */
+  --th1194: rgba(135, 158, 197, 0.18); /* line #77a7f6 */
+  --th1195: rgba(37, 99, 235, 0.078); /* shadow rgba(37, 99, 235, 0.078) */
+  --th1196: #a7bddd; /* text #193c6d */
+  --th1197: #91a0b6; /* text #667b99 */
+  --th1198: rgba(135, 197, 157, 0.18); /* line #b9ddc6 */
+  --th1199: rgba(15, 75, 46, 0.06); /* shadow rgba(15, 75, 46, 0.06) */
+  --th120: rgba(135, 147, 197, 0.18); /* line #c7d2fe */
+  --th1200: rgba(153, 27, 27, 0.06); /* shadow rgba(153, 27, 27, 0.06) */
+  --th1201: #a7c0dd; /* text #173b65 */
+  --th1202: #bbc2c8; /* text #5b6b7b */
+  --th1203: #95a3c6; /* line #2f6bff */
+  --th1204: #192543; /* surface #2f6bff */
+  --th1205: #1e56d2; /* surface #245fe0 */
+  --th1206: #81a2f5; /* text #2f6bff */
+  --th1207: rgba(135, 164, 197, 0.18); /* line #d6dee7 */
+  --th1208: #131a22; /* surface #f5f8fb */
+  --th1209: #131b22; /* surface #eaf1f8 */
+  --th121: rgba(45, 105, 255, 0.35); /* shadow rgba(45, 105, 255, 0.35) */
+  --th1210: #131b22; /* surface #eef2f6 */
+  --th122: rgba(149, 162, 198, 0.3); /* line rgba(49, 104, 255, 0.3) */
+  --th123: rgba(45, 86, 146, 0.08); /* shadow rgba(45, 86, 146, 0.08) */
+  --th124: rgba(52, 228, 107, 0.14); /* surface #f0fdf4 */
+  --th125: rgba(135, 197, 156, 0.18); /* line #bbf7d0 */
+  --th126: #131a21; /* surface #f8fafc */
+  --th127: #131821; /* surface #fafcff */
+  --th128: rgba(7, 23, 95, 0.85); /* surface rgba(7, 23, 95, 0.85) */
+  --th129: rgba(7, 23, 95, 0.25); /* shadow rgba(7, 23, 95, 0.25) */
+  --th130: #07819e; /* surface #0891b2 */
+  --th131: rgba(8, 145, 178, 0.28); /* shadow rgba(8, 145, 178, 0.28) */
+  --th132: rgba(135, 161, 197, 0.18); /* line #e2e8f0 */
+  --th133: rgba(135, 162, 197, 0.18); /* line #eef2f7 */
+  --th134: #9dd8e7; /* text #0891b2 */
+  --th135: #e7b29d; /* text #c2410c */
+  --th136: #b7c0cd; /* text #334155 */
+  --th137: #07175f; /* surface #07175f */
+  --th138: #141a23; /* surface #dbe7fb */
+  --th139: #55648f; /* surface #5d6d9c */
+  --th140: rgba(201, 221, 245, 0.72); /* line rgba(201, 221, 245, 0.72) */
+  --th141: #95a4c6; /* line #2563eb */
+  --th142: rgba(19, 25, 33, 0.86); /* surface rgba(248, 251, 255, 0.86) */
+  --th143: rgba(149, 198, 167, 0.26); /* line rgba(22, 163, 74, 0.26) */
+  --th144: #95c6a7; /* line #16a34a */
+  --th145: #a6ddbb; /* text #166534 */
+  --th146: rgba(198, 149, 149, 0.28); /* line rgba(220, 38, 38, 0.28) */
+  --th147: #e0a4a4; /* text #991b1b */
+  --th148: rgba(201, 221, 245, 0.82); /* line rgba(201, 221, 245, 0.82) */
+  --th149: rgba(18, 24, 33, 0.92); /* surface rgba(255, 255, 255, 0.92) */
+  --th150: rgba(201, 221, 245, 0.7); /* line rgba(201, 221, 245, 0.7) */
+  --th151: rgba(19, 25, 33, 0.68); /* surface rgba(248, 251, 255, 0.68) */
+  --th152: rgba(149, 164, 198, 0.38); /* line rgba(37, 99, 235, 0.38) */
+  --th153: rgba(19, 25, 34, 0.94); /* surface rgba(239, 246, 255, 0.94) */
+  --th154: rgba(198, 149, 149, 0.48); /* line rgba(220, 38, 38, 0.48) */
+  --th155: rgba(198, 149, 149, 0.72); /* line rgba(220, 38, 38, 0.72) */
+  --th156: #dc2626; /* shadow #dc2626 */
+  --th157: rgba(149, 198, 167, 0.34); /* line rgba(22, 163, 74, 0.34) */
+  --th158: rgba(149, 198, 167, 0.54); /* line rgba(22, 163, 74, 0.54) */
+  --th159: #aabfda; /* text #183456 */
+  --th160: #222c3a; /* surface #e2e8f0 */
+  --th161: #b0c0d4; /* text #315178 */
+  --th162: #a0b2e4; /* text #1747cc */
+  --th163: rgba(201, 221, 245, 0.76); /* line rgba(201, 221, 245, 0.76) */
+  --th164: rgba(19, 25, 33, 0.8); /* surface rgba(248, 251, 255, 0.8) */
+  --th165: #b4bacf; /* text #53649f */
+  --th166: rgba(198, 180, 149, 0.34); /* line rgba(245, 158, 11, 0.34) */
+  --th167: rgba(255, 209, 26, 0.14); /* surface #fffbeb */
+  --th168: rgba(198, 149, 149, 0.56); /* line rgba(220, 38, 38, 0.56) */
+  --th169: #dda7a7; /* text #7f1d1d */
+  --th170: rgba(149, 198, 167, 0.28); /* line rgba(22, 163, 74, 0.28) */
+  --th171: rgba(18, 24, 33, 0.8); /* surface rgba(255, 255, 255, 0.8) */
+  --th172: rgba(201, 221, 245, 0.58); /* line rgba(201, 221, 245, 0.58) */
+  --th173: rgba(18, 24, 33, 0.85); /* surface rgba(255, 255, 255, 0.85) */
+  --th174: rgba(198, 149, 149, 0.32); /* line rgba(239, 68, 68, 0.32) */
+  --th175: rgba(239, 42, 42, 0.14); /* surface rgba(254, 242, 242, 0.7) */
+  --th176: rgba(67, 25, 25, 0.14); /* surface rgba(239, 68, 68, 0.14) */
+  --th177: #9de7d2; /* text #047857 */
+  --th178: rgba(14, 166, 116, 0.14); /* surface rgba(16, 185, 129, 0.14) */
+  --th179: #a3bbe1; /* text #0f2d5c */
+  --th180: #131922; /* surface #eff6ff */
+  --th181: #131b21; /* surface #f8fcff */
+  --th182: #131921; /* surface #f4f9ff */
+  --th183: #131a22; /* surface #eef6ff */
+  --th184: rgba(25, 43, 67, 0.18); /* surface rgba(67, 149, 255, 0.18) */
+  --th185: rgba(19, 26, 33, 0.94); /* surface rgba(242, 248, 255, 0.94) */
+  --th186: rgba(25, 37, 67, 0.12); /* surface rgba(58, 115, 255, 0.12) */
+  --th187: rgba(148, 178, 235, 0.28); /* line rgba(208, 223, 247, 0.72) */
+  --th188: rgba(45, 86, 146, 0.06); /* shadow rgba(45, 86, 146, 0.06) */
+  --th189: rgba(45, 86, 146, 0.11); /* shadow rgba(45, 86, 146, 0.11) */
+  --th190: #a2abe2; /* text #111f72 */
+  --th191: #939fc5; /* text #6575ac */
+  --th192: #1a1943; /* surface #7a77ff */
+  --th193: #193a43; /* surface #20d3ff */
+  --th194: rgba(39, 104, 255, 0.2); /* shadow rgba(39, 104, 255, 0.2) */
+  --th195: #a6b0dd; /* text #18276f */
+  --th196: #858fc2; /* text #5564aa */
+  --th197: #131922; /* surface #edf4ff */
+  --th198: rgba(19, 26, 34, 0.55); /* surface rgba(237, 246, 255, 0.55) */
+  --th199: #7a9bf4; /* text #2861ff */
+  --th200: #43191c; /* surface #ff3d48 */
+  --th201: #a4aedf; /* text #14226c */
+  --th202: rgba(18, 24, 33, 0.82); /* surface rgba(255, 255, 255, 0.82) */
+  --th203: #102661; /* surface #102661 */
+  --th204: #193043; /* surface #3d9be8 */
+  --th205: #8f9bc3; /* text #6072aa */
+  --th206: rgba(25, 43, 67, 0.05); /* surface rgba(91, 151, 234, 0.05) */
+  --th207: rgba(26, 26, 26, 0.5); /* surface rgba(0, 0, 0, 0.5) */
+  --th208: rgba(25, 44, 67, 0.15); /* surface rgba(67, 154, 255, 0.15) */
+  --th209: #a0aae4; /* text #0c1a68 */
+  --th210: #6f93f3; /* text #1c5aff */
+  --th211: rgba(19, 26, 34, 0.86); /* surface rgba(235, 244, 255, 0.86) */
+  --th212: #6695f3; /* text #1261ff */
+  --th213: #819ace; /* text #4e71ba */
+  --th214: #9da6e7; /* text #07136a */
+  --th215: #aab2d9; /* text #273687 */
+  --th216: #aeb6d6; /* text #344890 */
+  --th217: #192643; /* surface #b8c9ef */
+  --th218: rgba(49, 104, 255, 0.12); /* shadow rgba(49, 104, 255, 0.12) */
+  --th219: rgba(149, 162, 198, 0.45); /* line rgba(49, 104, 255, 0.45) */
+  --th220: rgba(25, 36, 67, 0.2); /* surface rgba(49, 104, 255, 0.2) */
+  --th221: rgba(25, 36, 67, 0.18); /* surface rgba(49, 104, 255, 0.18) */
+  --th222: rgba(2, 6, 16, 0.65); /* shadow rgba(255, 255, 255, 0.9) */
+  --th223: rgba(200, 219, 247, 0.78); /* line rgba(200, 219, 247, 0.78) */
+  --th224: rgba(18, 24, 33, 0.58); /* surface rgba(255, 255, 255, 0.58) */
+  --th225: rgba(47, 93, 157, 0.08); /* shadow rgba(47, 93, 157, 0.08) */
+  --th226: #84a6f5; /* text #3f78ff */
+  --th227: #192743; /* surface #8fb4ff */
+  --th228: #1557e6; /* surface #2563eb */
+  --th229: #1fb5c6; /* surface #22c5d8 */
+  --th230: #192243; /* surface #5b7cff */
+  --th231: rgba(149, 162, 198, 0.24); /* line rgba(49, 104, 255, 0.24) */
+  --th232: rgba(18, 24, 33, 0.78); /* surface rgba(255, 255, 255, 0.78) */
+  --th233: rgba(43, 96, 172, 0.14); /* shadow rgba(43, 96, 172, 0.14) */
+  --th234: rgba(25, 36, 67, 0.44); /* surface rgba(49, 104, 255, 0.44) */
+  --th235: rgba(25, 53, 67, 0.18); /* surface rgba(31, 182, 255, 0.18) */
+  --th236: rgba(200, 219, 247, 0.7); /* line rgba(200, 219, 247, 0.7) */
+  --th237: rgba(18, 24, 33, 0.6); /* surface rgba(255, 255, 255, 0.6) */
+  --th238: #192743; /* surface #7fa9ff */
+  --th239: #1ccce4; /* surface #2ed0e6 */
+  --th240: rgba(20, 26, 35, 0.78); /* surface rgba(222, 236, 255, 0.78) */
+  --th241: rgba(53, 92, 156, 0.12); /* shadow rgba(53, 92, 156, 0.12) */
+  --th242: #192743; /* surface #8db4ff */
+  --th243: #141923; /* surface #d7e5ff */
+  --th244: #192743; /* surface #2d72ff */
+  --th245: #19c2dc; /* surface #24cce6 */
+  --th246: rgba(45, 114, 255, 0.45); /* shadow rgba(45, 114, 255, 0.45) */
+  --th247: #84a6f5; /* text #3571ff */
+  --th248: rgba(37, 96, 174, 0.13); /* shadow rgba(37, 96, 174, 0.13) */
+  --th249: #141a23; /* surface #dceaff */
+  --th250: rgba(39, 86, 156, 0.16); /* shadow rgba(39, 86, 156, 0.16) */
+  --th251: #9daae6; /* text #081865 */
+  --th252: rgba(135, 159, 197, 0.18); /* line #dce7f8 */
+  --th253: #a0abe3; /* text #0e1e70 */
+  --th254: rgba(18, 24, 33, 0.86); /* surface rgba(255, 255, 255, 0.86) */
+  --th255: rgba(42, 91, 170, 0.07); /* shadow rgba(42, 91, 170, 0.07) */
+  --th256: rgba(149, 162, 198, 0.42); /* line rgba(49, 104, 255, 0.42) */
+  --th257: #95a2c6; /* line #3168ff */
+  --th258: rgba(49, 104, 255, 0.16); /* shadow rgba(49, 104, 255, 0.16) */
+  --th259: #9de7d8; /* text #08b997 */
+  --th260: rgba(66, 215, 175, 0.14); /* surface #def8f1 */
+  --th261: #131822; /* surface #e8efff */
+  --th262: #a984f5; /* text #874dff */
+  --th263: #191322; /* surface #f2e9ff */
+  --th264: #f3a76a; /* text #ff7f16 */
+  --th265: rgba(255, 147, 26, 0.14); /* surface #fff0df */
+  --th266: #f1ba55; /* text #f2a10d */
+  --th267: rgba(255, 189, 26, 0.14); /* surface #fff5dc */
+  --th268: #a1aacd; /* text #7280b4 */
+  --th269: #131722; /* surface #eef1fa */
+  --th270: #b4bacf; /* text #52639e */
+  --th271: rgba(135, 159, 197, 0.18); /* line #d9e5f8 */
+  --th272: #a6b1d4; /* text #8a99c6 */
+  --th273: #131821; /* surface #f3f7ff */
+  --th274: rgba(135, 159, 197, 0.18); /* line rgba(217, 229, 248, 0.96) */
+  --th275: rgba(18, 24, 33, 0.98); /* surface rgba(255, 255, 255, 0.98) */
+  --th276: #131922; /* surface #eef5ff */
+  --th277: #a2ade2; /* text #10206c */
+  --th278: #a7b1d3; /* text #7b8bbd */
+  --th279: rgba(149, 162, 198, 0.18); /* line rgba(49, 104, 255, 0.18) */
+  --th280: rgba(19, 25, 34, 0.86); /* surface rgba(238, 245, 255, 0.86) */
+  --th281: #9ba8c9; /* text #6d7fb0 */
+  --th282: #192543; /* surface #356dff */
+  --th283: #1345f1; /* surface #2654f2 */
+  --th284: rgba(49, 104, 255, 0.28); /* shadow rgba(49, 104, 255, 0.28) */
+  --th285: rgba(49, 104, 255, 0.34); /* shadow rgba(49, 104, 255, 0.34) */
+  --th286: rgba(255, 255, 255, 0.35); /* line rgba(255, 255, 255, 0.35) */
+  --th287: rgba(135, 158, 197, 0.18); /* line #ffffff */
+  --th288: #6b8ce3; /* text #2f5dd7 */
+  --th289: rgba(135, 160, 197, 0.18); /* line rgba(218, 231, 250, 0.9) */
+  --th290: rgba(19, 24, 33, 0.92); /* surface rgba(242, 247, 255, 0.92) */
+  --th291: rgba(19, 25, 33, 0.82); /* surface rgba(248, 251, 255, 0.82) */
+  --th292: #9eabe5; /* text #1230c0 */
+  --th293: #a3afe1; /* text #12246f */
+  --th294: #939ec0; /* text #6676a6 */
+  --th295: #a2aee1; /* text #10216b */
+  --th296: #131a21; /* surface #f9fcff */
+  --th297: #131921; /* surface #f5f9ff */
+  --th298: rgba(25, 42, 67, 0.1); /* surface rgba(88, 157, 255, 0.1) */
+  --th299: rgba(18, 24, 33, 0.9); /* surface rgba(255, 255, 255, 0.9) */
+  --th300: rgba(135, 158, 197, 0.18); /* line #dde8fa */
+  --th301: #b2b9d2; /* text #445796 */
+  --th302: rgba(135, 157, 197, 0.18); /* line #dfe9fb */
+  --th303: #192843; /* surface #aac1eb */
+  --th304: #96a2c5; /* text #6879ac */
+  --th305: #a5b6d4; /* text #9aadcf */
+  --th306: #acb4d8; /* text #263677 */
+  --th307: #a8b2d0; /* text #7a89b7 */
+  --th308: #34a975; /* surface #39b980 */
+  --th309: rgba(21, 87, 230, 0.12); /* surface rgba(37, 99, 235, 0.12) */
+  --th310: rgba(19, 24, 33, 0.98); /* surface rgba(247, 250, 255, 0.98) */
+  --th311: rgba(37, 99, 235, 0.18); /* shadow rgba(37, 99, 235, 0.18) */
+  --th312: rgba(21, 87, 230, 0.1); /* surface rgba(37, 99, 235, 0.1) */
+  --th313: #1fa8bd; /* surface #22b8cf */
+  --th314: #abb5ce; /* text #8290b6 */
+  --th315: rgba(37, 99, 235, 0.12); /* shadow rgba(37, 99, 235, 0.12) */
+  --th316: rgba(149, 164, 198, 0.18); /* line rgba(37, 99, 235, 0.18) */
+  --th317: rgba(37, 99, 235, 0.16); /* shadow rgba(37, 99, 235, 0.16) */
+  --th318: #192943; /* surface #cbdaf3 */
+  --th319: rgba(198, 149, 149, 0.22); /* line rgba(220, 38, 38, 0.22) */
+  --th320: rgba(18, 24, 33, 0.96); /* surface rgba(255, 255, 255, 0.96) */
+  --th321: rgba(255, 26, 26, 0.14); /* surface rgba(255, 247, 247, 0.9) */
+  --th322: rgba(135, 162, 197, 0.18); /* line #bfdbfe */
+  --th323: #a1e3de; /* text #0f766e */
+  --th324: rgba(135, 197, 185, 0.18); /* line #99f6e4 */
+  --th325: rgba(26, 243, 255, 0.14); /* surface #ecfeff */
+  --th326: rgba(149, 198, 167, 0.3); /* line rgba(22, 163, 74, 0.3) */
+  --th327: rgba(197, 135, 135, 0.18); /* line #fecaca */
+  --th328: rgba(135, 161, 197, 0.18); /* line #dbe4f0 */
+  --th329: rgba(135, 158, 197, 0.18); /* line #d8e5fb */
+  --th330: rgba(21, 87, 230, 0.035); /* surface rgba(37, 99, 235, 0.035) */
+  --th331: rgba(239, 246, 255, 0.9); /* shadow rgba(239, 246, 255, 0.9) */
+  --th332: rgba(135, 160, 197, 0.18); /* line #e0ebfb */
+  --th333: #abbad9; /* text #26437f */
+  --th334: rgba(37, 99, 235, 0.05); /* shadow rgba(37, 99, 235, 0.05) */
+  --th335: #131922; /* surface #eaf2ff */
+  --th336: rgba(149, 198, 167, 0.22); /* line rgba(22, 163, 74, 0.22) */
+  --th337: rgba(52, 228, 107, 0.14); /* surface rgba(240, 253, 244, 0.92) */
+  --th338: rgba(239, 42, 42, 0.14); /* surface rgba(254, 242, 242, 0.94) */
+  --th339: rgba(198, 180, 149, 0.28); /* line rgba(245, 158, 11, 0.28) */
+  --th340: rgba(255, 209, 26, 0.14); /* surface rgba(255, 251, 235, 0.94) */
+  --th341: #131822; /* surface #f1f6ff */
+  --th342: #6b8ff3; /* text #1854ff */
+  --th343: rgba(135, 159, 197, 0.18); /* line #cfe0fa */
+  --th344: rgba(135, 160, 197, 0.18); /* line #dfeafa */
+  --th345: rgba(135, 155, 197, 0.18); /* line #93b7ff */
+  --th346: #7697f4; /* text #245dff */
+  --th347: #a0e4cf; /* text #13a97b */
+  --th348: #a58aef; /* text #7a52e8 */
+  --th349: #f3a167; /* text #f07822 */
+  --th350: #a2d8e1; /* text #1c9fb7 */
+  --th351: #e7cd9d; /* text #db8e00 */
+  --th352: #131821; /* surface #f7faff */
+  --th353: #a9b3da; /* text #203174 */
+  --th354: #98a3c6; /* text #6a7aad */
+  --th355: rgba(135, 159, 197, 0.18); /* line #d7e4f8 */
+  --th356: #192843; /* surface #c9d8f2 */
+  --th357: #19433a; /* surface #ccfbf1 */
+  --th358: rgba(255, 153, 26, 0.14); /* surface #fff7ed */
+  --th359: #adb6d6; /* text #31458c */
+  --th360: #9fe5ce; /* text #11a374 */
+  --th361: rgba(77, 203, 151, 0.14); /* surface #e7f8f1 */
+  --th362: #a5dec6; /* text #22a86f */
+  --th363: #21283b; /* svg #7d91c2 */
+  --th364: #a2e2c8; /* text #18a86f */
+  --th365: #25a86d; /* surface #29b978 */
+  --th366: #192143; /* surface #5d7cff */
+  --th367: #192843; /* surface #d9e3f5 */
+  --th368: #1f293d; /* surface #c8d3e8 */
+  --th369: rgba(135, 160, 197, 0.18); /* line #e1ebfa */
+  --th370: #95a2c6; /* line #1854ff */
+  --th371: rgba(25, 40, 67, 0.026); /* surface rgba(71, 122, 214, 0.026) */
+  --th372: rgba(135, 159, 197, 0.18); /* line #dce8fb */
+  --th373: rgba(197, 168, 135, 0.18); /* line #fed7aa */
+  --th374: #e4b1a0; /* text #9a3412 */
+  --th375: rgba(255, 153, 26, 0.14); /* surface rgba(255, 247, 237, 0.96) */
+  --th376: rgba(249, 115, 22, 0.1); /* shadow rgba(249, 115, 22, 0.1) */
+  --th377: rgba(102, 146, 241, 0.08); /* svg rgba(37, 99, 235, 0.08) */
+  --th378: #6692f1; /* svg #2563eb */
+  --th379: #b1bbd2; /* text #31446f */
+  --th380: rgba(19, 25, 33, 0.6); /* svg rgba(248, 251, 255, 0.6) */
+  --th381: rgba(25, 42, 67, 0.78); /* svg rgba(196, 215, 243, 0.78) */
+  --th382: rgba(19, 24, 33, 0.6); /* svg rgba(242, 247, 255, 0.6) */
+  --th383: rgba(19, 30, 34, 0.5); /* svg rgba(232, 249, 255, 0.5) */
+  --th384: rgba(52, 228, 107, 0.14); /* svg rgba(240, 253, 244, 0.5) */
+  --th385: rgba(18, 24, 33, 0.62); /* svg rgba(255, 255, 255, 0.62) */
+  --th386: #98a3c4; /* svg #6b7baa */
+  --th387: #9faae5; /* svg #0b1b6e */
+  --th388: #b4bacf; /* svg #53649f */
+  --th389: rgba(18, 24, 33, 0.94); /* svg rgba(255, 255, 255, 0.94) */
+  --th390: #a4e0ba; /* svg #22c55e */
+  --th391: rgba(19, 25, 34, 0.72); /* svg rgba(239, 246, 255, 0.72) */
+  --th392: #192643; /* svg #6f95e8 */
+  --th393: #7891dd; /* svg #3f63cf */
+  --th394: #a1e2b9; /* svg #16a34a */
+  --th395: #121821; /* svg #ffffff */
+  --th396: #431919; /* svg #ef4444 */
+  --th397: rgba(52, 228, 107, 0.14); /* svg rgba(240, 253, 244, 0.86) */
+  --th398: rgba(18, 24, 33, 0.82); /* svg rgba(255, 255, 255, 0.82) */
+  --th399: #192943; /* svg #d8e5fb */
+  --th400: #192443; /* svg #245dff */
+  --th401: rgba(239, 68, 68, 0.18); /* shadow rgba(239, 68, 68, 0.18) */
+  --th402: rgba(18, 24, 33, 0.96); /* svg rgba(255, 255, 255, 0.96) */
+  --th403: #431919; /* svg #fecaca */
+  --th404: rgba(239, 68, 68, 0.12); /* shadow rgba(239, 68, 68, 0.12) */
+  --th405: #e0a4a4; /* svg #991b1b */
+  --th406: #f1b856; /* text #f59e0b */
+  --th407: #f58585; /* text #ef4444 */
+  --th408: #f29e64; /* text #f97316 */
+  --th409: #afbaca; /* text #94a3b8 */
+  --th410: rgba(15, 23, 42, 0.14); /* shadow rgba(15, 23, 42, 0.14) */
+  --th411: rgba(18, 24, 33, 0.92); /* svg rgba(255, 255, 255, 0.92) */
+  --th412: rgba(34, 197, 94, 0.18); /* shadow rgba(34, 197, 94, 0.18) */
+  --th413: rgba(52, 228, 107, 0.14); /* svg rgba(240, 253, 244, 0.96) */
+  --th414: #194328; /* svg #86efac */
+  --th415: #a3e1ba; /* svg #15803d */
+  --th416: rgba(67, 63, 25, 0.96); /* svg rgba(254, 249, 195, 0.96) */
+  --th417: #433a19; /* svg #fde68a */
+  --th418: rgba(255, 153, 26, 0.14); /* svg rgba(255, 247, 237, 0.97) */
+  --th419: #432e19; /* svg #fdba74 */
+  --th420: #e7bd9d; /* svg #b45309 */
+  --th421: rgba(102, 146, 241, 0.1); /* svg rgba(37, 99, 235, 0.1) */
+  --th422: rgba(102, 146, 241, 0.28); /* svg rgba(37, 99, 235, 0.28) */
+  --th423: rgba(37, 99, 235, 0.24); /* shadow rgba(37, 99, 235, 0.24) */
+  --th424: #f29e64; /* svg #f97316 */
+  --th425: rgba(102, 146, 241, 0.16); /* svg rgba(37, 99, 235, 0.16) */
+  --th426: #192c43; /* svg #bfdbfe */
+  --th427: #432f19; /* svg #fed7aa */
+  --th428: #194328; /* svg #bbf7d0 */
+  --th429: rgba(18, 24, 33, 0.97); /* surface rgba(255, 255, 255, 0.97) */
+  --th430: rgba(42, 91, 170, 0.13); /* shadow rgba(42, 91, 170, 0.13) */
+  --th431: rgba(135, 158, 197, 0.18); /* line #e8effb */
+  --th432: rgba(18, 24, 33, 0.72); /* svg rgba(255, 255, 255, 0.72) */
+  --th433: #192a43; /* svg #d7e4f8 */
+  --th434: rgba(18, 24, 33, 0.9); /* svg rgba(255, 255, 255, 0.9) */
+  --th435: #192943; /* svg #c7d9f5 */
+  --th436: #131922; /* svg #eff6ff */
+  --th437: rgba(255, 26, 26, 0.14); /* svg #fff5f5 */
+  --th438: rgba(21, 87, 230, 0.028); /* surface rgba(37, 99, 235, 0.028) */
+  --th439: rgba(25, 42, 67, 0.85); /* svg rgba(190, 209, 238, 0.85) */
+  --th440: rgba(19, 25, 34, 0.48); /* svg rgba(239, 246, 255, 0.48) */
+  --th441: rgba(25, 44, 67, 0.55); /* svg rgba(191, 219, 254, 0.55) */
+  --th442: rgba(52, 228, 187, 0.14); /* svg rgba(240, 253, 250, 0.38) */
+  --th443: rgba(25, 52, 67, 0.48); /* svg rgba(186, 230, 253, 0.48) */
+  --th444: #bbc1c9; /* svg #64748b */
+  --th445: rgba(239, 68, 68, 0.2); /* shadow rgba(239, 68, 68, 0.2) */
+  --th446: #b7c0cd; /* svg #334155 */
+  --th447: rgba(18, 24, 33, 0.95); /* svg rgba(255, 255, 255, 0.95) */
+  --th448: rgba(18, 24, 33, 0.74); /* svg rgba(255, 255, 255, 0.74) */
+  --th449: rgba(25, 44, 67, 0.75); /* svg rgba(191, 219, 254, 0.75) */
+  --th450: rgba(37, 99, 235, 0.08); /* shadow rgba(37, 99, 235, 0.08) */
+  --th451: #192c43; /* svg #60a5fa */
+  --th452: rgba(20, 26, 35, 0.52); /* svg rgba(219, 234, 254, 0.52) */
+  --th453: #192843; /* svg #4f7fd8 */
+  --th454: #192943; /* svg #7ba6ee */
+  --th455: rgba(67, 44, 25, 0.2); /* svg rgba(251, 146, 60, 0.2) */
+  --th456: rgba(67, 25, 25, 0.12); /* svg rgba(239, 68, 68, 0.12) */
+  --th457: rgba(239, 42, 42, 0.14); /* svg rgba(254, 242, 242, 0.72) */
+  --th458: rgba(239, 42, 42, 0.14); /* svg rgba(254, 242, 242, 0.42) */
+  --th459: rgba(255, 26, 26, 0.14); /* svg rgba(255, 247, 247, 0.92) */
+  --th460: rgba(67, 25, 25, 0.34); /* svg rgba(239, 68, 68, 0.34) */
+  --th461: rgba(21, 87, 230, 0.024); /* surface rgba(37, 99, 235, 0.024) */
+  --th462: rgba(18, 24, 33, 0.84); /* svg rgba(255, 255, 255, 0.84) */
+  --th463: rgba(25, 42, 67, 0.9); /* svg rgba(190, 209, 238, 0.9) */
+  --th464: rgba(18, 24, 33, 0.8); /* svg rgba(255, 255, 255, 0.8) */
+  --th465: rgba(25, 44, 67, 0.72); /* svg rgba(191, 219, 254, 0.72) */
+  --th466: rgba(37, 99, 235, 0.1); /* shadow rgba(37, 99, 235, 0.1) */
+  --th467: rgba(239, 68, 68, 0.14); /* shadow rgba(239, 68, 68, 0.14) */
+  --th468: rgba(52, 228, 107, 0.14); /* svg #f0fdf4 */
+  --th469: #431919; /* svg #fca5a5 */
+  --th470: rgba(19, 25, 33, 0.96); /* svg rgba(248, 251, 255, 0.96) */
+  --th471: rgba(19, 25, 34, 0.7); /* svg rgba(239, 246, 255, 0.7) */
+  --th472: #192a43; /* svg #d8e6fb */
+  --th473: rgba(19, 25, 34, 0.76); /* svg rgba(235, 243, 255, 0.76) */
+  --th474: rgba(19, 27, 34, 0.74); /* svg rgba(238, 247, 255, 0.74) */
+  --th475: rgba(19, 24, 33, 0.82); /* svg rgba(243, 247, 255, 0.82) */
+  --th476: rgba(19, 30, 34, 0.78); /* svg rgba(232, 249, 255, 0.78) */
+  --th477: #192543; /* svg #4b74d8 */
+  --th478: #a6ddc0; /* svg #25a861 */
+  --th479: #431f19; /* svg #ff5d45 */
+  --th480: #432e19; /* svg #ff9a36 */
+  --th481: #a2d7e2; /* svg #20b8d7 */
+  --th482: #201943; /* svg #7d63ff */
+  --th483: #232b39; /* svg #b7c4d9 */
+  --th484: #192443; /* svg #3168ff */
+  --th485: #131921; /* svg #f8fbff */
+  --th486: #192643; /* svg #8fb2ff */
+  --th487: rgba(26, 255, 94, 0.14); /* svg rgba(245, 255, 248, 0.72) */
+  --th488: rgba(19, 26, 33, 0.72); /* svg rgba(247, 251, 255, 0.72) */
+  --th489: #f1b856; /* svg #f59e0b */
+  --th490: #192543; /* surface #4b74d8 */
+  --th491: #219757; /* surface #25a861 */
+  --th492: #431f19; /* surface #ff5d45 */
+  --th493: #1da9c5; /* surface #20b8d7 */
+  --th494: #432e19; /* surface #ff9a36 */
+  --th495: #201943; /* surface #7d63ff */
+  --th496: #4c5c92; /* surface #53649f */
+  --th497: #131821; /* surface #f2f7ff */
+  --th498: #131922; /* surface #ecf3ff */
+  --th499: #192943; /* svg #bcd2f4 */
+  --th500: #e7b69d; /* text #ea580c */
+  --th501: #131721; /* surface #f2f6ff */
+  --th502: rgba(135, 197, 157, 0.18); /* line #86efac */
+  --th503: #22c55e; /* shadow #22c55e */
+  --th504: #f97316; /* shadow #f97316 */
+  --th505: #3b82f6; /* shadow #3b82f6 */
+  --th506: rgba(19, 25, 34, 0.96); /* surface rgba(239, 246, 255, 0.96) */
+  --th507: rgba(34, 197, 94, 0.08); /* shadow rgba(34, 197, 94, 0.08) */
+  --th508: rgba(135, 158, 197, 0.18); /* line #e6eefb */
+  --th509: rgba(135, 159, 197, 0.18); /* line #8bb8ff */
+  --th510: #2563eb; /* shadow #2563eb */
+  --th511: rgba(255, 26, 26, 0.14); /* surface #fff7f7 */
+  --th512: rgba(197, 184, 135, 0.18); /* line #fde68a */
+  --th513: rgba(149, 169, 198, 0.16); /* line rgba(38, 85, 150, 0.16) */
+  --th514: rgba(19, 25, 33, 0.82); /* surface rgba(244, 249, 255, 0.82) */
+  --th515: rgba(29, 169, 197, 0.12); /* surface rgba(32, 184, 215, 0.12) */
+  --th516: rgba(24, 61, 112, 0.1); /* shadow rgba(24, 61, 112, 0.1) */
+  --th517: #a6bddd; /* text #112b4f */
+  --th518: rgba(21, 87, 230, 0.55); /* surface rgba(37, 99, 235, 0.55) */
+  --th519: rgba(21, 87, 230, 0); /* surface rgba(37, 99, 235, 0) */
+  --th520: #aec0d5; /* text #213a58 */
+  --th521: rgba(138, 166, 210, 0.18); /* line rgba(138, 166, 210, 0.18) */
+  --th522: rgba(19, 23, 33, 0.72); /* surface rgba(245, 248, 255, 0.72) */
+  --th523: #afbad5; /* text #25365f */
+  --th524: rgba(149, 164, 198, 0.14); /* line rgba(37, 99, 235, 0.14) */
+  --th525: #a6b6de; /* text #17306f */
+  --th526: rgba(21, 87, 230, 0.08); /* surface rgba(37, 99, 235, 0.08) */
+  --th527: rgba(21, 87, 230, 0.02); /* surface rgba(37, 99, 235, 0.02) */
+  --th528: rgba(21, 87, 230, 0.03); /* surface rgba(37, 99, 235, 0.03) */
+  --th529: rgba(19, 25, 33, 0.6); /* surface rgba(248, 251, 255, 0.6) */
+  --th530: rgba(138, 166, 210, 0.22); /* line rgba(138, 166, 210, 0.22) */
+  --th531: rgba(21, 87, 230, 0.35); /* surface rgba(37, 99, 235, 0.35) */
+  --th532: rgba(21, 87, 230, 0.05); /* surface rgba(37, 99, 235, 0.05) */
+  --th533: rgba(13, 138, 122, 0.4); /* surface rgba(13, 138, 122, 0.4) */
+  --th534: rgba(13, 138, 122, 0.05); /* surface rgba(13, 138, 122, 0.05) */
+  --th535: rgba(33, 25, 67, 0.4); /* surface rgba(107, 78, 224, 0.4) */
+  --th536: rgba(33, 25, 67, 0.05); /* surface rgba(107, 78, 224, 0.05) */
+  --th537: rgba(149, 164, 198, 0.3); /* line rgba(37, 99, 235, 0.3) */
+  --th538: rgba(24, 61, 112, 0.08); /* shadow rgba(24, 61, 112, 0.08) */
+  --th539: rgba(13, 138, 122, 0.12); /* surface rgba(13, 138, 122, 0.12) */
+  --th540: #9ee5dc; /* text #0d8a7a */
+  --th541: rgba(33, 25, 67, 0.12); /* surface rgba(107, 78, 224, 0.12) */
+  --th542: #9e8beb; /* text #6b4ee0 */
+  --th543: rgba(138, 166, 210, 0.28); /* line rgba(138, 166, 210, 0.28) */
+  --th544: rgba(15, 31, 92, 0.04); /* shadow rgba(15, 31, 92, 0.04) */
+  --th545: #afb6c6; /* text #8590a8 */
+  --th546: rgba(138, 166, 210, 0.3); /* line rgba(138, 166, 210, 0.3) */
+  --th547: rgba(19, 24, 34, 0.9); /* surface rgba(238, 242, 250, 0.9) */
+  --th548: rgba(21, 87, 230, 0.06); /* surface rgba(37, 99, 235, 0.06) */
+  --th549: rgba(138, 166, 210, 0.6); /* line rgba(138, 166, 210, 0.6) */
+  --th550: rgba(18, 24, 33, 0.74); /* surface rgba(255, 255, 255, 0.74) */
+  --th551: rgba(19, 25, 33, 0.9); /* surface rgba(244, 249, 255, 0.9) */
+  --th552: rgba(67, 25, 25, 0.08); /* surface rgba(239, 68, 68, 0.08) */
+  --th553: #131721; /* surface #f5f8ff */
+  --th554: #9ea9c7; /* text #7181ad */
+  --th555: #a5bbdf; /* text #173b76 */
+  --th556: #c69595; /* line #ef4444 */
+  --th557: rgba(255, 26, 26, 0.14); /* surface #fff8f8 */
+  --th558: #131821; /* surface #f6f9ff */
+  --th559: #c6b495; /* line #f59e0b */
+  --th560: rgba(255, 178, 26, 0.14); /* surface #fffaf0 */
+  --th561: #b4bfcf; /* text #466087 */
+  --th562: rgba(47, 233, 146, 0.14); /* surface #ecfdf5 */
+  --th563: rgba(149, 164, 198, 0.16); /* line rgba(37, 99, 235, 0.16) */
+  --th564: #99a6c5; /* text #6b7eab */
+  --th565: rgba(19, 25, 33, 0.86); /* surface rgba(244, 249, 255, 0.86) */
+  --th566: rgba(19, 25, 34, 0.78); /* surface rgba(239, 246, 255, 0.78) */
+  --th567: rgba(149, 163, 198, 0.1); /* line rgba(15, 23, 42, 0.1) */
+  --th568: rgba(149, 163, 198, 0.08); /* line rgba(15, 23, 42, 0.08) */
+  --th569: rgba(19, 25, 34, 0.9); /* surface rgba(239, 246, 255, 0.9) */
+  --th570: rgba(15, 23, 42, 0.06); /* surface rgba(15, 23, 42, 0.06) */
+  --th571: #e66363; /* svg #dc2626 */
+  --th572: rgba(230, 99, 99, 0.08); /* svg rgba(220, 38, 38, 0.08) */
+  --th573: rgba(230, 99, 99, 0.055); /* svg rgba(220, 38, 38, 0.055) */
+  --th574: rgba(230, 99, 99, 0.035); /* svg rgba(220, 38, 38, 0.035) */
+  --th575: #b6c0ce; /* svg #1f2937 */
+  --th576: #b1bcd3; /* svg #111827 */
+  --th577: #e1a2a2; /* svg #b91c1c */
+  --th578: #262d35; /* svg #94a3b8 */
+  --th579: #131a21; /* svg #f8fafc */
+  --th580: #a0b2e4; /* svg #1747cc */
+  --th581: rgba(247, 33, 33, 0.14); /* svg #fee2e2 */
+  --th582: rgba(244, 104, 6, 0.1); /* surface rgba(249, 115, 22, 0.1) */
+  --th583: rgba(31, 180, 86, 0.1); /* surface rgba(34, 197, 94, 0.1) */
+  --th584: rgba(20, 145, 66, 0.12); /* surface rgba(22, 163, 74, 0.12) */
+  --th585: rgba(44, 237, 110, 0.14); /* surface rgba(220, 252, 231, 0.88) */
+  --th586: rgba(149, 198, 167, 0.14); /* line rgba(22, 163, 74, 0.14) */
+  --th587: rgba(149, 164, 198, 0.1); /* line rgba(37, 99, 235, 0.1) */
+  --th588: rgba(201, 221, 245, 0.78); /* line rgba(201, 221, 245, 0.78) */
+  --th589: #a3b4e1; /* text #102661 */
+  --th590: rgba(149, 164, 198, 0.4); /* line rgba(37, 99, 235, 0.4) */
+  --th591: rgba(149, 164, 198, 0.12); /* line rgba(37, 99, 235, 0.12) */
+  --th592: rgba(19, 25, 33, 0.88); /* surface rgba(248, 251, 255, 0.88) */
+  --th593: rgba(149, 164, 198, 0.28); /* line rgba(37, 99, 235, 0.28) */
+  --th594: rgba(37, 99, 235, 0.22); /* shadow rgba(37, 99, 235, 0.22) */
+  --th595: rgba(149, 164, 198, 0.22); /* line rgba(37, 99, 235, 0.22) */
+  --th596: rgba(19, 25, 33, 0.72); /* surface rgba(248, 251, 255, 0.72) */
+  --th597: rgba(149, 164, 198, 0.42); /* line rgba(37, 99, 235, 0.42) */
+  --th598: rgba(149, 198, 167, 0.5); /* line rgba(22, 163, 74, 0.5) */
+  --th599: rgba(22, 163, 74, 0.12); /* shadow rgba(22, 163, 74, 0.12) */
+  --th600: rgba(19, 25, 33, 0.78); /* surface rgba(248, 251, 255, 0.78) */
+  --th601: rgba(135, 163, 197, 0.18); /* line rgba(201, 221, 245, 0.9) */
+  --th602: #e7cc9d; /* text #9a6200 */
+  --th603: rgba(149, 164, 198, 0.15); /* line rgba(37, 99, 235, 0.15) */
+  --th604: rgba(19, 25, 33, 0.92); /* surface rgba(248, 251, 255, 0.92) */
+  --th605: rgba(19, 25, 34, 0.92); /* surface rgba(239, 246, 255, 0.92) */
+  --th606: rgba(18, 166, 149, 0.14); /* surface rgba(20, 184, 166, 0.14) */
+  --th607: #b6c0ce; /* text #526d94 */
+  --th608: #aebad6; /* text #0f172a */
+  --th609: #95a2c6; /* line #245dff */
+  --th610: #192443; /* surface #245dff */
+  --th611: #1b48c6; /* surface #1d4ed8 */
+  --th612: #95a2c6; /* line #1d4ed8 */
+  --th613: #131922; /* surface #f1f5fb */
+  --th614: #a6b5dd; /* text #1e3a8a */
+  --th615: rgba(135, 157, 197, 0.18); /* line #c7d8f7 */
+  --th616: rgba(36, 93, 255, 0.12); /* shadow rgba(36, 93, 255, 0.12) */
+  --th617: rgba(135, 161, 197, 0.18); /* line #94a3b8 */
+  --th618: rgba(44, 237, 110, 0.14); /* surface rgba(220, 252, 231, 0.6) */
+  --th619: rgba(149, 198, 167, 0.3); /* line rgba(34, 197, 94, 0.3) */
+  --th620: #a3b2e0; /* text #1e40af */
+  --th621: #b3bad0; /* text #4d609b */
+  --th622: rgba(44, 237, 110, 0.14); /* surface rgba(220, 252, 231, 0.5) */
+  --th623: rgba(149, 198, 167, 0.25); /* line rgba(34, 197, 94, 0.25) */
+  --th624: rgba(135, 161, 197, 0.18); /* line #dbe6f5 */
+  --th625: #131721; /* surface #f8faff */
+  --th626: #131722; /* surface #f1f5fe */
+  --th627: rgba(36, 93, 255, 0.15); /* shadow rgba(36, 93, 255, 0.15) */
+  --th628: rgba(135, 159, 197, 0.18); /* line #d5e4fb */
+  --th629: #131923; /* surface #e1ecff */
+  --th630: rgba(149, 164, 198, 0.2); /* line rgba(37, 99, 235, 0.2) */
+  --th631: rgba(148, 163, 184, 0.2); /* line rgba(148, 163, 184, 0.2) */
+  --th632: #131721; /* surface #fbfcfe */
+  --th633: rgba(67, 63, 25, 0.6); /* surface rgba(254, 249, 195, 0.6) */
+  --th634: rgba(198, 186, 149, 0.25); /* line rgba(234, 179, 8, 0.25) */
+  --th635: #e4c49f; /* text #854d0e */
+  --th636: rgba(149, 164, 198, 0.35); /* line rgba(37, 99, 235, 0.35) */
+  --th637: rgba(67, 63, 25, 0.5); /* surface rgba(254, 249, 195, 0.5) */
+  --th638: rgba(198, 186, 149, 0.4); /* line rgba(234, 179, 8, 0.4) */
+  --th639: rgba(149, 164, 198, 0.5); /* line rgba(37, 99, 235, 0.5) */
+  --th640: rgba(198, 186, 149, 0.3); /* line rgba(234, 179, 8, 0.3) */
+  --th641: #131822; /* surface #eaf1ff */
+  --th642: rgba(167, 25, 25, 0.1); /* surface rgba(185, 28, 28, 0.1) */
+  --th643: rgba(149, 198, 167, 0.24); /* line rgba(22, 163, 74, 0.24) */
+  --th644: #1fb456; /* surface #22c55e */
+  --th645: rgba(19, 25, 34, 0.5); /* surface rgba(239, 246, 255, 0.5) */
+  --th646: rgba(135, 163, 197, 0.18); /* line #cbd5e1 */
+  --th647: rgba(148, 163, 184, 0.5); /* line rgba(148, 163, 184, 0.5) */
+  --th648: rgba(19, 25, 34, 0.6); /* surface rgba(239, 246, 255, 0.6) */
+  --th649: #131a22; /* surface #eef2f7 */
+  --th650: rgba(148, 163, 184, 0.24); /* line rgba(148, 163, 184, 0.24) */
+  --th651: #141d23; /* surface #e0f2fe */
+  --th652: #9dcde7; /* text #075985 */
+  --th653: rgba(148, 163, 184, 0.34); /* line rgba(148, 163, 184, 0.34) */
+  --th654: rgba(135, 163, 197, 0.18); /* line #60a5fa */
+  --th655: rgba(37, 99, 235, 0.11); /* shadow rgba(37, 99, 235, 0.11) */
+  --th656: rgba(19, 25, 33, 0.9); /* surface rgba(248, 251, 255, 0.9) */
+  --th657: rgba(44, 237, 110, 0.14); /* surface rgba(220, 252, 231, 0.9) */
+  --th658: rgba(67, 58, 25, 0.94); /* surface rgba(254, 243, 199, 0.94) */
+  --th659: rgba(19, 25, 34, 0.7); /* surface rgba(239, 246, 255, 0.7) */
+  --th660: rgba(149, 164, 198, 0.11); /* line rgba(37, 99, 235, 0.11) */
+  --th661: rgba(247, 33, 33, 0.14); /* surface rgba(254, 226, 226, 0.92) */
+  --th662: rgba(67, 58, 25, 0.92); /* surface rgba(254, 243, 199, 0.92) */
+  --th663: rgba(34, 44, 58, 0.9); /* surface rgba(226, 232, 240, 0.9) */
+  --th664: #b3bed1; /* text #49679a */
+  --th665: rgba(19, 25, 34, 0.82); /* surface rgba(239, 246, 255, 0.82) */
+  --th666: rgba(198, 149, 149, 0.2); /* line rgba(220, 38, 38, 0.2) */
+  --th667: rgba(149, 198, 182, 0.2); /* line rgba(16, 185, 129, 0.2) */
+  --th668: #95c6b6; /* line #10b981 */
+  --th669: rgba(149, 169, 198, 0.2); /* line rgba(100, 116, 139, 0.2) */
+  --th670: rgba(31, 180, 86, 0.12); /* surface rgba(34, 197, 94, 0.12) */
+  --th671: rgba(20, 145, 66, 0.08); /* surface rgba(22, 163, 74, 0.08) */
+  --th672: rgba(149, 198, 167, 0.16); /* line rgba(22, 163, 74, 0.16) */
+  --th673: #b7c1cd; /* text #54708f */
+  --th674: rgba(198, 169, 149, 0.24); /* line rgba(249, 115, 22, 0.24) */
+  --th675: rgba(255, 153, 26, 0.14); /* surface rgba(255, 247, 237, 0.84) */
+  --th676: #f46806; /* surface #f97316 */
+  --th677: rgba(149, 198, 167, 0.2); /* line rgba(22, 163, 74, 0.2) */
+  --th678: rgba(47, 233, 146, 0.14); /* surface rgba(236, 253, 245, 0.8) */
+  --th679: #acbfd8; /* text #1e3a5f */
+  --th680: rgba(20, 145, 66, 0.1); /* surface rgba(22, 163, 74, 0.1) */
+  --th681: rgba(149, 198, 167, 0.18); /* line rgba(22, 163, 74, 0.18) */
+  --th682: rgba(226, 146, 9, 0.1); /* surface rgba(245, 158, 11, 0.1) */
+  --th683: rgba(198, 180, 149, 0.18); /* line rgba(245, 158, 11, 0.18) */
+  --th684: rgba(198, 169, 149, 0.18); /* line rgba(249, 115, 22, 0.18) */
+  --th685: rgba(91, 106, 127, 0.1); /* surface rgba(100, 116, 139, 0.1) */
+  --th686: rgba(149, 169, 198, 0.16); /* line rgba(100, 116, 139, 0.16) */
+  --th687: rgba(19, 26, 34, 0.94); /* surface rgba(238, 246, 255, 0.94) */
+  --th688: rgba(47, 233, 146, 0.14); /* surface rgba(236, 253, 245, 0.72) */
+  --th689: rgba(44, 237, 110, 0.14); /* surface rgba(220, 252, 231, 0.92) */
+  --th690: rgba(47, 233, 146, 0.14); /* surface rgba(236, 253, 245, 0.82) */
+  --th691: rgba(149, 164, 198, 0.24); /* line rgba(37, 99, 235, 0.24) */
+  --th692: rgba(19, 25, 33, 0.92); /* surface rgba(244, 249, 255, 0.92) */
+  --th693: rgba(21, 87, 230, 0.2); /* surface rgba(37, 99, 235, 0.2) */
+  --th694: rgba(226, 146, 9, 0.12); /* surface rgba(245, 158, 11, 0.12) */
+  --th695: rgba(198, 180, 149, 0.24); /* line rgba(245, 158, 11, 0.24) */
+  --th696: rgba(205, 33, 33, 0.1); /* surface rgba(220, 38, 38, 0.1) */
+  --th697: rgba(19, 25, 33, 0.76); /* surface rgba(248, 251, 255, 0.76) */
+  --th698: rgba(149, 164, 198, 0.48); /* line rgba(37, 99, 235, 0.48) */
+  --th699: rgba(91, 106, 127, 0.08); /* surface rgba(100, 116, 139, 0.08) */
+  --th700: rgba(149, 169, 198, 0.24); /* line rgba(100, 116, 139, 0.24) */
+  --th701: rgba(19, 25, 34, 0.8); /* surface rgba(239, 246, 255, 0.8) */
+  --th702: rgba(239, 42, 42, 0.14); /* surface rgba(254, 242, 242, 0.82) */
+  --th703: rgba(198, 149, 149, 0.16); /* line rgba(220, 38, 38, 0.16) */
+  --th704: rgba(198, 169, 149, 0.16); /* line rgba(249, 115, 22, 0.16) */
+  --th705: rgba(149, 164, 198, 0.36); /* line rgba(37, 99, 235, 0.36) */
+  --th706: rgba(18, 24, 33, 0.88); /* surface rgba(255, 255, 255, 0.88) */
+  --th707: rgba(30, 64, 175, 0.06); /* shadow rgba(30, 64, 175, 0.06) */
+  --th708: rgba(19, 25, 34, 0.95); /* surface rgba(239, 246, 255, 0.95) */
+  --th709: rgba(30, 64, 175, 0.12); /* shadow rgba(30, 64, 175, 0.12) */
+  --th710: #131921; /* surface #f3f8ff */
+  --th711: rgba(20, 26, 35, 0.32); /* surface rgba(219, 234, 254, 0.32) */
+  --th712: rgba(37, 99, 235, 0.32); /* shadow rgba(37, 99, 235, 0.32) */
+  --th713: rgba(102, 146, 241, 0.2); /* svg rgba(37, 99, 235, 0.2) */
+  --th714: rgba(15, 23, 42, 0.1); /* shadow rgba(15, 23, 42, 0.1) */
+  --th715: rgba(255, 153, 26, 0.14); /* svg rgba(255, 247, 237, 0.96) */
+  --th716: rgba(242, 158, 100, 0.34); /* svg rgba(249, 115, 22, 0.34) */
+  --th717: rgba(239, 42, 42, 0.14); /* svg rgba(254, 242, 242, 0.96) */
+  --th718: rgba(230, 99, 99, 0.34); /* svg rgba(220, 38, 38, 0.34) */
+  --th719: rgba(102, 146, 241, 0.66); /* svg rgba(37, 99, 235, 0.66) */
+  --th720: #a6bddd; /* svg #112b4f */
+  --th721: #a1b2e2; /* svg #1d4ed8 */
+  --th722: #e7b29d; /* svg #c2410c */
+  --th723: rgba(255, 153, 26, 0.14); /* surface rgba(255, 247, 237, 0.86) */
+  --th724: rgba(135, 161, 197, 0.18); /* line #e8f0fb */
+  --th725: rgba(149, 169, 198, 0.18); /* line rgba(100, 116, 139, 0.18) */
+  --th726: rgba(149, 169, 198, 0.28); /* line rgba(100, 116, 139, 0.28) */
+  --th727: rgba(19, 25, 33, 0.66); /* surface rgba(248, 251, 255, 0.66) */
+  --th728: rgba(147, 184, 255, 0.38); /* line rgba(147, 184, 255, 0.38) */
+  --th729: rgba(19, 25, 33, 0.68); /* svg rgba(248, 251, 255, 0.68) */
+  --th730: rgba(102, 146, 241, 0.32); /* svg rgba(37, 99, 235, 0.32) */
+  --th731: #b0c0d4; /* svg #315178 */
+  --th732: #192643; /* svg #5b8dff */
+  --th733: #9fe4dd; /* svg #14b8a6 */
+  --th734: rgba(102, 146, 241, 0.26); /* svg rgba(37, 99, 235, 0.26) */
+  --th735: rgba(24, 61, 112, 0.12); /* shadow rgba(24, 61, 112, 0.12) */
+  --th736: #aabfda; /* svg #183456 */
+  --th737: rgba(52, 228, 187, 0.14); /* svg rgba(240, 253, 250, 0.94) */
+  --th738: rgba(159, 228, 221, 0.32); /* svg rgba(20, 184, 166, 0.32) */
+  --th739: rgba(19, 25, 34, 0.96); /* svg rgba(239, 246, 255, 0.96) */
+  --th740: rgba(102, 146, 241, 0.42); /* svg rgba(37, 99, 235, 0.42) */
+  --th741: rgba(255, 209, 26, 0.14); /* svg rgba(255, 251, 235, 0.94) */
+  --th742: rgba(241, 184, 86, 0.32); /* svg rgba(245, 158, 11, 0.32) */
+  --th743: rgba(19, 26, 34, 0.95); /* surface rgba(226, 239, 255, 0.95) */
+  --th744: rgba(21, 87, 230, 0.18); /* surface rgba(37, 99, 235, 0.18) */
+  --th745: rgba(18, 166, 149, 0.5); /* surface rgba(20, 184, 166, 0.5) */
+  --th746: rgba(148, 163, 184, 0.22); /* line rgba(148, 163, 184, 0.22) */
+  --th747: rgba(149, 198, 193, 0.28); /* line rgba(20, 184, 166, 0.28) */
+  --th748: rgba(149, 164, 198, 0.26); /* line rgba(37, 99, 235, 0.26) */
+  --th749: #aebcd6; /* text #243b64 */
+  --th750: #9ee5d7; /* text #0f9f83 */
+  --th751: rgba(201, 221, 245, 0.8); /* line rgba(201, 221, 245, 0.8) */
+  --th752: rgba(19, 27, 34, 0.7); /* surface rgba(241, 245, 249, 0.7) */
+  --th753: rgba(239, 42, 42, 0.14); /* surface rgba(254, 242, 242, 0.85) */
+  --th754: rgba(52, 228, 107, 0.14); /* surface rgba(240, 253, 244, 0.85) */
+  --th755: rgba(19, 25, 33, 0.85); /* surface rgba(248, 251, 255, 0.85) */
+  --th756: rgba(149, 198, 193, 0.18); /* line rgba(20, 184, 166, 0.18) */
+  --th757: rgba(18, 24, 33, 0.76); /* surface rgba(255, 255, 255, 0.76) */
+  --th758: rgba(19, 25, 34, 0.86); /* surface rgba(239, 246, 255, 0.86) */
+  --th759: rgba(18, 166, 149, 0.12); /* surface rgba(20, 184, 166, 0.12) */
+  --th760: rgba(24, 61, 112, 0.09); /* shadow rgba(24, 61, 112, 0.09) */
+  --th761: rgba(19, 25, 33, 0.96); /* surface rgba(248, 251, 255, 0.96) */
+  --th762: rgba(19, 26, 34, 0.92); /* surface rgba(238, 246, 255, 0.92) */
+  --th763: rgba(21, 87, 230, 0.04); /* surface rgba(37, 99, 235, 0.04) */
+  --th764: rgba(149, 164, 198, 0.82); /* line rgba(37, 99, 235, 0.82) */
+  --th765: #8aa0c1; /* svg #5b7aa8 */
+  --th766: rgba(18, 24, 33, 0.88); /* svg rgba(255, 255, 255, 0.88) */
+  --th767: #9ee6ce; /* svg #10b981 */
+  --th768: #261943; /* svg #8b5cf6 */
+  --th769: #1c2b40; /* svg #8aa9d6 */
+  --th770: rgba(24, 61, 112, 0.14); /* shadow rgba(24, 61, 112, 0.14) */
+  --th771: #a5bbdf; /* svg #173b76 */
+  --th772: #b6c0ce; /* svg #526d94 */
+  --th773: rgba(135, 154, 197, 0.18); /* line #bcd0fb */
+  --th774: #131922; /* surface #e8f1ff */
+  --th775: rgba(135, 154, 197, 0.18); /* line #bfd3ff */
+  --th776: rgba(135, 153, 197, 0.18); /* line #8fb0ff */
+  --th777: #12a695; /* surface #14b8a6 */
+  --th778: rgba(21, 87, 230, 0.22); /* surface rgba(37, 99, 235, 0.22) */
+  --th779: rgba(18, 24, 33, 0.7); /* surface rgba(255, 255, 255, 0.7) */
+  --th780: rgba(25, 44, 67, 0.72); /* surface rgba(191, 219, 254, 0.72) */
+  --th781: rgba(34, 44, 58, 0.7); /* surface rgba(226, 232, 240, 0.7) */
+  --th782: #a3bce1; /* text #0f2f5f */
+  --th783: rgba(24, 61, 112, 0.18); /* shadow rgba(24, 61, 112, 0.18) */
+  --th784: rgba(149, 164, 198, 0.09); /* line rgba(37, 99, 235, 0.09) */
+  --th785: rgba(135, 156, 197, 0.18); /* line #93b8ff */
+  --th786: rgba(172, 191, 216, 0.22); /* svg rgba(30, 58, 95, 0.22) */
+  --th787: #acbfd8; /* svg #1e3a5f */
+  --th788: #a1e3de; /* svg #0f766e */
+  --th789: #193643; /* svg #38bdf8 */
+  --th790: #9dcce7; /* svg #0369a1 */
+  --th791: #9dd8e7; /* svg #0891b2 */
+  --th792: #a3b2e0; /* svg #1e40af */
+  --th793: #131b22; /* svg #f1f5f9 */
+  --th794: #222c3a; /* svg #e2e8f0 */
+  --th795: #aebad6; /* svg #0f172a */
+  --th796: #bac0ca; /* svg #475569 */
+  --th797: rgba(102, 146, 241, 0.06); /* svg rgba(37, 99, 235, 0.06) */
+  --th798: #e7b69d; /* svg #ea580c */
+  --th799: #242d38; /* svg #cbd5e1 */
+  --th800: #433a19; /* svg #fef3c7 */
+  --th801: rgba(25, 41, 67, 0.04); /* svg rgba(59, 130, 246, 0.04) */
+  --th802: rgba(102, 146, 241, 0.18); /* svg rgba(37, 99, 235, 0.18) */
+  --th803: rgba(220, 38, 38, 0.16); /* shadow rgba(220, 38, 38, 0.16) */
+  --th804: rgba(19, 25, 34, 0.97); /* svg rgba(239, 246, 255, 0.97) */
+  --th805: rgba(67, 25, 25, 0.32); /* svg rgba(239, 68, 68, 0.32) */
+  --th806: rgba(161, 226, 185, 0.32); /* svg rgba(22, 163, 74, 0.32) */
+  --th807: #a6ddbb; /* svg #166534 */
+  --th808: rgba(230, 99, 99, 0.32); /* svg rgba(220, 38, 38, 0.32) */
+  --th809: rgba(241, 184, 86, 0.34); /* svg rgba(245, 158, 11, 0.34) */
+  --th810: #e5b99e; /* svg #92400e */
+  --th811: rgba(19, 25, 34, 0.88); /* surface rgba(239, 246, 255, 0.88) */
+  --th812: rgba(21, 87, 230, 0.14); /* surface rgba(37, 99, 235, 0.14) */
+  --th813: rgba(24, 61, 112, 0.16); /* shadow rgba(24, 61, 112, 0.16) */
+  --th814: rgba(198, 169, 149, 0.22); /* line rgba(249, 115, 22, 0.22) */
+  --th815: rgba(255, 153, 26, 0.14); /* surface rgba(255, 247, 237, 0.9) */
+  --th816: rgba(244, 104, 6, 0.14); /* surface rgba(249, 115, 22, 0.14) */
+  --th817: rgba(52, 228, 107, 0.14); /* surface rgba(240, 253, 244, 0.9) */
+  --th818: rgba(20, 145, 66, 0.13); /* surface rgba(22, 163, 74, 0.13) */
+  --th819: rgba(198, 149, 149, 0.18); /* line rgba(220, 38, 38, 0.18) */
+  --th820: rgba(239, 42, 42, 0.14); /* surface rgba(254, 242, 242, 0.84) */
+  --th821: rgba(149, 164, 198, 0.75); /* line rgba(37, 99, 235, 0.75) */
+  --th822: #1541ba; /* surface #1747cc */
+  --th823: rgba(37, 99, 235, 0.2); /* shadow rgba(37, 99, 235, 0.2) */
+  --th824: rgba(19, 25, 34, 0.76); /* surface rgba(239, 246, 255, 0.76) */
+  --th825: rgba(242, 158, 100, 0.24); /* svg rgba(249, 115, 22, 0.24) */
+  --th826: rgba(67, 25, 25, 0.28); /* svg rgba(239, 68, 68, 0.28) */
+  --th827: rgba(164, 224, 186, 0.28); /* svg rgba(34, 197, 94, 0.28) */
+  --th828: rgba(15, 23, 42, 0.08); /* shadow rgba(15, 23, 42, 0.08) */
+  --th829: #1e3a5f; /* surface #1e3a5f */
+  --th830: #193643; /* surface #38bdf8 */
+  --th831: #c56c05; /* surface #d97706 */
+  --th832: #262d35; /* surface #94a3b8 */
+  --th833: #131a21; /* svg #fbfdff */
+  --th834: rgba(25, 44, 67, 0.75); /* svg rgba(201, 221, 245, 0.75) */
+  --th835: rgba(102, 146, 241, 0.035); /* svg rgba(37, 99, 235, 0.035) */
+  --th836: rgba(19, 26, 34, 0.52); /* svg rgba(232, 243, 255, 0.52) */
+  --th837: #192c43; /* svg #c9ddf5 */
+  --th838: #131a22; /* svg #eaf4ff */
+  --th839: #192c43; /* svg #9cc2f0 */
+  --th840: #192c43; /* svg #d7e7fb */
+  --th841: #acbed7; /* svg #1d3557 */
+  --th842: #193543; /* svg #7dd3fc */
+  --th843: #e7c49d; /* svg #d97706 */
+  --th844: rgba(220, 38, 38, 0.18); /* shadow rgba(220, 38, 38, 0.18) */
+  --th845: rgba(245, 158, 11, 0.18); /* shadow rgba(245, 158, 11, 0.18) */
+  --th846: rgba(100, 116, 139, 0.16); /* shadow rgba(100, 116, 139, 0.16) */
+  --th847: rgba(139, 92, 246, 0.18); /* shadow rgba(139, 92, 246, 0.18) */
+  --th848: rgba(25, 44, 67, 0.9); /* svg rgba(201, 221, 245, 0.9) */
+  --th849: #abbed9; /* svg #2f5f9f */
+  --th850: #1c2c3f; /* svg #6f99cc */
+  --th851: #141a23; /* svg #dbeafe */
+  --th852: #131a21; /* svg #f2f8ff */
+  --th853: #b3bed1; /* svg #49679a */
+  --th854: #abbed9; /* text #2f5f9f */
+  --th855: rgba(37, 99, 235, 0.15); /* shadow rgba(37, 99, 235, 0.15) */
+  --th856: rgba(245, 158, 11, 0.14); /* shadow rgba(245, 158, 11, 0.14) */
+  --th857: rgba(139, 92, 246, 0.14); /* shadow rgba(139, 92, 246, 0.14) */
+  --th858: rgba(255, 153, 26, 0.14); /* svg #fff7ed */
+  --th859: #151321; /* svg #f5f3ff */
+  --th860: #9665e4; /* svg #6d28d9 */
+  --th861: rgba(25, 44, 67, 0.82); /* svg rgba(201, 221, 245, 0.82) */
+  --th862: rgba(201, 221, 245, 0.85); /* line rgba(201, 221, 245, 0.85) */
+  --th863: rgba(19, 25, 33, 0.94); /* surface rgba(248, 251, 255, 0.94) */
+  --th864: rgba(147, 184, 255, 0.22); /* line rgba(147, 184, 255, 0.22) */
+  --th865: rgba(255, 153, 26, 0.14); /* surface rgba(255, 247, 237, 0.76) */
+  --th866: #e5b99e; /* text #92400e */
+  --th867: rgba(147, 184, 255, 0.26); /* line rgba(147, 184, 255, 0.26) */
+  --th868: rgba(30, 64, 175, 0.1); /* shadow rgba(30, 64, 175, 0.1) */
+  --th869: rgba(198, 180, 149, 0.32); /* line rgba(245, 158, 11, 0.32) */
+  --th870: rgba(47, 233, 146, 0.14); /* surface rgba(236, 253, 245, 0.88) */
+  --th871: rgba(149, 198, 167, 0.65); /* line rgba(22, 163, 74, 0.65) */
+  --th872: rgba(47, 233, 146, 0.14); /* surface rgba(236, 253, 245, 0.98) */
+  --th873: rgba(149, 198, 182, 0.22); /* line rgba(16, 185, 129, 0.22) */
+  --th874: #cd2121; /* surface #dc2626 */
+  --th875: rgba(198, 149, 149, 0.34); /* line rgba(220, 38, 38, 0.34) */
+  --th876: rgba(147, 184, 255, 0.24); /* line rgba(147, 184, 255, 0.24) */
+  --th877: rgba(30, 64, 175, 0.08); /* shadow rgba(30, 64, 175, 0.08) */
+  --th878: rgba(198, 180, 149, 0.25); /* line rgba(245, 158, 11, 0.25) */
+  --th879: rgba(15, 23, 42, 0.18); /* surface rgba(15, 23, 42, 0.18) */
+  --th880: rgba(24, 61, 112, 0.26); /* shadow rgba(24, 61, 112, 0.26) */
+  --th881: rgba(149, 164, 198, 0.08); /* line rgba(37, 99, 235, 0.08) */
+  --th882: rgba(147, 184, 255, 0.2); /* line rgba(147, 184, 255, 0.2) */
+  --th883: #e29209; /* surface #f59e0b */
+  --th884: rgba(198, 149, 149, 0.36); /* line rgba(220, 38, 38, 0.36) */
+  --th885: rgba(135, 160, 197, 0.18); /* line #edf3fc */
+  --th886: #433119; /* surface #ffedd5 */
+  --th887: #131822; /* surface #f0f5ff */
+  --th888: #21b8cd; /* surface #27c6dc */
+  --th889: rgba(201, 221, 245, 0.64); /* line rgba(201, 221, 245, 0.64) */
+  --th890: rgba(20, 76, 150, 0.12); /* shadow rgba(20, 76, 150, 0.12) */
+  --th891: #281943; /* surface #7c3aed */
+  --th892: #0277b3; /* surface #0284c7 */
+  --th893: #12cdea; /* surface #22d3ee */
+  --th894: #43191f; /* surface #fb7185 */
+  --th895: rgba(19, 25, 34, 0.98); /* surface rgba(239, 246, 255, 0.98) */
+  --th896: rgba(198, 180, 149, 0.26); /* line rgba(245, 158, 11, 0.26) */
+  --th897: rgba(255, 209, 26, 0.14); /* surface rgba(255, 251, 235, 0.86) */
+  --th898: #a9b4d0; /* text #7b8bb7 */
+  --th899: #a6bade; /* text #1a3d7c */
+  --th900: rgba(198, 180, 149, 0.22); /* line rgba(245, 158, 11, 0.22) */
+  --th901: rgba(255, 209, 26, 0.14); /* surface rgba(255, 251, 235, 0.9) */
+  --th902: #b4bdcf; /* text #526b9d */
+  --th903: #8e9fc2; /* text #6078a9 */
+  --th904: #c6a995; /* line #f97316 */
+  --th905: #131721; /* surface #f9fbff */
+  --th906: rgba(15, 23, 42, 0.06); /* shadow rgba(15, 23, 42, 0.06) */
+  --th907: rgba(13, 151, 214, 0.04); /* surface rgba(14, 165, 233, 0.04) */
+  --th908: #b7becd; /* text #5a6e96 */
+  --th909: rgba(198, 149, 149, 0.36); /* line rgba(239, 68, 68, 0.36) */
+  --th910: rgba(149, 198, 182, 0.32); /* line rgba(16, 185, 129, 0.32) */
+  --th911: rgba(19, 28, 34, 0.66); /* surface rgba(240, 249, 255, 0.66) */
+  --th912: #9de7d2; /* text #065f46 */
+  --th913: rgba(149, 198, 182, 0.24); /* line rgba(16, 185, 129, 0.24) */
+  --th914: rgba(14, 166, 116, 0.12); /* surface rgba(16, 185, 129, 0.12) */
+  --th915: rgba(19, 26, 33, 0.9); /* surface rgba(248, 250, 252, 0.9) */
+  --th916: rgba(19, 24, 34, 0.6); /* surface rgba(241, 245, 253, 0.6) */
+  --th917: #b6becd; /* text #46587a */
+  --th918: rgba(19, 26, 33, 0.8); /* surface rgba(248, 250, 252, 0.8) */
+  --th919: rgba(149, 163, 198, 0.05); /* line rgba(15, 23, 42, 0.05) */
+  --th920: #b0bdd4; /* text #334e7d */
+  --th921: #aab4cc; /* text #7e8db1 */
+  --th922: rgba(19, 28, 34, 0.6); /* surface rgba(240, 249, 255, 0.6) */
+  --th923: rgba(149, 183, 198, 0.18); /* line rgba(14, 165, 233, 0.18) */
+  --th924: #0f172a; /* surface #0f172a */
+  --th925: #84d1f5; /* text #7dd3fc */
+  --th926: #b4bdd0; /* text #475e8a */
+  --th927: rgba(198, 149, 149, 0.42); /* line rgba(239, 68, 68, 0.42) */
+  --th928: rgba(247, 33, 33, 0.14); /* surface rgba(254, 226, 226, 0.58) */
+  --th929: rgba(149, 198, 182, 0.3); /* line rgba(16, 185, 129, 0.3) */
+  --th930: rgba(25, 67, 45, 0.35); /* surface rgba(209, 250, 229, 0.35) */
+  --th931: rgba(67, 25, 25, 0.16); /* surface rgba(239, 68, 68, 0.16) */
+  --th932: rgba(14, 166, 116, 0.18); /* surface rgba(16, 185, 129, 0.18) */
+  --th933: #431919; /* surface #ef4444 */
+  --th934: #2bc78e; /* surface #34d399 */
+  --th935: #0ea674; /* surface #10b981 */
+  --th936: #131621; /* surface #fbfcff */
+  --th937: rgba(174, 186, 214, 0.06); /* svg rgba(15, 23, 42, 0.06) */
+  --th938: rgba(174, 186, 214, 0.45); /* svg rgba(15, 23, 42, 0.45) */
+  --th939: rgba(158, 230, 206, 0.1); /* svg rgba(16, 185, 129, 0.1) */
+  --th940: rgba(239, 68, 68, 0.4); /* shadow rgba(239, 68, 68, 0.4) */
+  --th941: #b7becd; /* svg #5a6e96 */
+  --th942: rgba(67, 58, 25, 0.4); /* surface rgba(254, 243, 199, 0.4) */
+  --th943: rgba(247, 33, 33, 0.14); /* surface rgba(254, 226, 226, 0.68) */
+  --th944: rgba(67, 25, 25, 0.36); /* surface rgba(254, 202, 202, 0.36) */
+  --th945: rgba(25, 67, 45, 0.5); /* surface rgba(209, 250, 229, 0.5) */
+  --th946: rgba(25, 67, 48, 0.3); /* surface rgba(167, 243, 208, 0.3) */
+  --th947: #192c43; /* surface #c9ddf5 */
+  --th948: #95a1c6; /* line #5d6d9c */
+  --th949: #a2b5e2; /* text #1d4fc7 */
+  --th950: rgba(149, 164, 198, 0.46); /* line rgba(37, 99, 235, 0.46) */
+  --th951: #c6af95; /* line #d97706 */
+  --th952: rgba(16, 185, 129, 0.4); /* shadow rgba(16, 185, 129, 0.4) */
+  --th953: #9de7d2; /* svg #047857 */
+  --th954: rgba(15, 118, 110, 0.1); /* shadow rgba(15, 118, 110, 0.1) */
+  --th955: rgba(149, 198, 194, 0.32); /* line rgba(13, 148, 136, 0.32) */
+  --th956: rgba(52, 228, 187, 0.14); /* surface #f0fdfa */
+  --th957: rgba(26, 255, 198, 0.14); /* surface #f7fffd */
+  --th958: #0d9488; /* surface #0d9488 */
+  --th959: rgba(198, 149, 149, 0.3); /* line rgba(220, 38, 38, 0.3) */
+  --th960: #83aff5; /* text #3b82f6 */
+  --th961: rgba(135, 156, 197, 0.18); /* line #8fb5ff */
+  --th962: rgba(37, 99, 235, 0.09); /* shadow rgba(37, 99, 235, 0.09) */
+  --th963: rgba(197, 135, 135, 0.18); /* line #fca5a5 */
+  --th964: rgba(255, 26, 26, 0.14); /* surface #fff5f5 */
+  --th965: rgba(197, 166, 135, 0.18); /* line #fdba74 */
+  --th966: rgba(135, 160, 197, 0.18); /* line #d8e4f5 */
+  --th967: rgba(135, 155, 197, 0.18); /* line #9cbcff */
+  --th968: #245dff; /* shadow #245dff */
+  --th969: #a4bae0; /* text #163b7a */
+  --th970: #a0b6e4; /* text #1858d8 */
+  --th971: #131822; /* surface #e7efff */
+  --th972: #b7becd; /* text #506489 */
+  --th973: #a3aec4; /* text #7788a8 */
+  --th974: #a7bbdc; /* text #183567 */
+  --th975: rgba(149, 162, 198, 0.18); /* line rgba(36, 93, 255, 0.18) */
+  --th976: rgba(19, 25, 33, 0.98); /* surface rgba(248, 251, 255, 0.98) */
+  --th977: rgba(149, 162, 198, 0.14); /* line rgba(36, 93, 255, 0.14) */
+  --th978: #e7c39d; /* text #b65f00 */
+  --th979: rgba(255, 175, 26, 0.14); /* surface #fff7e8 */
+  --th980: rgba(197, 176, 135, 0.18); /* line #f3d69c */
+  --th981: #131a22; /* surface #edf6ff */
+  --th982: rgba(25, 43, 67, 0.16); /* surface rgba(70, 151, 255, 0.16) */
+  --th983: rgba(25, 43, 67, 0.045); /* surface rgba(91, 151, 234, 0.045) */
+  --th984: rgba(26, 26, 26, 0.55); /* surface rgba(0, 0, 0, 0.55) */
+  --th985: #8f9bc1; /* text #6172a8 */
+  --th986: rgba(19, 26, 34, 0.9); /* surface rgba(235, 244, 255, 0.9) */
+  --th987: #688ef3; /* text #1455ff */
+  --th988: rgba(149, 162, 198, 0.28); /* line rgba(49, 104, 255, 0.28) */
+  --th989: #abb4d9; /* text #293d8a */
+  --th990: #7b9ef4; /* text #2966ff */
+  --th991: rgba(39, 86, 156, 0.18); /* shadow rgba(39, 86, 156, 0.18) */
+  --th992: #19c7dc; /* surface #23d1e6 */
+  --th993: #13ccf1; /* surface #26d0f2 */
+  --th994: rgba(49, 104, 255, 0.35); /* shadow rgba(49, 104, 255, 0.35) */
+  --th995: rgba(52, 228, 174, 0.14); /* surface #f0fdf9 */
+  --th996: #9de7d0; /* text #059669 */
+  --th997: rgba(67, 214, 161, 0.14); /* surface #dff8ef */
+  --th998: #141923; /* surface #dfeaff */
+  --th999: rgba(139, 92, 246, 0.24); /* line rgba(139, 92, 246, 0.24) */
+}
+
+:root[data-theme='dark'], .redesign-root[data-theme='dark'] {
+  --navy: #c3d0f4;
+  --blue: #6d93ff;
+  --blue-2: #53c2ff;
+  --soft-blue: rgba(80, 120, 255, 0.16);
+  --line: rgba(148, 178, 235, 0.16);
+  --muted: #8fa3c8;
+  --shadow: 0 22px 54px rgba(2, 6, 16, 0.5);
+}

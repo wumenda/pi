@@ -1,0 +1,760 @@
+/* 复刻区定制样式（手写维护）：插槽页、集成修正等。生成类样式（styles.css 等 11 个文件）勿手改 */
+
+/* 全局复位：宿主 antd reset 给 body line-height:1.5715 会继承进复刻区，造成逐元素 2-8px 纵向漂移；
+   原型无此规则（浏览器默认 normal），统一复位保持像素一致 */
+.redesign-root {
+  line-height: normal;
+}
+
+.redesign-root .redesign-slot-page {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.redesign-root .redesign-slot-card {
+  max-width: 560px;
+  padding: 48px 56px;
+  border: 1px dashed var(--line, var(--th086));
+  border-radius: 20px;
+  background: var(--th002);
+  box-shadow: var(--shadow, 0 22px 54px var(--th087));
+  text-align: center;
+}
+.redesign-root .redesign-slot-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--soft-blue, var(--th018));
+  color: var(--blue, var(--th088));
+  font-size: var(--font-badge, 12px);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.redesign-root .redesign-slot-card h1 {
+  margin: 18px 0 12px;
+  font-size: var(--font-page-title, 32px);
+  color: var(--navy, var(--th089));
+}
+.redesign-root .redesign-slot-card p {
+  margin: 0;
+  font-size: var(--font-body-sm, 15px);
+  line-height: 1.8;
+  color: var(--muted, var(--th039));
+}
+
+/* ===== 首页自适应增补 =====
+   原型按 1920 固定设计，styles.css 仅含 max-height:880 与 max-width:1200 两档断点，
+   1201-1599（1366/1440/1536 笔记本）区间出现：goal-grid 6 列挤爆、hero 60px 大标题溢出、
+   固定大间距挤压、固定 min-height 788px + workspace overflow:hidden 导致底部能力全景被裁切。
+   此处用流式字号 + auto-fit 网格补齐；1920 下计算结果与原型一致（不破坏基准截图）。 */
+
+/* 工作区纵向允许滚动（横向仍隐藏），矮窗口不再裁切底部内容 */
+.redesign-root .workspace {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* 流式字号：1920 恰为原型值，随视口平滑收缩 */
+.redesign-root .hero h1 {
+  font-size: clamp(34px, 3.2vw, 60px);
+}
+.redesign-root .hero-subtitle {
+  font-size: clamp(16px, 1vw, 19px);
+}
+.redesign-root .hero-desc {
+  font-size: clamp(15px, 0.95vw, 18px);
+}
+
+/* hero 左列下限可收缩到 0，防窄容器溢出（1920 时 minmax(500px,650px) 语义不变） */
+.redesign-root .hero {
+  grid-template-columns: minmax(min(500px, 100%), 650px) 1fr;
+}
+
+/* 固定 min-height 改由内容撑起，配合 overflow-y:auto 消除矮窗口裁切 */
+.redesign-root .home-carousel-region {
+  min-height: auto;
+}
+
+/* 目标/问题卡片：auto-fit 自动降列——1920 容器宽仍为 6 列（与原型一致），
+   窄屏按 210px 下限自动折为 4/3/2 列，卡片不再被挤到 130px */
+.redesign-root .goal-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+}
+.redesign-root .goal-card {
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 13px;
+  padding: 16px 18px;
+}
+.redesign-root .goal-icon {
+  width: 54px;
+  height: 54px;
+}
+.redesign-root .goal-icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* 能力全景流式间距；箭头位置跟随 gap 收缩 */
+.redesign-root .flow-row {
+  gap: clamp(24px, 2.4vw, 48px);
+}
+.redesign-root .flow-arrow {
+  right: clamp(-39px, -2vw, -26px);
+}
+.redesign-root .support-row {
+  flex-wrap: wrap;
+  gap: clamp(28px, 5vw, 112px);
+}
+
+@media (max-width: 1599px) {
+  .redesign-root .workspace {
+    padding: 64px 40px 28px 48px;
+  }
+  .redesign-root .top-actions {
+    top: 20px;
+    right: 40px;
+  }
+  .redesign-root .industrial-map {
+    transform: scale(0.82);
+    transform-origin: right center;
+  }
+  .redesign-root .input-panel {
+    grid-template-columns: minmax(0, 1fr) 200px;
+    min-height: 132px;
+  }
+}
+
+/* 窄屏（≤1200 已有 styles.css 断点处理 3 列 grid；此处补箭头与单列） */
+@media (max-width: 1200px) {
+  .redesign-root .flow-arrow {
+    display: none;
+  }
+  .redesign-root .flow-row {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 860px) {
+  .redesign-root .hero {
+    grid-template-columns: 1fr;
+  }
+  .redesign-root .industrial-map {
+    display: none;
+  }
+  .redesign-root .goal-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  }
+  .redesign-root .input-panel {
+    grid-template-columns: 1fr;
+  }
+  .redesign-root .start-button {
+    width: 100%;
+  }
+}
+
+/* ===== 侧边栏响应式 =====
+   原型侧边栏固定 310px（内容 254px）。≤1599 收窄为 260px；
+   ≤1280 pinned 时收成 76px 图标条（文字隐藏、图标居中），hover 浮出完整面板。 */
+
+@media (max-width: 1599px) {
+  .redesign-root .app-shell.sidebar-pinned {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  .redesign-root .sidebar.pinned {
+    width: 260px;
+    padding-inline: 22px;
+  }
+  .redesign-root .sidebar.pinned .brand,
+  .redesign-root .sidebar.pinned .nav-list,
+  .redesign-root .sidebar.pinned .nav-item,
+  .redesign-root .sidebar.pinned .sidebar-bottom,
+  .redesign-root .sidebar.pinned .user-card,
+  .redesign-root .sidebar.pinned .utility-link {
+    width: 216px;
+  }
+  .redesign-root .sidebar.pinned .brand strong {
+    font-size: 20px;
+  }
+  .redesign-root .sidebar.pinned .nav-item {
+    height: 52px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .redesign-root .app-shell.sidebar-pinned {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  .redesign-root .app-shell.sidebar-rail {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) {
+    width: 76px;
+    padding: 26px 10px 18px;
+    transition: width 200ms ease, padding 200ms ease;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .brand,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .nav-list,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .nav-item,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .sidebar-bottom,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .user-card,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .utility-link {
+    width: 56px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .brand {
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 30px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .brand-copy,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .nav-item span,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .nav-item b,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .user-card-copy,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .user-card > svg,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .utility-link span {
+    display: none;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .nav-item {
+    justify-content: center;
+    padding: 0;
+    height: 50px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .utility-link {
+    justify-content: center;
+    padding: 0;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .user-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0;
+    padding: 6px;
+    min-height: 0;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded) .sidebar-bottom {
+    gap: 12px;
+  }
+
+  /* hover 浮出完整面板：恢复文字与布局（垂直节奏与收起 rail 对齐：
+     padding-top/brand 下边距/导航项高一致，切换时选项纵向位置不动） */
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover {
+    width: 280px;
+    padding: 26px 26px 18px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .brand,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .nav-list,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .nav-item,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .sidebar-bottom,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .user-card,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .utility-link {
+    width: 228px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .brand {
+    justify-content: flex-start;
+    gap: 14px;
+    margin-bottom: 30px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .brand-copy,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .nav-item span,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .nav-item b,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .user-card-copy,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .user-card > svg,
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .utility-link span {
+    display: block;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .nav-item b {
+    display: grid;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .nav-item {
+    justify-content: flex-start;
+    padding: 0 18px;
+    height: 50px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .utility-link {
+    justify-content: flex-start;
+    padding: 0 18px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .user-card {
+    grid-template-columns: 46px 1fr 18px;
+    justify-items: stretch;
+    gap: 9px;
+    padding: 12px 10px;
+    min-height: 76px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .avatar {
+    width: 46px;
+    height: 46px;
+  }
+  .redesign-root .sidebar.pinned:not(.sidebar-expanded):hover .sidebar-bottom {
+    gap: 14px;
+  }
+}
+
+/* ===== ShellApp 侧边栏双态（面板 ↔ 图标 rail）=====
+   点击 logo 切换：展开 = .sidebar-expanded（原型面板形态，≤1280 由上面媒体查询
+   借 :not(.sidebar-expanded) 放行），收起 = shell 挂 .sidebar-rail。
+   ≤1280 的 rail 样式由媒体查询提供；此处补齐 >1280 宽屏的 rail 形态。 */
+.redesign-root .app-shell.sidebar-rail {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar {
+  width: 76px;
+  padding: 26px 10px 18px;
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar .brand,
+.redesign-root .app-shell.sidebar-rail > .sidebar .nav-list,
+.redesign-root .app-shell.sidebar-rail > .sidebar .nav-item,
+.redesign-root .app-shell.sidebar-rail > .sidebar .sidebar-bottom,
+.redesign-root .app-shell.sidebar-rail > .sidebar .user-card,
+.redesign-root .app-shell.sidebar-rail > .sidebar .utility-link {
+  width: 56px;
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar .brand {
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 30px;
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar .brand-copy,
+.redesign-root .app-shell.sidebar-rail > .sidebar .nav-item span,
+.redesign-root .app-shell.sidebar-rail > .sidebar .nav-item b,
+.redesign-root .app-shell.sidebar-rail > .sidebar .user-card-copy,
+.redesign-root .app-shell.sidebar-rail > .sidebar .user-card > svg,
+.redesign-root .app-shell.sidebar-rail > .sidebar .utility-link span {
+  display: none;
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar .nav-item {
+  justify-content: center;
+  padding: 0;
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar .utility-link {
+  justify-content: center;
+  padding: 0;
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar .user-card {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 0;
+  padding: 6px;
+  min-height: 0;
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar .avatar {
+  width: 40px;
+  height: 40px;
+}
+.redesign-root .app-shell.sidebar-rail > .sidebar .sidebar-bottom {
+  gap: 12px;
+}
+
+/* ===== 用户卡片展开菜单（点击 chevron：退出登录收纳入菜单）=====
+   菜单锚定 .user-card-wrap 右侧弹出；rail 形态无 chevron 入口，JS 侧不开启 */
+.redesign-root .user-card-wrap {
+  position: relative;
+}
+.redesign-root .user-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: transparent;
+  cursor: default;
+}
+.redesign-root .user-menu {
+  position: absolute;
+  bottom: 0;
+  left: calc(100% + 10px);
+  z-index: 11;
+  min-width: 100%;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  background: var(--th090);
+  border: 1px solid var(--th091);
+  border-radius: 20px;
+  box-shadow: 0 16px 32px var(--th092);
+}
+/* 展开态侧栏内容（254px + 28px×2 内边距）恰好填满 310px，放开裁剪让右侧菜单可见；rail 态仍保持 hidden */
+.redesign-root .sidebar.sidebar-expanded {
+  overflow: visible;
+}
+.redesign-root .user-menu-item {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 14px;
+  border-radius: 10px;
+  color: var(--th093);
+  background: transparent;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.redesign-root .user-menu-item:hover {
+  background: var(--th094);
+}
+
+/* ===== 会话工作台（redesign 任务页布局形态：rail | 任务进度+iframe区 | 对话流）===== */
+/* 覆盖 .app-shell.sidebar-pinned 的 grid 布局（同特异性，依赖本文件后加载取胜）：
+   工作台需要 rail 固定宽 + 中区弹性 + 右栏固定的三栏 flex */
+.redesign-root .session-workspace.sidebar-pinned {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+.redesign-root .session-workspace > .sidebar {
+  /* 原型 .sidebar 为 fixed 悬浮抽屉（grid 第一列预留空间）；工作台 flex 布局下
+     改为流内元素，自然占据第一栏 */
+  position: relative;
+  inset: auto;
+  flex: none;
+  height: 100vh;
+  transform: none;
+}
+.redesign-root .session-workspace .session-center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: var(--th095);
+}
+.redesign-root .session-center-top {
+  flex: none;
+  padding: 14px 24px 0;
+  margin-bottom: 2px;
+  background: var(--th002);
+  overflow-x: auto;
+}
+/* 收敛原型 .task-stepper 自带的底部空隙（margin 16px + padding 6px），工作台内不需要 */
+.redesign-root .session-center-top .task-stepper {
+  margin-bottom: 0;
+  padding-bottom: 4px;
+}
+/* 阶段 tab 悬停态：所有非激活 tab（含 done）悬停给底色反馈；激活态配色不被覆盖 */
+.redesign-root .session-center-top .task-stepper button {
+  border-radius: 10px;
+  transition: background-color 0.15s ease;
+}
+.redesign-root .session-center-top .task-stepper button:hover:not(.active) {
+  background: var(--th094);
+}
+.redesign-root .session-center-top .task-stepper button:hover:not(.active):not(.done) span {
+  background: var(--th096);
+  color: var(--th088);
+}
+.redesign-root .session-center-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+.redesign-root .session-center-body .center-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.redesign-root .session-center-body .center-content-layer {
+  flex: 1;
+  min-height: 0;
+}
+.redesign-root .session-center-body .center-placeholder {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--th097);
+}
+.redesign-root .session-workspace .right-pane {
+  --right-pane-width: 420px;
+  width: var(--right-pane-width);
+  min-width: 320px;
+  flex: none;
+  position: relative;
+  border-left: 1px solid var(--th098);
+  background: var(--th002);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.redesign-root .session-workspace .pane-resizer {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+}
+.redesign-root .session-workspace .right-placeholder { margin: auto; color: var(--th097); }
+
+/* ===== 会话工作台配色统一：对话栏/中栏沿用 redesign 蓝色主题语言 =====
+   index.css 的对话栏走工业青品牌色（--ind-* 亮色 #0B8FA3 + 中性灰），
+   与左 sidebar / 顶部 stepper 的蓝色主题不一致；在此把工作台内的 --ind-*
+   映射到 redesign 语义变量（--navy/--blue/--line/--soft-blue），亮暗两套
+   值由 [data-theme] 自动切换，无需重复定义。 */
+.redesign-root .session-workspace {
+  --ind-primary: var(--blue);
+  --ind-foreground: var(--navy);
+  --ind-muted-foreground: var(--muted);
+  --ind-border: var(--line);
+  --ind-border-soft: var(--line);
+  --ind-input: var(--line);
+  --ind-muted: var(--soft-blue);
+  --ind-accent: var(--soft-blue);
+  --ind-card: var(--th002);
+  --ind-popover: var(--th002);
+}
+
+/* ===== 项目中心文字色（.redesign-root 全局按钮色继承修正）===== */
+.redesign-root .project-card,
+.redesign-root .project-card-head,
+.redesign-root .project-center-head {
+  color: var(--th099);
+}
+.redesign-root .project-card .session-open {
+  color: var(--th099);
+}
+.redesign-root .project-card .session-open .session-title {
+  color: var(--th099);
+  font-weight: 500;
+}
+.redesign-root .project-card .session-delete {
+  color: var(--th100);
+}
+
+
+/* ===== 工作台侧栏：按钮切换 rail/展开（覆盖断点媒体查询的 pinned/hover 语义）=====
+   全断点统一：默认 76px 图标 rail；点击「展开导航」→ 260px 面板推开中区；
+   hover 不再浮出。展开态垂直节奏与 rail 完全一致（26/30/50）。 */
+.redesign-root .session-workspace > .sidebar.pinned {
+  width: 76px;
+  padding: 26px 10px 18px;
+  transition: width 200ms ease, padding 200ms ease;
+}
+.redesign-root .session-workspace > .sidebar.pinned:hover {
+  width: 76px;
+  padding: 26px 10px 18px;
+}
+.redesign-root .session-workspace > .sidebar.pinned .brand,
+.redesign-root .session-workspace > .sidebar.pinned .nav-list,
+.redesign-root .session-workspace > .sidebar.pinned .nav-item,
+.redesign-root .session-workspace > .sidebar.pinned .sidebar-bottom,
+.redesign-root .session-workspace > .sidebar.pinned .user-card,
+.redesign-root .session-workspace > .sidebar.pinned .utility-link {
+  width: 56px;
+}
+.redesign-root .session-workspace > .sidebar.pinned .brand {
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 30px;
+}
+.redesign-root .session-workspace > .sidebar.pinned .brand-copy,
+.redesign-root .session-workspace > .sidebar.pinned .nav-item span,
+.redesign-root .session-workspace > .sidebar.pinned .nav-item b,
+.redesign-root .session-workspace > .sidebar.pinned .user-card-copy,
+.redesign-root .session-workspace > .sidebar.pinned .user-card > svg,
+.redesign-root .session-workspace > .sidebar.pinned .utility-link span {
+  display: none;
+}
+.redesign-root .session-workspace > .sidebar.pinned .nav-item {
+  justify-content: center;
+  padding: 0;
+  height: 50px;
+}
+.redesign-root .session-workspace > .sidebar.pinned .utility-link {
+  justify-content: center;
+  padding: 0;
+}
+.redesign-root .session-workspace > .sidebar.pinned .user-card {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 0;
+  padding: 6px;
+  min-height: 0;
+}
+.redesign-root .session-workspace > .sidebar.pinned .avatar {
+  width: 40px;
+  height: 40px;
+}
+.redesign-root .session-workspace > .sidebar.pinned .sidebar-bottom {
+  gap: 12px;
+}
+
+/* 展开态（.sidebar-expanded 由 SessionWorkspace 随 state 挂到 sidebar 上） */
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded:hover {
+  width: 260px;
+  padding: 26px 22px 18px;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .brand,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .nav-list,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .nav-item,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .sidebar-bottom,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .user-card,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .utility-link {
+  width: 232px;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .brand {
+  justify-content: flex-start;
+  gap: 14px;
+  margin-bottom: 30px;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .brand-copy,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .nav-item span,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .user-card-copy,
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .utility-link span {
+  display: block;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .nav-item b {
+  display: grid;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .user-card > svg {
+  display: block;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .nav-item {
+  justify-content: flex-start;
+  padding: 0 18px;
+  height: 50px;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .utility-link {
+  justify-content: flex-start;
+  padding: 0 18px;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .user-card {
+  grid-template-columns: 46px 1fr 18px;
+  justify-items: stretch;
+  gap: 9px;
+  padding: 12px 18px 12px 10px;
+  min-height: 76px;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .avatar {
+  width: 46px;
+  height: 46px;
+}
+.redesign-root .session-workspace > .sidebar.pinned.sidebar-expanded .sidebar-bottom {
+  gap: 14px;
+}
+
+/* 用户卡片 chevron：菜单展开时旋转指向右侧（菜单向右弹出） */
+.redesign-root .user-card .user-card-chevron {
+  transition: transform 0.2s ease;
+}
+.redesign-root .user-card .user-card-chevron.is-open {
+  transform: rotate(-90deg);
+}
+
+/* ===== 帮助浮层（#/help）=====
+   骨架复用产品理念浮层（concept-overlay/canvas/main/header/card），此处仅新增内容区样式 */
+.redesign-root .help-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+.redesign-root .help-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 14px;
+  padding: 6px 18px 18px;
+}
+.redesign-root .help-step {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  align-content: start;
+  padding: 18px;
+  border: 1px solid var(--th101);
+  border-radius: 14px;
+  background: var(--th102);
+}
+.redesign-root .help-step-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--th103);
+  background: linear-gradient(135deg, var(--th104), var(--th003));
+  box-shadow: inset 0 0 0 1px var(--th105);
+}
+.redesign-root .help-step strong {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--th106);
+}
+.redesign-root .help-step p {
+  margin: 0;
+  font-size: var(--font-caption, 13px);
+  line-height: 1.7;
+  color: var(--th039);
+}
+.redesign-root .help-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 12px;
+  padding: 6px 18px 18px;
+}
+.redesign-root .help-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--th101);
+  border-radius: 12px;
+  background: var(--th102);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.redesign-root .help-nav-item:hover {
+  background: var(--th094);
+}
+.redesign-root .help-nav-item > svg {
+  flex: none;
+  color: var(--th103);
+}
+.redesign-root .help-nav-copy strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--th106);
+}
+.redesign-root .help-nav-copy small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--font-caption, 13px);
+  color: var(--th039);
+}
+.redesign-root .help-faq {
+  display: grid;
+  gap: 12px;
+  padding: 6px 18px 18px;
+}
+.redesign-root .help-faq-item {
+  padding: 14px 16px;
+  border: 1px solid var(--th101);
+  border-radius: 12px;
+  background: var(--th102);
+}
+.redesign-root .help-faq-item strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--th106);
+}
+.redesign-root .help-faq-item p {
+  margin: 6px 0 0;
+  font-size: var(--font-caption, 13px);
+  line-height: 1.7;
+  color: var(--th039);
+}

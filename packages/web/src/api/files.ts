@@ -1,63 +1,64 @@
 /**
- * 会话文件上传/下载客户端（app-server POST/GET /api/v1/sessions/:sessionId/files）：
- * - uploadSessionFiles：multipart 上传，返回 {filename, path} 引用（file-collect 作答用）；
- * - downloadSessionFile：拉取文件内容并以浏览器下载方式落盘（file-download 勾选后触发）。
+ * 会话文件 API 适配层：pi app-server REST
+ * - POST /api/v1/sessions/:sessionId/files（multipart，字段 files，单文件硬顶 50MB）
+ * - GET  /api/v1/sessions/:sessionId/files?path=（附件下载）
  */
 
+import type { FileContentDTO } from "@platform/shared";
+import { http, unwrap } from "./client";
+
+/** 上传结果（pi 返回 path 为会话根内相对路径） */
 export interface UploadedFileRef {
 	filename: string;
-	/** 会话文件根内相对路径（uploads/<uuid>-<name>），下载与作答引用共用 */
 	path: string;
 }
 
-/** 上传文件到会话工作区；失败抛错（HTTP 状态 + 服务端 error 文案）；token 非空时追加 ?token= */
-export async function uploadSessionFiles(
-	httpBase: string,
+/** 上传单个文件到会话文件区（semantic 为平台元数据，pi 侧暂不消费） */
+export async function uploadFileToWorkspace(
 	sessionId: string,
-	files: File[],
-	token?: string,
-): Promise<UploadedFileRef[]> {
-	const body = new FormData();
-	for (const file of files) body.append("files", file, file.name);
-	const suffix = token === undefined || token === "" ? "" : `?token=${encodeURIComponent(token)}`;
-	const response = await fetch(`${httpBase}/api/v1/sessions/${sessionId}/files${suffix}`, { method: "POST", body });
-	const payload: unknown = await response.json().catch(() => undefined);
-	if (!response.ok) {
-		const message =
-			typeof payload === "object" && payload !== null && "error" in payload
-				? String((payload as { error?: unknown }).error)
-				: `HTTP ${response.status}`;
-		throw new Error(`文件上传失败：${message}`);
-	}
-	return payload as UploadedFileRef[];
+	_directory: string | undefined,
+	file: File,
+	semantic: string,
+): Promise<{ filename: string; bytes: number }> {
+	void semantic;
+	const form = new FormData();
+	form.append("files", file);
+	const saved = await unwrap<UploadedFileRef[]>(
+		http.post(`/sessions/${encodeURIComponent(sessionId)}/files`, form, {
+			headers: { "content-type": "multipart/form-data" },
+			timeout: 600_000,
+		}),
+	);
+	return { filename: saved[0]?.filename ?? file.name, bytes: file.size };
 }
 
-/** 下载会话文件（路径须为会话文件根内相对路径）；以 <a download> 触发浏览器落盘；token 非空时追加 &token= */
-export async function downloadSessionFile(
-	httpBase: string,
+/** 下载会话文件（逐个触发浏览器保存；pi 不提供多文件 zip 打包） */
+export async function downloadSessionFiles(
 	sessionId: string,
-	path: string,
+	_directory: string | undefined,
+	paths: string[],
 	token?: string,
 ): Promise<void> {
-	const suffix = token === undefined || token === "" ? "" : `&token=${encodeURIComponent(token)}`;
-	const response = await fetch(
-		`${httpBase}/api/v1/sessions/${sessionId}/files?path=${encodeURIComponent(path)}${suffix}`,
-	);
-	if (!response.ok) {
-		const payload: unknown = await response.json().catch(() => undefined);
-		const message =
-			typeof payload === "object" && payload !== null && "error" in payload
-				? String((payload as { error?: unknown }).error)
-				: `HTTP ${response.status}`;
-		throw new Error(`文件下载失败：${message}`);
+	void _directory;
+	for (const path of paths) {
+		const params = new URLSearchParams({ path });
+		if (token !== undefined && token.length > 0) params.set("token", token);
+		const res = await fetch(`/api/v1/sessions/${encodeURIComponent(sessionId)}/files?${params.toString()}`);
+		if (!res.ok) throw new Error(`下载失败：${path}`);
+		const blob = await res.blob();
+		const url = URL.createObjectURL(blob);
+		const anchor = document.createElement("a");
+		anchor.href = url;
+		anchor.download = path.split("/").pop() ?? "file";
+		document.body.append(anchor);
+		anchor.click();
+		anchor.remove();
+		URL.revokeObjectURL(url);
 	}
-	const blob = await response.blob();
-	const url = URL.createObjectURL(blob);
-	const anchor = document.createElement("a");
-	anchor.href = url;
-	anchor.download = path.split("/").pop() ?? "file";
-	document.body.appendChild(anchor);
-	anchor.click();
-	anchor.remove();
-	URL.revokeObjectURL(url);
+}
+
+/** 读工作区文件：pi 后端不提供任意文件读取（安全边界），调用方需降级处理 */
+export async function fetchFileContent(_path: string): Promise<FileContentDTO> {
+	void _path;
+	throw new Error("pi 后端不提供工作区文件读取");
 }

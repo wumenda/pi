@@ -16,6 +16,7 @@
 		"forceConsistentCasingInFileNames": true,
 		"types": ["vite/client", "node"],
 		"paths": {
+			"@platform/shared": ["./src/shared/index.ts"],
 			"@earendil-works/chord/context": ["../chord/src/context/index.ts"],
 			"@earendil-works/chord": ["../chord/src/index.ts"],
 			"@earendil-works/pi-agent-core": ["../agent/src/index.ts"],
