@@ -477,6 +477,50 @@ describe("agentLoop with AgentMessage", () => {
 		expect(messages[messages.length - 1].role).toBe("assistant");
 	});
 
+	it("keeps terminalDetails on error results when a tool throws", async () => {
+		const toolSchema = Type.Object({ value: Type.String() });
+		const terminalDetails = { mcpUi: { resourceUri: "ui://demo/panel", serverId: "demo" } };
+		const tool: AgentTool<typeof toolSchema, unknown> = {
+			name: "echo",
+			label: "Echo",
+			description: "Echo tool",
+			parameters: toolSchema,
+			terminalDetails,
+			async execute() {
+				throw new Error("tool failed");
+			},
+		};
+
+		const context: AgentContext = { messages: [], tools: [tool] };
+		const config: AgentLoopConfig = { model: createModel(), convertToLlm: identityConverter };
+
+		let callIndex = 0;
+		const streamFn = () => {
+			const stream = new MockAssistantStream();
+			queueMicrotask(() => {
+				if (callIndex === 0) {
+					const message = createAssistantMessage(
+						[{ type: "toolCall", id: "tool-1", name: "echo", arguments: { value: "hello" } }],
+						"toolUse",
+					);
+					stream.push({ type: "done", reason: "toolUse", message });
+				} else {
+					const message = createAssistantMessage([{ type: "text", text: "done" }]);
+					stream.push({ type: "done", reason: "stop", message });
+				}
+				callIndex++;
+			});
+			return stream;
+		};
+
+		const stream = agentLoop([createUserMessage("echo something")], context, config, undefined, streamFn);
+		const messages = await stream.result();
+
+		const toolResult = messages.find((message) => message.role === "toolResult");
+		expect(toolResult?.role === "toolResult" ? toolResult.isError : undefined).toBe(true);
+		expect(toolResult?.role === "toolResult" ? toolResult.details : undefined).toEqual(terminalDetails);
+	});
+
 	it("should execute mutated beforeToolCall args without revalidation", async () => {
 		const toolSchema = Type.Object({ value: Type.String() });
 		const executed: Array<string | number> = [];

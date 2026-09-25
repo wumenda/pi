@@ -147,35 +147,51 @@ function syntheticMessage(
 	};
 }
 
-function abortedOutcome(toolCall: AgentToolCall): ToolOutcome {
-	return {
-		toolCall,
-		message: syntheticMessage(toolCall, [{ type: "text", text: "Tool execution was cancelled before completion." }]),
-		terminate: false,
-	};
-}
-
-function interruptedOutcome(toolCall: AgentToolCall, checkpoint: AgentToolResult<unknown> | undefined): ToolOutcome {
+function abortedOutcome(toolCall: AgentToolCall, terminalDetails?: unknown): ToolOutcome {
 	return {
 		toolCall,
 		message: syntheticMessage(
 			toolCall,
-			[...(checkpoint?.content ?? []), { type: "text", text: INTERRUPTION_MARKER }],
-			checkpoint === undefined ? {} : { details: checkpoint.details, usage: checkpoint.usage },
+			[{ type: "text", text: "Tool execution was cancelled before completion." }],
+			terminalDetails === undefined ? {} : { details: terminalDetails },
 		),
 		terminate: false,
 	};
 }
 
-function truncatedOutcome(toolCall: AgentToolCall): ToolOutcome {
+function interruptedOutcome(
+	toolCall: AgentToolCall,
+	checkpoint: AgentToolResult<unknown> | undefined,
+	terminalDetails?: unknown,
+): ToolOutcome {
+	const details = checkpoint?.details ?? terminalDetails;
 	return {
 		toolCall,
-		message: syntheticMessage(toolCall, [
+		message: syntheticMessage(
+			toolCall,
+			[...(checkpoint?.content ?? []), { type: "text", text: INTERRUPTION_MARKER }],
 			{
-				type: "text",
-				text: `Tool call ${JSON.stringify(toolCall.name)} was not executed because the assistant response hit the output token limit, so its arguments may be truncated. Re-issue the tool call with complete arguments.`,
+				...(details === undefined ? {} : { details }),
+				...(checkpoint?.usage === undefined ? {} : { usage: checkpoint.usage }),
 			},
-		]),
+		),
+		terminate: false,
+	};
+}
+
+function truncatedOutcome(toolCall: AgentToolCall, terminalDetails?: unknown): ToolOutcome {
+	return {
+		toolCall,
+		message: syntheticMessage(
+			toolCall,
+			[
+				{
+					type: "text",
+					text: `Tool call ${JSON.stringify(toolCall.name)} was not executed because the assistant response hit the output token limit, so its arguments may be truncated. Re-issue the tool call with complete arguments.`,
+				},
+			],
+			terminalDetails === undefined ? {} : { details: terminalDetails },
+		),
 		terminate: false,
 	};
 }
@@ -397,7 +413,9 @@ async function performToolInvocation<TContext extends object | undefined>(
 		await progress.drain();
 		if (!(error instanceof AbortRequested)) throw error;
 		await error.cancellation;
-		return recovery ? interruptedOutcome(cleared.toolCall, undefined) : abortedOutcome(cleared.toolCall);
+		return recovery
+			? interruptedOutcome(cleared.toolCall, undefined, cleared.tool.terminalDetails)
+			: abortedOutcome(cleared.toolCall, cleared.tool.terminalDetails);
 	}
 
 	const executed = await execution.finally(() => {
@@ -442,7 +460,8 @@ async function prepareToolInvocation<TContext extends object | undefined>(
 ): Promise<PreparedToolInvocation<TContext>> {
 	const toolCall = toolCallFor(sources, call);
 	if (sources.assistant.stopReason === "length") {
-		return { kind: "outcome", outcome: truncatedOutcome(toolCall) };
+		const terminalDetails = tools.find((candidate) => candidate.name === toolCall.name)?.terminalDetails;
+		return { kind: "outcome", outcome: truncatedOutcome(toolCall, terminalDetails) };
 	}
 	const prepared = prepareToolCall(toolCall, tools);
 	if ("kind" in prepared) return { kind: "outcome", outcome: outcomeFromFinalizedCall(prepared) };
@@ -464,7 +483,7 @@ async function prepareToolInvocation<TContext extends object | undefined>(
 	} catch (error) {
 		if (!(error instanceof AbortRequested)) throw error;
 		await error.cancellation;
-		return { kind: "outcome", outcome: abortedOutcome(toolCall) };
+		return { kind: "outcome", outcome: abortedOutcome(toolCall, prepared.tool.terminalDetails) };
 	}
 	const cleared = applyBeforeToolDecision(prepared, decision);
 	return "kind" in cleared
@@ -499,7 +518,14 @@ async function startToolInvocation<TContext extends object | undefined>(
 	return {
 		completion:
 			effectPending.kind === "cancel_requested"
-				? publishToolOutcome(lane, drive, run, call, abortedOutcome(prepared.cleared.toolCall), recovery)
+				? publishToolOutcome(
+						lane,
+						drive,
+						run,
+						call,
+						abortedOutcome(prepared.cleared.toolCall, prepared.cleared.tool.terminalDetails),
+						recovery,
+					)
 				: performToolInvocation(
 						lane,
 						drive,
@@ -535,7 +561,14 @@ async function recoverToolInvocation<TContext extends object | undefined>(
 	}
 	const checkpoint = await readCheckpoint(lane, drive, call);
 	return {
-		completion: publishToolOutcome(lane, drive, run, call, interruptedOutcome(toolCall, checkpoint), true),
+		completion: publishToolOutcome(
+			lane,
+			drive,
+			run,
+			call,
+			interruptedOutcome(toolCall, checkpoint, tool?.terminalDetails),
+			true,
+		),
 	};
 }
 
@@ -552,6 +585,8 @@ async function runSequential<TContext extends object | undefined>(
 		  }
 		| undefined,
 	recovery: boolean,
+	/** Tool lookup for the cancel path: runTools enters cancel before resolving execution context. */
+	cancelToolsByName?: Map<string, AgentHarnessTool<TContext>>,
 ): Promise<ProcedureResult> {
 	const { batch } = run;
 	for (let transition = 0; transition <= batch.calls.length * 2 + 1; transition += 1) {
@@ -564,8 +599,16 @@ async function runSequential<TContext extends object | undefined>(
 
 		if (current.run.control.status === "cancel_requested") {
 			const toolCall = toolCallFor(sources, call);
+			const terminalDetails = cancelToolsByName?.get(toolCall.name)?.terminalDetails;
 			if (call.status === "planned") {
-				await publishToolOutcome(lane, drive, current.run, call, abortedOutcome(toolCall), recovery);
+				await publishToolOutcome(
+					lane,
+					drive,
+					current.run,
+					call,
+					abortedOutcome(toolCall, terminalDetails),
+					recovery,
+				);
 			} else {
 				const checkpoint = await readCheckpoint(lane, drive, call);
 				await publishToolOutcome(
@@ -573,7 +616,7 @@ async function runSequential<TContext extends object | undefined>(
 					drive,
 					current.run,
 					call,
-					interruptedOutcome(toolCall, checkpoint),
+					interruptedOutcome(toolCall, checkpoint, terminalDetails),
 					recovery,
 				);
 			}
@@ -679,7 +722,12 @@ export async function runTools<TContext extends object | undefined>(
 	const current = currentBatch(lane);
 	if (current === undefined) return { kind: "continue" };
 	if (current.run.control.status === "cancel_requested") {
-		return runSequential(lane, drive, current.run, sources, undefined, recovery);
+		const cancelConfig = lane.readConfig();
+		const cancelActive = new Set(batch.configuration.activeToolNames);
+		const cancelToolsByName = new Map(
+			cancelConfig.tools.filter((tool) => cancelActive.has(tool.name)).map((tool) => [tool.name, tool] as const),
+		);
+		return runSequential(lane, drive, current.run, sources, undefined, recovery, cancelToolsByName);
 	}
 	const config = lane.readConfig();
 	const active = new Set(batch.configuration.activeToolNames);

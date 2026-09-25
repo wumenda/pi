@@ -4,6 +4,7 @@ import { loadConfig } from "./config.ts";
 import { createAppServer } from "./index.ts";
 import { createAgentPlanLlm } from "./llm.ts";
 import { createLogger } from "./logger.ts";
+import { resolvePersistedServerId } from "./server-id.ts";
 
 const log = createLogger("main");
 const config = loadConfig();
@@ -17,7 +18,11 @@ if (config.webDist === undefined) {
 	if (existsSync(defaultDist)) config.webDist = defaultDist;
 }
 const llm = createAgentPlanLlm(config.agentPlanBaseUrl, config.modelId);
-const handle = createAppServer({ wsPort: config.wsPort, httpPort: config.httpPort, deps: { config, llm } });
+// server 身份持久化：前端 hello 握手按 serverId 校验，重启必须保持不变——
+// 首次生成写入 <dataDir>/server-id，之后读回；APP_SERVER_SERVER_ID 显式覆盖（回写文件）。
+const serverId = await resolvePersistedServerId(config.dataDir, config.serverId);
+log.info(`serverId: ${serverId}`);
+const handle = createAppServer({ serverId, wsPort: config.wsPort, httpPort: config.httpPort, deps: { config, llm } });
 await handle.start();
 console.log("app-server ready");
 console.log(`  serverId: ${handle.serverId}`);

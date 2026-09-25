@@ -30,6 +30,8 @@ export interface McpToolManifestEntry {
 	serverId: string;
 	name: string;
 	resourceUri: string;
+	/** 最终桥接工具名 `mcp__<server>__<tool>`（撞名 `_` 后缀含）；缺省 = A1 前的旧清单 */
+	harnessName?: string;
 	/** 受众可见性声明（_meta.ui.visibility）；未声明时缺省（默认模型可见） */
 	visibility?: string[];
 }
@@ -94,7 +96,7 @@ export function intersectCsp(declared: string | null): string {
 }
 
 export function createHttpServer(
-	options: { httpPort: number; token?: string; users?: Record<string, string>; webDist?: string },
+	options: { httpPort: number; token?: string; users?: Record<string, string>; webDist?: string; serverId?: string },
 	deps: HttpDeps,
 ): FastifyInstance {
 	const app = Fastify({ logger: false });
@@ -175,6 +177,15 @@ export function createHttpServer(
 	app.get("/api/v1/mcp-tools", async (request, reply) => {
 		const tools = await deps.listMcpTools(requestUserId(request));
 		return reply.code(200).header("cache-control", "no-store").send(tools);
+	});
+	// 零手填连接（前端启动时自动发现 serverId）：token/users 模式受上方认证钩子保护，
+	// 匿名开发回环可达。serverId 未装配（直接构造 HTTP 面的测试场景）返回 null，
+	// 前端对非 UUIDv4 值一律忽略。
+	app.get("/api/v1/server-id", async (_request, reply) => {
+		return reply
+			.code(200)
+			.header("cache-control", "no-store")
+			.send({ serverId: options.serverId ?? null });
 	});
 
 	/** 解析会话文件根内相对路径；越界（resolve 后逃出根）返回 undefined */

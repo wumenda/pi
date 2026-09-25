@@ -24,7 +24,7 @@ export interface SessionRuntimeOptions {
 	models: Models;
 	model: Model<Api>;
 	workspaceDir: string;
-	/** 会话专属 MCP manager：host 创建并 connectAll 后传入，close 时随 runtime 关闭。 */
+	/** host 级共享 MCP manager：host 创建、连接并统一关闭，runtime 仅使用不回收。 */
 	mcp: McpServerManager;
 	/** 附加工具（host 注入 MCP 桥接工具）。 */
 	extraTools?: AgentHarnessTool<ExecutionToolContext>[];
@@ -91,7 +91,6 @@ export async function createSessionRuntime(options: SessionRuntimeOptions): Prom
 			staleRunOperationId,
 			close: async () => {
 				await harness.close(BACKGROUND_CONTEXT);
-				await options.mcp.close();
 			},
 		};
 	} catch (error) {

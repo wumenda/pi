@@ -146,6 +146,7 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 				http = createHttpServer(
 					{
 						httpPort: options.httpPort ?? config.httpPort,
+						serverId,
 						...(config.token === undefined ? {} : { token: config.token }),
 						...(users === undefined ? {} : { users }),
 						...(config.webDist === undefined ? {} : { webDist: config.webDist }),

@@ -24,6 +24,11 @@ export interface AppServerConfig {
 	users?: Record<string, string>;
 	/** web 前端生产构建目录（Task 28 静态托管 + SPA fallback）；缺省不注册静态托管。 */
 	webDist?: string;
+	/**
+	 * 固定 server 身份（APP_SERVER_SERVER_ID，小写 UUIDv4）：前端 hello 握手按它校验，
+	 * 缺省由 main 解析为 <dataDir>/server-id 持久化（首次生成，重启不变）。
+	 */
+	serverId?: string;
 }
 
 /** 连接/请求的身份解析结果（users 模式）；single 表示单用户模式（无 userId 维度）。 */
@@ -68,6 +73,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppServerConfi
 		...(env.APP_SERVER_WEB_DIST === undefined || env.APP_SERVER_WEB_DIST === ""
 			? {}
 			: { webDist: env.APP_SERVER_WEB_DIST }),
+		...(env.APP_SERVER_SERVER_ID === undefined || env.APP_SERVER_SERVER_ID === ""
+			? {}
+			: { serverId: env.APP_SERVER_SERVER_ID }),
 	};
 }
 

@@ -111,17 +111,32 @@ function mapContent(contents: McpContent[]): MappedContent[] {
 	return mapped;
 }
 
+/** Final bridged tool identity: (serverId, original tool name) → harness name. */
+export interface McpToolProvenance {
+	/** MCP-side original tool name. */
+	toolName: string;
+	serverId: string;
+	/** Harness tool name actually registered (`mcp__<server>__<tool>`, `_`-suffixed on collision). */
+	harnessName: string;
+}
+
+export interface McpBridgeTools {
+	tools: AgentHarnessTool<ExecutionToolContext, TSchema, McpToolDetails>[];
+	/** Provenance for every bridged tool, in bridge order. */
+	provenance: McpToolProvenance[];
+}
+
 /** Bridge every tool exposed by the manager's ready servers into harness tools. */
-export function createMcpTools(
-	manager: McpServerManager,
-): AgentHarnessTool<ExecutionToolContext, TSchema, McpToolDetails>[] {
+export function createMcpTools(manager: McpServerManager): McpBridgeTools {
 	const usedNames = new Set<string>();
 	const tools: AgentHarnessTool<ExecutionToolContext, TSchema, McpToolDetails>[] = [];
+	const provenance: McpToolProvenance[] = [];
 	for (const routed of manager.tools()) {
 		const ui = extractMcpToolUi(routed);
 		let name = mcpToolName(routed.serverId, routed.tool.name);
 		while (usedNames.has(name)) name = `${name}_`;
 		usedNames.add(name);
+		provenance.push({ serverId: routed.serverId, toolName: routed.tool.name, harnessName: name });
 		const description =
 			routed.tool.description === undefined
 				? `MCP tool ${routed.tool.name} from server ${routed.serverId}`
@@ -132,6 +147,9 @@ export function createMcpTools(
 			label,
 			description,
 			parameters: Type.Unsafe<Record<string, unknown>>(routed.tool.inputSchema as TSchema),
+			// Aborted/failed terminal results keep the UI descriptor so the web host can
+			// still route the terminal state to the app iframe without the tools manifest.
+			...(ui === undefined ? {} : { terminalDetails: { mcpUi: ui } satisfies McpToolDetails }),
 			async execute(_toolCallId, params, onUpdate, _toolContext, _invocation, context) {
 				const result = await manager.callTool(
 					routed.serverId,
@@ -152,5 +170,5 @@ export function createMcpTools(
 			},
 		});
 	}
-	return tools;
+	return { tools, provenance };
 }

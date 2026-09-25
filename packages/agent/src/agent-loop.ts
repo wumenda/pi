@@ -617,7 +617,7 @@ async function executeToolCallsParallel(
 			if (signal?.aborted) {
 				const finalized = {
 					toolCall,
-					result: createErrorToolResult("Operation aborted"),
+					result: createErrorToolResult("Operation aborted", preparation.tool.terminalDetails),
 					isError: true,
 				} satisfies FinalizedToolCallOutcome;
 				await emitToolExecutionEnd(finalized, emit);
@@ -732,12 +732,15 @@ async function prepareToolCall(
 			if (signal?.aborted) {
 				return {
 					kind: "immediate",
-					result: createErrorToolResult("Operation aborted"),
+					result: createErrorToolResult("Operation aborted", tool.terminalDetails),
 					isError: true,
 				};
 			}
 			if (beforeResult?.block) {
-				const result = createErrorToolResult(beforeResult.reason || "Tool execution was blocked");
+				const result = createErrorToolResult(
+					beforeResult.reason || "Tool execution was blocked",
+					tool.terminalDetails,
+				);
 				if (beforeResult.terminate === true) {
 					result.terminate = true;
 				}
@@ -751,7 +754,7 @@ async function prepareToolCall(
 		if (signal?.aborted) {
 			return {
 				kind: "immediate",
-				result: createErrorToolResult("Operation aborted"),
+				result: createErrorToolResult("Operation aborted", tool.terminalDetails),
 				isError: true,
 			};
 		}
@@ -764,7 +767,7 @@ async function prepareToolCall(
 	} catch (error) {
 		return {
 			kind: "immediate",
-			result: createErrorToolResult(error instanceof Error ? error.message : String(error)),
+			result: createErrorToolResult(error instanceof Error ? error.message : String(error), tool.terminalDetails),
 			isError: true,
 		};
 	}
@@ -805,7 +808,10 @@ async function executePreparedToolCall(
 		acceptingUpdates = false;
 		await Promise.all(updateEvents);
 		return {
-			result: createErrorToolResult(error instanceof Error ? error.message : String(error)),
+			result: createErrorToolResult(
+				error instanceof Error ? error.message : String(error),
+				prepared.tool.terminalDetails,
+			),
 			isError: true,
 		};
 	} finally {
@@ -848,7 +854,10 @@ async function finalizeExecutedToolCall(
 				isError = afterResult.isError ?? isError;
 			}
 		} catch (error) {
-			result = createErrorToolResult(error instanceof Error ? error.message : String(error));
+			result = createErrorToolResult(
+				error instanceof Error ? error.message : String(error),
+				prepared.tool.terminalDetails,
+			);
 			isError = true;
 		}
 	}
@@ -860,10 +869,10 @@ async function finalizeExecutedToolCall(
 	};
 }
 
-function createErrorToolResult(message: string): AgentToolResult<any> {
+function createErrorToolResult(message: string, terminalDetails?: unknown): AgentToolResult<any> {
 	return {
 		content: [{ type: "text", text: message }],
-		details: {},
+		details: { ...(terminalDetails as Record<string, unknown> | undefined) },
 	};
 }
 

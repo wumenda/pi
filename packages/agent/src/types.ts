@@ -465,6 +465,13 @@ export interface AgentTool<TParameters extends TSchema = TSchema, TDetails = any
 	 * If omitted, the default execution mode applies.
 	 */
 	executionMode?: ToolExecutionMode;
+	/**
+	 * Details used verbatim for error tool results the runtime synthesizes for this
+	 * tool (abort before or during execution, blocked call, validation failure,
+	 * execute() throw). Tools with static UI descriptors (e.g. MCP Apps
+	 * `details.mcpUi`) set this so terminal failures stay routable to the UI host.
+	 */
+	terminalDetails?: TDetails;
 }
 
 /** Context snapshot passed into the low-level agent loop. */

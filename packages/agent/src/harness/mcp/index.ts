@@ -12,7 +12,9 @@ export {
 	createMcpTools,
 	extractMcpToolUi,
 	isVisibleToLlm,
+	type McpBridgeTools,
 	type McpToolDetails,
+	type McpToolProvenance,
 	type McpToolUiDescriptor,
 	mcpToolName,
 } from "./tools.ts";

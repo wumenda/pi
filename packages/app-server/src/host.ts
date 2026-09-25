@@ -1,4 +1,4 @@
-﻿import { join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import type { Context } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import type { HarnessEvent } from "@earendil-works/pi-agent-core";
@@ -35,7 +35,7 @@ export interface AppServerHostHandle {
 	readonly services: ServerServices;
 	/**
 	 * 读取 MCP Apps ui:// 资源（HTTP ui-resources 端点用）。
-	 * 资源为静态应用文档：任一已连接该 server 的会话 manager 读取等价；
+	 * 资源为静态应用文档：host 级共享 manager 读取，会话存活与否不影响可用性（B1）；
 	 * declaredCsp 取声明该 resourceUri 的工具 `_meta.ui.csp`（未声明 null）。
 	 */
 	readUiResource(request: { serverId: string; resourceUri: string }): Promise<{
@@ -85,8 +85,29 @@ function declaredVisibility(routed: McpRoutedTool): string[] | undefined {
 /** 会话运行时缓存：attach/detach 不销毁，removeSession 与 shutdown 才关闭。 */
 export async function createAppServerHost(deps: AppServerHostDeps, serverId: string): Promise<AppServerHostHandle> {
 	const runtimes = new Map<string, RuntimeEntry>();
-	// 存活会话的 MCP manager 登记：ui-resources 端点按需复用已连接实例读静态资源
-	const managers = new Set<McpServerManager>();
+	// host 级共享 MCP manager（B1）：app-server 启动即连接，供全部会话、ui-resources
+	// 端点与 mcp-tools 清单共用——会话关闭不回收，host.close() 统一释放。
+	// 配置缺失/坏 JSON 由 loadMcpServerConfigs 降级为空 map（error 日志），不阻塞启动；
+	// per-server 连接失败记录进 statuses，不抛。
+	const mcpConfigPath = deps.config.mcpConfigPath ?? join(deps.config.dataDir, "mcp.json");
+	const mcp = new McpServerManager(await loadMcpServerConfigs(mcpConfigPath));
+	for (const status of await mcp.connectAll()) {
+		log.info(
+			`mcp server ${status.id}: state=${status.state} toolCount=${status.toolCount}${status.error === undefined ? "" : ` error=${status.error}`}`,
+		);
+	}
+	// 桥接工具与 (serverId, toolName) → 最终桥接名映射在构造期计算一次（B1 后 manager
+	// 进程内单例、无自动重连，tools 快照恒定）；清单据映射携带 harnessName，撞名 `_`
+	// 后缀的桥接名也能被前端精确匹配（A1）。
+	const mcpBridge = createMcpTools(mcp);
+	const harnessNames = new Map(
+		mcpBridge.provenance.map((entry) => [`${entry.serverId}\0${entry.toolName}`, entry.harnessName] as const),
+	);
+	// MCP Apps app-only 工具（visibility=["app"]）仅 iframe 经反向调用可用
+	const hiddenFromLlm: readonly string[] = mcp
+		.tools()
+		.filter((routed) => !isVisibleToLlm(routed))
+		.map((routed) => mcpToolName(routed.serverId, routed.tool.name));
 	const workspaceDir = resolve(deps.config.dataDir, "workspace");
 	// 会话存储按 host 的 dataDir 构造：多用户隔离（Task 27）通过 per-user dataDir 派生实现
 	const store: SessionStore = createSessionStore({ dataDir: deps.config.dataDir, workspaceDir });
@@ -99,57 +120,44 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		const entry = runtimes.get(sessionId);
 		if (entry === undefined) return;
 		runtimes.delete(sessionId);
-		managers.delete(entry.runtime.mcp);
 		log.info(`closing runtime for session ${sessionId}`);
 		for (const unsubscribe of entry.unsubscribe) unsubscribe();
 		await entry.services.dispose().catch(() => undefined);
 		await entry.runtime.close().catch(() => undefined);
 	}
 	const readUiResource = async (request: { serverId: string; resourceUri: string }) => {
-		let lastError: unknown;
-		for (const manager of managers) {
-			try {
-				const contents = await manager.readResource(request.serverId, request.resourceUri);
-				const first = contents.contents[0];
-				const csp = manager
-					.tools()
-					.filter(
-						(routed) =>
-							routed.serverId === request.serverId &&
-							extractMcpToolUi(routed)?.resourceUri === request.resourceUri,
-					)
-					.map((routed) => extractMcpToolUi(routed)?.csp)
-					.find((csp) => csp !== undefined);
-				return {
-					mimeType: first?.mimeType ?? "text/html",
-					html: first?.text ?? "",
-					declaredCsp: csp ?? null,
-				};
-			} catch (error) {
-				lastError = error;
-			}
-		}
-		throw lastError instanceof Error ? lastError : new Error(`no connected manager for ${request.serverId}`);
+		const contents = await mcp.readResource(request.serverId, request.resourceUri);
+		const first = contents.contents[0];
+		const csp = mcp
+			.tools()
+			.filter(
+				(routed) =>
+					routed.serverId === request.serverId && extractMcpToolUi(routed)?.resourceUri === request.resourceUri,
+			)
+			.map((routed) => extractMcpToolUi(routed)?.csp)
+			.find((csp) => csp !== undefined);
+		return {
+			mimeType: first?.mimeType ?? "text/html",
+			html: first?.text ?? "",
+			declaredCsp: csp ?? null,
+		};
 	};
-	// MCP Apps 工具清单：跨存活会话 manager 聚合带 ui:// 声明的工具（按 serverId+name 去重）
+	// MCP Apps 工具清单：host 级共享 manager 中带 ui:// 声明的工具
+	//（单 manager 内 serverId 为配置键、tool 名 server 内唯一，无需去重）
 	const listMcpTools = async (): Promise<McpToolManifestEntry[]> => {
-		const seen = new Set<string>();
 		const entries: McpToolManifestEntry[] = [];
-		for (const manager of managers) {
-			for (const routed of manager.tools()) {
-				const ui = extractMcpToolUi(routed);
-				if (ui === undefined) continue;
-				const key = `${routed.serverId}\0${routed.tool.name}`;
-				if (seen.has(key)) continue;
-				seen.add(key);
-				const visibility = declaredVisibility(routed);
-				entries.push({
-					serverId: routed.serverId,
-					name: routed.tool.name,
-					resourceUri: ui.resourceUri,
-					...(visibility === undefined ? {} : { visibility }),
-				});
-			}
+		for (const routed of mcp.tools()) {
+			const ui = extractMcpToolUi(routed);
+			if (ui === undefined) continue;
+			const visibility = declaredVisibility(routed);
+			const harnessName = harnessNames.get(`${routed.serverId}\0${routed.tool.name}`);
+			entries.push({
+				serverId: routed.serverId,
+				name: routed.tool.name,
+				resourceUri: ui.resourceUri,
+				...(harnessName === undefined ? {} : { harnessName }),
+				...(visibility === undefined ? {} : { visibility }),
+			});
 		}
 		return entries;
 	};
@@ -188,31 +196,15 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 				const startedAt = Date.now();
 				log.info(`openSession ${metadata.id}: creating runtime`);
 				const session = await store.open(metadata);
-				let mcpManager: McpServerManager | undefined;
 				try {
-					const mcpConfigPath = deps.config.mcpConfigPath ?? join(deps.config.dataDir, "mcp.json");
-					const mcpConfig = await loadMcpServerConfigs(mcpConfigPath);
-					const manager = new McpServerManager(mcpConfig);
-					mcpManager = manager;
-					for (const status of await manager.connectAll()) {
-						log.info(
-							`mcp server ${status.id}: state=${status.state} toolCount=${status.toolCount}${status.error === undefined ? "" : ` error=${status.error}`}`,
-						);
-					}
-					managers.add(manager);
-					const mcpTools = createMcpTools(manager);
 					const runtime = await createSessionRuntime({
 						session,
 						models: deps.llm.models,
 						model: deps.llm.model,
 						workspaceDir,
-						mcp: manager,
-						extraTools: mcpTools,
-						// MCP Apps app-only 工具（visibility=["app"]）仅 iframe 经反向调用可用
-						hiddenFromLlm: manager
-							.tools()
-							.filter((routed) => !isVisibleToLlm(routed))
-							.map((routed) => mcpToolName(routed.serverId, routed.tool.name)),
+						mcp,
+						extraTools: mcpBridge.tools,
+						hiddenFromLlm,
 					});
 					const recorder = createToolEventRecorder(deps.config.dataDir, metadata.id);
 					const sessionServices = await createSessionServices(runtime, recorder);
@@ -224,7 +216,6 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 					log.error(
 						`openSession ${metadata.id}: runtime failed: ${error instanceof Error ? error.message : String(error)}`,
 					);
-					await mcpManager?.close().catch(() => undefined);
 					await session.close(BACKGROUND_CONTEXT).catch(() => undefined);
 					throw error;
 				}
@@ -249,6 +240,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		sessionFilesRoot,
 		async close() {
 			for (const sessionId of [...runtimes.keys()]) await closeRuntime(sessionId);
+			await mcp.close();
 			await services.dispose();
 		},
 	};

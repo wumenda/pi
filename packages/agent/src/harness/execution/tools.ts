@@ -57,18 +57,23 @@ export interface FinalizedToolCall {
 	terminate: boolean;
 }
 
-function createErrorToolResult(message: string): AgentToolResult<unknown> {
+function createErrorToolResult(message: string, terminalDetails?: unknown): AgentToolResult<unknown> {
 	return {
 		content: [{ type: "text", text: message }],
-		details: undefined,
+		details: terminalDetails === undefined ? undefined : { ...(terminalDetails as Record<string, unknown>) },
 	};
 }
 
-function immediateError(toolCall: AgentToolCall, message: string, terminate = false): ImmediateToolOutcome {
+function immediateError(
+	toolCall: AgentToolCall,
+	message: string,
+	terminate = false,
+	terminalDetails?: unknown,
+): ImmediateToolOutcome {
 	return {
 		kind: "immediate",
 		toolCall,
-		result: createErrorToolResult(message),
+		result: createErrorToolResult(message, terminalDetails),
 		isError: true,
 		terminate,
 	};
@@ -93,7 +98,7 @@ export function prepareToolCall<TContext extends object | undefined>(
 		const args = validateToolArguments(tool, preparedCall) as Record<string, JsonValue>;
 		return { toolCall: call, tool, args };
 	} catch (error) {
-		return immediateError(call, error instanceof Error ? error.message : String(error));
+		return immediateError(call, error instanceof Error ? error.message : String(error), false, tool.terminalDetails);
 	}
 }
 
@@ -103,7 +108,12 @@ export function applyBeforeToolDecision<TContext extends object | undefined>(
 	decision: BeforeToolDecision | undefined,
 ): ClearedToolCall<TContext> | ImmediateToolOutcome {
 	if (decision?.block) {
-		return immediateError(prepared.toolCall, decision.block.reason, decision.block.terminate === true);
+		return immediateError(
+			prepared.toolCall,
+			decision.block.reason,
+			decision.block.terminate === true,
+			prepared.tool.terminalDetails,
+		);
 	}
 
 	if (!decision?.args) {
@@ -117,7 +127,12 @@ export function applyBeforeToolDecision<TContext extends object | undefined>(
 		}) as Record<string, JsonValue>;
 		return { toolCall: prepared.toolCall, tool: prepared.tool, args: validatedArgs };
 	} catch (error) {
-		return immediateError(prepared.toolCall, error instanceof Error ? error.message : String(error));
+		return immediateError(
+			prepared.toolCall,
+			error instanceof Error ? error.message : String(error),
+			false,
+			prepared.tool.terminalDetails,
+		);
 	}
 }
 
@@ -148,7 +163,10 @@ export function executeToolCall<TContext extends object | undefined>(
 			return { result, isError: false };
 		} catch (error) {
 			return {
-				result: createErrorToolResult(error instanceof Error ? error.message : String(error)),
+				result: createErrorToolResult(
+					error instanceof Error ? error.message : String(error),
+					call.tool.terminalDetails,
+				),
 				isError: true,
 			};
 		} finally {

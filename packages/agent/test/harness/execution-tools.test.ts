@@ -182,6 +182,56 @@ describe("tool execution primitives", () => {
 		expect(execute).not.toHaveBeenCalled();
 	});
 
+	it("merges terminalDetails into error results when a tool with a UI descriptor throws", async () => {
+		interface UiDetails {
+			mcpUi: { resourceUri: string; serverId: string };
+		}
+		const terminalDetails: UiDetails = { mcpUi: { resourceUri: "ui://demo/panel", serverId: "demo" } };
+		const uiTool: AgentHarnessTool<undefined, typeof parameters, UiDetails> = {
+			name: "echo",
+			label: "Echo",
+			description: "Echo input",
+			parameters,
+			terminalDetails,
+			async execute() {
+				throw new Error("tool failed");
+			},
+		};
+		const prepared = prepareToolCall(call(), [uiTool]);
+		if (isImmediate(prepared)) throw new Error("expected prepared call");
+		const cleared = applyBeforeToolDecision(prepared, undefined);
+		if (isImmediate(cleared)) throw new Error("expected cleared call");
+
+		const result = await executeToolCall(cleared, effectGate(), () => {}, undefined, invocation, BACKGROUND_CONTEXT);
+
+		expect(result.isError).toBe(true);
+		expect(result.result.details).toEqual(terminalDetails);
+	});
+
+	it("keeps terminalDetails on blocked immediate outcomes", () => {
+		interface UiDetails {
+			mcpUi: { resourceUri: string; serverId: string };
+		}
+		const terminalDetails: UiDetails = { mcpUi: { resourceUri: "ui://demo/panel", serverId: "demo" } };
+		const uiTool: AgentHarnessTool<undefined, typeof parameters, UiDetails> = {
+			name: "echo",
+			label: "Echo",
+			description: "Echo input",
+			parameters,
+			terminalDetails,
+			async execute() {
+				throw new Error("not executed: call is blocked before execution");
+			},
+		};
+		const prepared = prepareToolCall(call(), [uiTool]);
+		if (isImmediate(prepared)) throw new Error("expected prepared call");
+
+		const blocked = applyBeforeToolDecision(prepared, { block: { reason: "denied" } });
+
+		expect(isImmediate(blocked) ? blocked.result.details : null).toEqual(terminalDetails);
+		expect(isImmediate(blocked) ? text(blocked.result) : "").toBe("denied");
+	});
+
 	it("applies patches field by field and constructs the tool-result message", () => {
 		const cleared = clearPrepared(prepareToolCall(call(), [tool()]));
 		const originalUsage = {
