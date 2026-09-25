@@ -48,7 +48,8 @@ export function createAgentController(
 				log.info(`prompt: settling stale suspended run ${staleRunOperationId}, then retrying`);
 				await lane.requestAbort(staleRunOperationId, context).catch(() => undefined);
 				await lane.resume(context).catch(() => undefined);
-				await lane.waitForIdle(context);
+				// 等待空闲失败（如 lane 已关闭）不阻断：重试 prompt 返回规整的受理失败错误
+				await lane.waitForIdle(context).catch(() => undefined);
 				const retry = await lane.prompt(message, images, context);
 				if (retry.ok) {
 					log.info(`prompt: accepted after stale run settle (operationId=${retry.value.operationId})`);
