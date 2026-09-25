@@ -83,6 +83,7 @@ MCP Apps related features are documented under `docs/` (see `docs/MCP-Apps-概�
 - Adding a new feature requires writing a technical doc under `docs/` covering the problem it solves, the design, and how to verify it.
 - Record a reference to that doc in this file (AGENTS.md) so future sessions can find it.
 - app-server platform (real backend + web + MCP Apps protocol): see [docs/app-server-平台.md](docs/app-server-平台.md).
+- web 前端复刻（工业 Agent 工作台 UI + pi 后端适配层）: see [docs/pi-web-工业工作台复刻.md](docs/pi-web-工业工作台复刻.md).
 
 ## User Override
 
