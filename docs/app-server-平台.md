@@ -40,6 +40,10 @@ app-server ── MCP servers（mcp.json，Streamable HTTP/SSE）
 - **ask_user_question**：七种页类型（list-single / list-multi / form / table / dropdown / file-collect / file-download）+ 三层校验（结构预设 → 通用校验：id 唯一 / defaultValue / constraints / rowOps / allowCustom / 未知字段，报错含「期望 vs 实际」）；AskUserRegistry 挂起 agent loop，前端交互卡片作答后恢复。
 - **多用户隔离**：`APP_SERVER_USERS`（JSON token→userId）配置后，每个 userId 预建独立 `createAppServerHost` + `new Server(...)`；WS 连接按 upgrade 解析的 userId 路由到对应 Server（连接对象携带 userId，零侵入 pi-server）；HTTP 回调按 `request.userId` 路由。数据目录派生为 `<dataDir>/users/<userId>/`（sessions / sessions-workspace / tool-events 全隔离）。未配置 = 单用户模式，dataDir 原样。
 - **静态托管**：`@fastify/static`（wildcard: false）+ `setNotFoundHandler`——`/api/` 前缀未知路径回 404 JSON 不被 fallback 吞，其余回 index.html（SPA 深链）。webDist 解析：`APP_SERVER_WEB_DIST` 显式 > main.ts 按 `import.meta.dirname` 找 monorepo 内 `packages/web/dist`（existsSync 守卫，未构建则不注册）。
+- **崩溃恢复（LaneBusy 自动收尾）**：进程在 ask_user_question 挂起期间崩溃，挂起 run 被 durable 化为 open operation；重启后新 lane 无 drive 推进——prompt 永远 LaneBusy（lane 僵死）、ask registry 为空导致作答永远失败。
+  - **触发条件**（三者同时满足才收尾）：① runtime 创建时快照到的遗留 run id（`staleRunOperationId`：runtime 刚建、本进程未启动过任何 operation，此刻 `inspectExecution().current` 必然是上一进程遗留）；② prompt 撞 `LaneBusy` 且其 operationId 精确等于该快照 id；③ 每个 controller 实例只收尾一次（防重复）。本进程正常运行的 run（opId 不同）不受影响，照常返回 LaneBusy。
+  - **收尾动作**：`requestAbort + resume + waitForIdle` 把遗留 run 收敛为 `aborted` 终态（工具以 interrupted outcome 收尾，消息流中遗留 ask toolCall 获得 toolResult），随后重试本次 prompt。
+  - **安全边界**：收尾路径**零 LLM 调用**（不自动续跑、不产生费用）；不自动作答遗留 ask（registry 已空，作答返回可行动错误提示「会话因重启中断，发新消息继续」）；用户主动发消息即显式确认恢复。遗留 ask 的 `tool_end`（isError=true）经 tool-events 落盘，前端作答卡据此转为失败终态。
 
 ### 配置（环境变量）
 
@@ -69,7 +73,7 @@ node ../../node_modules/vitest/dist/cli.js --run
 node ..\..\node_modules\vitest\dist\cli.js --run test/<file>.test.ts
 ```
 
-- `packages/app-server/test/`：boot / config / llm / sessions / runtime / services / mcp-config / mcp-host / tool-events / token / users / http-ui-resources / http-mcp-tools / http-files / http-static。
+- `packages/app-server/test/`：boot / config / llm / sessions / runtime / services / mcp-config / mcp-host / tool-events / token / users / http-ui-resources / http-mcp-tools / http-files / http-static / crash-recovery（重启后遗留挂起 run 的自动收尾，见核心机制「崩溃恢复」）。
 - `packages/web/test/`：mcp-progress（指纹去重与恢复）/ skill-declaration（声明归属与就绪门控）/ mcp-manifest（清单自愈）/ answers-file-download。
 - `packages/agent/test/harness/`：ask-user-preset-validation（七类型结构预设）/ ask-user-file-download（路径安全）。
 
