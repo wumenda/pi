@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { Context } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
@@ -109,6 +110,9 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		.filter((routed) => !isVisibleToLlm(routed))
 		.map((routed) => mcpToolName(routed.serverId, routed.tool.name));
 	const workspaceDir = resolve(deps.config.dataDir, "workspace");
+	// bash 工具以该目录为 cwd，缺失时所有 bash 调用直接 spawn_error；
+	// 会话 JSONL 持久化可跨重启恢复，workspace 目录必须随之重建。
+	await mkdir(workspaceDir, { recursive: true });
 	// 会话存储按 host 的 dataDir 构造：多用户隔离（Task 27）通过 per-user dataDir 派生实现
 	const store: SessionStore = createSessionStore({ dataDir: deps.config.dataDir, workspaceDir });
 	const toSummary = (metadata: JsonlSessionMetadata) => ({
