@@ -9,8 +9,16 @@ import { fetchToolLibrary } from "../../api/tool-library"
 import { uploadFileToWorkspace } from "../../api/files"
 import { AssetSemanticModal } from "./AssetSemanticModal"
 import { textPartsOf } from "../../api/events"
-import { estimateContextSegments } from "./contextEstimate"
+import {
+	historyTokensOf,
+	latestStepFinishTokens,
+	quantizeTokens,
+	systemTokensOf,
+	toolsTokensOf,
+} from "./contextEstimate"
 import { useAppStore, sessionDirectoryOf } from "../../stores/app-store"
+import { usePiStore } from "../../pi/pi-app"
+import { runFailureMessage } from "./run-error"
 import type { ReasoningEffort } from "../../types"
 
 const REASONING_OPTIONS: { value: ReasoningEffort; label: string }[] = [
@@ -62,6 +70,12 @@ export function ChatInput({ sessionId }: { sessionId: string }) {
   const markSessionPrompt = useAppStore((s) => s.markSessionPrompt)
   const promptPrefs = useAppStore((s) => s.promptPrefs)
   const setPromptPrefs = useAppStore((s) => s.setPromptPrefs)
+  // 运行失败提示（输入区上方红色 pill）：数据源 = transcript 快照 lastResult 的 run failed 终态；
+  // 运行中 / 成功 / aborted 自动隐藏（派生规则见 run-error.ts）。
+  // select 返回字符串或 null：仅失败态出现与消失时通知重渲染，流式期间恒定零通知。
+  const runFailure = usePiStore((s) =>
+    s.activeSessionId === sessionId ? runFailureMessage(s.transcript) : null,
+  )
   const { message } = AntdApp.useApp()
 
   // Agent 预设与模型清单（选择器数据源；失败降级为仅占位）
@@ -137,11 +151,21 @@ export function ChatInput({ sessionId }: { sessionId: string }) {
   }, [agents])
 
   // 当前会话消息（共享 MessageList 同 key 缓存；staleTime: Infinity 避免覆盖已有缓存，
-  // 仅由 SSE setQueryData 驱动更新，供上下文占用圆环取数）
-  const { data: messages = [] } = useQuery({
+  // 仅由 SSE setQueryData 驱动更新）。T2.9-1 订阅收窄：select 返回派生原始标量，
+  // 值相等时 React Query 不通知重渲染。两路口径：
+  // - 圆环权威值 latestStepFinishTokens：step-finish 在轮次结束才出现，流式期间恒定 → 零通知；
+  // - 明细历史段：粗化到 500 token 档（quantizeTokens），流式期间仅跨档通知。
+  const historyTokens = useQuery({
     queryKey: ["messages", sessionId],
     queryFn: () => fetchMessages(sessionId, sessionDirectoryOf(sessionId)),
     staleTime: Infinity,
+    select: (messages) => quantizeTokens(historyTokensOf(messages)),
+  })
+  const contextTokens = useQuery({
+    queryKey: ["messages", sessionId],
+    queryFn: () => fetchMessages(sessionId, sessionDirectoryOf(sessionId)),
+    staleTime: Infinity,
+    select: latestStepFinishTokens,
   })
 
   // 工具库（三段估算的工具定义数据源；含 inputSchema，5 分钟缓存足够）
@@ -152,33 +176,22 @@ export function ChatInput({ sessionId }: { sessionId: string }) {
   })
 
   // 三段估算（系统提示/工具定义/历史消息，全部为启发式估算值）。
-  // 单个 useMemo 聚合，避免 SSE 高频更新时重复遍历消息。
+  // 派生标量组装：agents/tools 引用稳定（WeakMap 缓存命中），messages 段来自
+  // select 标量——仅在数值变化时触发本组件重渲染。
   const contextSegments = useMemo(
-    () =>
-      estimateContextSegments({
-        messages,
-        agents,
-        agentName: promptPrefs.agent,
-        tools,
-      }),
-    [messages, agents, promptPrefs.agent, tools],
-  )
-
-  // 上下文占用：最新 step-finish part 的 input token（含缓存读），反映模型看到的上下文量
-  const contextTokens = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const parts = messages[i]?.parts ?? []
-      for (let j = parts.length - 1; j >= 0; j--) {
-        const p = parts[j] as
-          | { type?: string; tokens?: { input?: number; cache?: { read?: number } } }
-          | undefined
-        if (p?.type === "step-finish" && p.tokens) {
-          return (p.tokens.input ?? 0) + (p.tokens.cache?.read ?? 0)
-        }
+    () => {
+      const systemTokens = systemTokensOf(agents, promptPrefs.agent)
+      const toolsTokens = toolsTokensOf(tools)
+      const history = historyTokens.data ?? 0
+      return {
+        systemTokens,
+        toolsTokens,
+        historyTokens: history,
+        segmentTotal: systemTokens + toolsTokens + history,
       }
-    }
-    return null
-  }, [messages])
+    },
+    [agents, promptPrefs.agent, tools, historyTokens.data],
+  )
 
   // 当前选中模型（provider.list 透传的 contextWindow/reasoning），供圆环分母与思考强度选择器复用
   const activeModel = useMemo(() => {
@@ -193,15 +206,16 @@ export function ChatInput({ sessionId }: { sessionId: string }) {
   // 上下文占用圆环分母：按当前选中模型的真实 context window（provider.list 透传），
   // 未知（未连接/清单未加载/无 limit）时回退默认 128k，避免进度比例失真（chat-input-context-ring）。
   const FALLBACK_CONTEXT_WINDOW_TOKENS = 128_000
+  const latestContextTokens = contextTokens.data ?? null
   const contextWindowTokens =
     activeModel?.contextWindow && activeModel.contextWindow > 0
       ? activeModel.contextWindow
       : FALLBACK_CONTEXT_WINDOW_TOKENS
 
   const contextPercent =
-    contextTokens === null
+    latestContextTokens === null
       ? 0
-      : Math.min(100, Math.round((contextTokens / contextWindowTokens) * 100))
+      : Math.min(100, Math.round((latestContextTokens / contextWindowTokens) * 100))
   const contextColor =
     contextPercent >= 90 ? "#ef4444" : contextPercent >= 70 ? "#f59e0b" : "var(--ind-primary)"
 
@@ -220,9 +234,12 @@ export function ChatInput({ sessionId }: { sessionId: string }) {
     const sentAt = Date.now()
     // F2：发送发起时间记账——挂载期 status 查询的陈旧 running=false 结果据此不误清 streaming
     markSessionPrompt(sessionId, sentAt)
+    // pi 适配后 sendPrompt 需整轮 run 结束才 resolve（lane.prompt 驱动 run 到终态，
+    // 并非旧 opencode 的"202 受理即返回"），等它再清空会让已发送文本在整个流式期间
+    // 滞留输入框：改为发送即乐观清空，受理失败时回填保留输入便于重试。
+    setText("")
     try {
       await sendPrompt(sessionId, value, promptPrefs, sessionDirectoryOf(sessionId))
-      setText("")
       // A3 修复：idle/error 事件可能先于 202 经 SSE 到达（秒级失败场景）。
       // 发送发起后该会话已收到终态事件 → 会话实际已结束，不再置位 streaming，
       // 否则 streamingSessionId 置位后无人复位，输入框永久禁用。
@@ -231,6 +248,8 @@ export function ChatInput({ sessionId }: { sessionId: string }) {
         setStreamingSession(sessionId)
       }
     } catch (e) {
+      // 受理失败回填已清空的文本，保留输入便于重试（与下方"保留输入"提示配套）
+      setText(value)
       const msg = String(e)
       // 模型失效类错误（服务端 assertModelConnected 的 BAD_REQUEST）：清掉失效偏好，
       // 给出可行动提示；其余错误保留输入便于重试，给出可见反馈。
@@ -279,6 +298,17 @@ export function ChatInput({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="chat-input">
+      {runFailure !== null && (
+        <div
+          className="chat-run-error-pill"
+          role="status"
+          title={runFailure.length > 0 ? runFailure : undefined}
+        >
+          <span className="chat-run-error-pill-text">
+            运行失败{runFailure.length > 0 ? `：${runFailure}` : ""}
+          </span>
+        </div>
+      )}
       <div className="chat-input-box">
         <div className="chat-input-attachments">
           <Button
@@ -380,14 +410,14 @@ export function ChatInput({ sessionId }: { sessionId: string }) {
             onChange={(value) => setPromptPrefs({ reasoning: value })}
           />
           <div className="chat-input-toolbar-spacer" />
-          {contextTokens !== null && (
+          {latestContextTokens !== null && (
             <Popover
               trigger="hover"
               placement="topRight"
               content={
                 <div className="ctx-est">
                   <div className="ctx-est-header">
-                    权威总量 {contextTokens.toLocaleString()} /{" "}
+                    权威总量 {latestContextTokens.toLocaleString()} /{" "}
                     {contextWindowTokens.toLocaleString()} tokens（{contextPercent}%）
                   </div>
                   {(
