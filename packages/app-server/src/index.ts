@@ -140,8 +140,13 @@ export function createAppServer(options: AppServerOptions = {}): AppServerHandle
 						return target.readUiResource(request);
 					},
 					listMcpTools: async (userId: string | undefined) => hostFor(userId)?.listMcpTools() ?? [],
+					listTools: async (userId: string | undefined) => (await hostFor(userId)?.listAllTools()) ?? [],
+					listSkills: async (userId: string | undefined) => hostFor(userId)?.listSkills() ?? [],
+					getSkillDetail: async (userId: string | undefined, name: string) =>
+						hostFor(userId)?.getSkillDetail(name) ?? null,
 					sessionFilesRoot: async (userId: string | undefined, sessionId: string) =>
 						hostFor(userId)?.sessionFilesRoot(sessionId) ?? null,
+					dataCenterStore: async (userId: string | undefined) => hostFor(userId)?.dataCenter ?? null,
 				};
 				http = createHttpServer(
 					{

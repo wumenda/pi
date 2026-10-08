@@ -1,3 +1,5 @@
+import path from "node:path";
+
 export interface AppServerConfig {
 	/** AgentPlan（OpenAI 兼容）端点。 */
 	agentPlanBaseUrl: string;
@@ -10,6 +12,11 @@ export interface AppServerConfig {
 	dataDir: string;
 	/** MCP 配置文件路径；缺省由 host 解析为 join(dataDir, "mcp.json")。 */
 	mcpConfigPath?: string;
+	/**
+	 * 追加技能扫描目录（技能清单 + harness 注入）；缺省扫描 ~/.pi/agent/skills（global）
+	 * 与 <cwd>/.pi/skills（project）。APP_SERVER_SKILLS_DIRS 以 path.delimiter 分隔，记 global。
+	 */
+	skillsDirs?: string[];
 	/**
 	 * 访问令牌（WS upgrade 与 /api/v1/* HTTP 共用；query ?token= 或 Authorization: Bearer）。
 	 * 缺省 = 开发回环匿名（不校验）。已知边界（ADR-0003）：token 进 query 有日志泄漏风险，
@@ -68,6 +75,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppServerConfi
 		httpPort: Number(env.APP_SERVER_HTTP_PORT ?? 8791),
 		dataDir: env.APP_SERVER_DATA_DIR ?? ".data",
 		...(env.APP_SERVER_MCP_CONFIG === undefined ? {} : { mcpConfigPath: env.APP_SERVER_MCP_CONFIG }),
+		...skillsDirsEntries(env),
 		...(env.APP_SERVER_TOKEN === undefined || env.APP_SERVER_TOKEN === "" ? {} : { token: env.APP_SERVER_TOKEN }),
 		...usersEntries(env),
 		...(env.APP_SERVER_WEB_DIST === undefined || env.APP_SERVER_WEB_DIST === ""
@@ -82,4 +90,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppServerConfi
 function usersEntries(env: NodeJS.ProcessEnv): { users?: Record<string, string> } {
 	const users = parseUsers(env.APP_SERVER_USERS);
 	return users === undefined ? {} : { users };
+}
+
+function skillsDirsEntries(env: NodeJS.ProcessEnv): { skillsDirs?: string[] } {
+	const raw = env.APP_SERVER_SKILLS_DIRS;
+	if (raw === undefined || raw === "") return {};
+	const dirs = raw
+		.split(path.delimiter)
+		.map((dir) => dir.trim())
+		.filter((dir) => dir !== "");
+	return dirs.length > 0 ? { skillsDirs: dirs } : {};
 }

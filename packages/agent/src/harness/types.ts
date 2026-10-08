@@ -61,6 +61,10 @@ export interface Skill {
 	title?: string;
 	/** Tools declared as belonging to this skill (frontmatter `tools`; used for ownership/display, not sent to the model). */
 	tools?: readonly SkillToolDeclaration[];
+	/** Skill category for host UI grouping (frontmatter `meta`; not sent to the model). */
+	meta?: string;
+	/** Skill version for host UI display (frontmatter `version`; not sent to the model). */
+	version?: string;
 }
 
 /** A tool declaration in SKILL.md frontmatter (`tools: [name-or-object]`). */

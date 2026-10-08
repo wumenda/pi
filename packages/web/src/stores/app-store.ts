@@ -1,6 +1,5 @@
 import type { SkillWhitelistItem } from "@platform/shared";
 import { create } from "zustand";
-import { resetSkillRegistry } from "../api/transcript";
 import { type IframeAcquireMeta, iframePool } from "../mcp-iframe/IframePool";
 import { type IframeEventPayload, iframeEventReporter } from "../mcp-iframe/iframe-event-reporter";
 import { messageBridge } from "../mcp-iframe/MessageBridge";
@@ -309,7 +308,6 @@ export const useAppStore = create<AppState>()((set, get) => ({
 	setCurrentSession: (id) => {
 		// 统一重置点：先全量回收 iframe（含 DOM 销毁），再复位其余状态
 		get().destroyAllIframes();
-		resetSkillRegistry(); // pi 适配：skill 注册表缓存随会话切换重建
 		set({
 			currentSessionId: id,
 			skills: [],

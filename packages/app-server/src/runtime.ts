@@ -10,6 +10,7 @@ import {
 	createReadTool,
 	createWriteTool,
 	type ExecutionToolContext,
+	type Skill,
 } from "@earendil-works/pi-agent-core";
 import { NodeExecutionEnv } from "@earendil-works/pi-agent-core/harness/env/nodejs";
 import type { McpServerManager } from "@earendil-works/pi-agent-core/harness/mcp";
@@ -34,6 +35,12 @@ export interface SessionRuntimeOptions {
 	 * MCP host 反向调用走 manager 直连，不受影响。
 	 */
 	hiddenFromLlm?: readonly string[];
+	/**
+	 * host 级扫描的技能清单（skills-manifest）：进 harness resources ——
+	 * 模型侧系统提示词 `<available_skills>`（disableModelInvocation 除外）+
+	 * kind:"skill" 显式调用可用。快照在 host 启动时定格。
+	 */
+	skills?: Skill[];
 }
 
 export interface SessionRuntime {
@@ -69,7 +76,7 @@ export async function createSessionRuntime(options: SessionRuntimeOptions): Prom
 			tools,
 			activeToolNames: tools.map((tool) => tool.name).filter((name) => !hidden.has(name)),
 			toolContext: { env, askUser },
-			resources: {},
+			resources: { skills: options.skills ?? [] },
 		},
 		BACKGROUND_CONTEXT,
 	);

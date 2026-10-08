@@ -312,6 +312,9 @@ async function loadSkillFromFile(
 	for (const error of errors) {
 		diagnostics.push({ type: "warning", code: "invalid_metadata", message: error, path: filePath });
 	}
+	const meta = typeof frontmatter.meta === "string" && frontmatter.meta.trim() !== "" ? frontmatter.meta : undefined;
+	const version =
+		typeof frontmatter.version === "string" && frontmatter.version.trim() !== "" ? frontmatter.version : undefined;
 
 	if (!description || description.trim() === "") {
 		return { skill: null, diagnostics };
@@ -326,6 +329,8 @@ async function loadSkillFromFile(
 			disableModelInvocation: frontmatter["disable-model-invocation"] === true,
 			...(title !== undefined ? { title } : {}),
 			...(tools !== undefined ? { tools } : {}),
+			...(meta !== undefined ? { meta } : {}),
+			...(version !== undefined ? { version } : {}),
 		},
 		diagnostics,
 	};

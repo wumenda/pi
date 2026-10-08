@@ -1,7 +1,7 @@
 /**
  * 设置 API 适配层：
  * - MCP 状态 → pi.mcp-host.statuses()（chord 服务真实连接状态）；
- * - skills → 转译层注册表缓存（transcript 中 skill-meta 声明）；
+ * - skills → app-server GET /api/v1/skills（host 启动时磁盘扫描快照）；
  * - 白名单 → 空数组（= 全部允许）；
  * - OAuth / 连通性测试 → no-op / 直连探测。
  */
@@ -11,12 +11,40 @@ import type {
 	DefaultMcpServerDTO,
 	McpStatusInfoDTO,
 	SettingsInfoDTO,
+	SharedToolMeta,
 	SkillDetailDTO,
 	SkillInfoDTO,
 	SkillWhitelistItem,
 } from "@platform/shared";
 import { requirePiServices } from "../pi/pi-app";
-import { knownSkills } from "./transcript";
+import { http, unwrap } from "./client";
+
+/** pi GET /api/v1/skills 清单条目（wire） */
+interface PiSkillManifestEntry {
+	name: string;
+	description: string;
+	directory: string;
+	source: "global" | "project";
+	disableModelInvocation: boolean;
+	title?: string;
+	meta?: string;
+	version?: string;
+	tools: SharedToolMeta[];
+}
+
+function toSkillInfo(entry: PiSkillManifestEntry): SkillInfoDTO {
+	return {
+		name: entry.name,
+		...(entry.title !== undefined ? { title: entry.title } : {}),
+		...(entry.description !== undefined ? { description: entry.description } : {}),
+		...(entry.version !== undefined ? { version: entry.version } : {}),
+		...(entry.meta !== undefined ? { meta: entry.meta } : {}),
+		tools: entry.tools,
+		directory: entry.directory,
+		source: entry.source,
+		metadataUnavailable: false,
+	};
+}
 
 /** 设置聚合（MCP 连接状态为 pi 真实数据；插件注册清单 pi 侧无对应概念） */
 export async function fetchSettingsInfo(): Promise<SettingsInfoDTO> {
@@ -49,25 +77,18 @@ function toMcpStatus(state: string, error: string | null): McpStatusInfoDTO {
 	}
 }
 
-/** 磁盘扫描的 skill 清单（pi 侧 = transcript 中 skill-meta 声明注册表） */
+/** 磁盘扫描的 skill 清单（app-server host 启动时扫描 ~/.pi/agent/skills + .pi/skills 的快照） */
 export async function fetchSkills(): Promise<SkillInfoDTO[]> {
-	return knownSkills();
+	const entries = await unwrap<PiSkillManifestEntry[]>(http.get<PiSkillManifestEntry[]>("/skills"));
+	return entries.map(toSkillInfo);
 }
 
-/** 单 skill 详情（注册表命中时返回元数据；SKILL.md 原文 pi 侧不可读，body 恒空） */
+/** 单 skill 详情（SKILL.md 原文由 /skills/:name 提供） */
 export async function fetchSkillDetail(name: string): Promise<SkillDetailDTO> {
-	const known = knownSkills().find((skill) => skill.name === name);
-	if (known === undefined) {
-		return {
-			name,
-			tools: [],
-			directory: "",
-			source: "global",
-			metadataUnavailable: true,
-			body: "",
-		};
-	}
-	return { ...known, metadataUnavailable: false, body: "" };
+	const entry = await unwrap<PiSkillManifestEntry & { body: string; metadataUnavailable: boolean }>(
+		http.get(`/skills/${encodeURIComponent(name)}`),
+	);
+	return { ...toSkillInfo(entry), body: entry.body, metadataUnavailable: entry.metadataUnavailable };
 }
 
 /** skill tab 白名单（空数组 = 全部允许） */

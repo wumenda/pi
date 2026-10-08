@@ -14,8 +14,12 @@ beforeAll(async () => {
 	deps = {
 		readUiResource: async () => ({ mimeType: "text/html", html: "<html>x</html>", declaredCsp: null }),
 		listMcpTools: async () => [],
+		listTools: async () => [],
+		listSkills: async () => [],
+		getSkillDetail: async () => null,
 		sessionFilesRoot: async (_userId, sessionId) =>
 			sessionId === "sid-1" ? join(dataDir, "sessions-workspace", sessionId) : null,
+		dataCenterStore: async () => null,
 	};
 });
 

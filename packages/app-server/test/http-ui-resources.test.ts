@@ -9,7 +9,11 @@ function fakeDeps() {
 			declaredCsp: null as string | null,
 		}),
 		listMcpTools: async () => [],
+		listTools: async () => [],
+		listSkills: async () => [],
+		getSkillDetail: async () => null,
 		sessionFilesRoot: async () => null,
+		dataCenterStore: async () => null,
 	};
 }
 
@@ -38,7 +42,11 @@ describe("GET /api/v1/ui-resources", () => {
 					throw new Error("server down");
 				},
 				listMcpTools: async () => [],
+				listTools: async () => [],
+				listSkills: async () => [],
+				getSkillDetail: async () => null,
 				sessionFilesRoot: async () => null,
+				dataCenterStore: async () => null,
 			},
 		);
 		const response = await http.inject({

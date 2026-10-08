@@ -14,7 +14,8 @@ import {
 import type { JsonlSessionMetadata } from "@earendil-works/pi-agent-core/harness/session";
 import type { RoutedSessionHandle, ServerHost } from "@earendil-works/pi-server";
 import type { AppServerConfig } from "./config.ts";
-import type { McpToolManifestEntry } from "./http.ts";
+import { createDataCenterStore, type DataCenterStoreHandle } from "./data-center-store.ts";
+import type { McpToolEntry, McpToolManifestEntry } from "./http.ts";
 import type { AppServerLlm } from "./llm.ts";
 import { createLogger } from "./logger.ts";
 import { loadMcpServerConfigs } from "./mcp-config.ts";
@@ -22,6 +23,7 @@ import { createSessionRuntime, type SessionRuntime } from "./runtime.ts";
 import { createServerServices, type ServerServices } from "./services/server-services.ts";
 import { createSessionServices, type SessionServiceRuntime } from "./services/session-services.ts";
 import { createSessionStore, type SessionStore } from "./sessions.ts";
+import { resolveSkillDirs, type SkillDetailEntry, type SkillManifestEntry, scanSkills } from "./skills-manifest.ts";
 import { createToolEventRecorder, recordToolEvent, type ToolEventRecorder } from "./tool-events.ts";
 
 const log = createLogger("host");
@@ -46,8 +48,16 @@ export interface AppServerHostHandle {
 	}>;
 	/** MCP Apps 工具清单（HTTP mcp-tools 端点用）：带 ui:// 声明的工具 + 受众可见性 */
 	listMcpTools(): Promise<McpToolManifestEntry[]>;
+	/** 全量 MCP 工具清单（HTTP tools 端点用）：已连 server 的所有工具（含非 ui://） */
+	listAllTools(): Promise<McpToolEntry[]>;
+	/** 技能清单（HTTP skills 端点用；host 启动时扫描的快照） */
+	listSkills(): SkillManifestEntry[];
+	/** 单个技能详情（含 SKILL.md 原文）；未知返回 null */
+	getSkillDetail(name: string): SkillDetailEntry | null;
 	/** 会话文件根目录（文件上传/下载端点用，安全边界）；未知会话返回 null */
 	sessionFilesRoot(sessionId: string): Promise<string | null>;
+	/** 数据中心领域句柄（HTTP data-center 端点用；<dataDir>/data-center 持久化） */
+	readonly dataCenter: DataCenterStoreHandle;
 	close(): Promise<void>;
 }
 
@@ -109,6 +119,16 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		.tools()
 		.filter((routed) => !isVisibleToLlm(routed))
 		.map((routed) => mcpToolName(routed.serverId, routed.tool.name));
+	// 技能清单（host 级快照，与 manager 同生命周期）：注入 harness resources（agent 可调用）
+	// + 供 HTTP skills 端点。目录缺失跳过；诊断只打 warn 不阻塞启动；改动技能需重启生效。
+	const skillDirs = resolveSkillDirs(deps.config);
+	const skillScan = await scanSkills(skillDirs);
+	for (const diagnostic of skillScan.diagnostics) {
+		log.info(`skill scan warning ${diagnostic.code}: ${diagnostic.message} (${diagnostic.path})`);
+	}
+	log.info(`skills scanned: ${skillScan.entries.length} entries from ${skillDirs.length} dirs`);
+	// 数据中心存储（host 级）：registry 损坏降级空集合（store 内 error 日志），不阻塞启动
+	const dataCenter = await createDataCenterStore(deps.config.dataDir);
 	const workspaceDir = resolve(deps.config.dataDir, "workspace");
 	// bash 工具以该目录为 cwd，缺失时所有 bash 调用直接 spawn_error；
 	// 会话 JSONL 持久化可跨重启恢复，workspace 目录必须随之重建。
@@ -165,6 +185,34 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		}
 		return entries;
 	};
+	// 全量工具清单：已连 server 的所有工具（含非 ui://；web 工具库据此标 plugin/native）
+	const listAllTools = async (): Promise<McpToolEntry[]> => {
+		const entries: McpToolEntry[] = [];
+		for (const routed of mcp.tools()) {
+			const ui = extractMcpToolUi(routed);
+			const visibility = declaredVisibility(routed);
+			const harnessName = harnessNames.get(`${routed.serverId}\0${routed.tool.name}`);
+			entries.push({
+				serverId: routed.serverId,
+				name: routed.tool.name,
+				...(routed.tool.title === undefined ? {} : { title: routed.tool.title }),
+				...(routed.tool.description === undefined ? {} : { description: routed.tool.description }),
+				...(harnessName === undefined ? {} : { harnessName }),
+				...(visibility === undefined ? {} : { visibility }),
+				...(ui === undefined ? {} : { resourceUri: ui.resourceUri }),
+				inputSchema: routed.tool.inputSchema,
+			});
+		}
+		return entries;
+	};
+	// 技能清单/详情：启动时扫描的快照（entries 与 skills 按 name 一一对应）
+	const listSkills = (): SkillManifestEntry[] => skillScan.entries;
+	const getSkillDetail = (name: string): SkillDetailEntry | null => {
+		const entry = skillScan.entries.find((candidate) => candidate.name === name);
+		if (entry === undefined) return null;
+		const skill = skillScan.skills.find((candidate) => candidate.name === name);
+		return { ...entry, body: skill?.content ?? "", metadataUnavailable: false };
+	};
 	// 会话文件根：<dataDir>/sessions-workspace/<sessionId>；store.resolve 校验存在性（含路径注入拒绝）
 	const sessionFilesRoot = async (sessionId: string): Promise<string | null> => {
 		try {
@@ -209,6 +257,7 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 						mcp,
 						extraTools: mcpBridge.tools,
 						hiddenFromLlm,
+						skills: skillScan.skills,
 					});
 					const recorder = createToolEventRecorder(deps.config.dataDir, metadata.id);
 					const sessionServices = await createSessionServices(runtime, recorder);
@@ -241,7 +290,11 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		services,
 		readUiResource,
 		listMcpTools,
+		listAllTools,
+		listSkills,
+		getSkillDetail,
 		sessionFilesRoot,
+		dataCenter,
 		async close() {
 			for (const sessionId of [...runtimes.keys()]) await closeRuntime(sessionId);
 			await mcp.close();

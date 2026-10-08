@@ -16,7 +16,11 @@ let dist = "";
 const deps: HttpDeps = {
 	readUiResource: async () => ({ mimeType: "text/html", html: "<html>x</html>", declaredCsp: null }),
 	listMcpTools: async () => [],
+	listTools: async () => [],
+	listSkills: async () => [],
+	getSkillDetail: async () => null,
 	sessionFilesRoot: async () => null,
+	dataCenterStore: async () => null,
 };
 
 beforeAll(async () => {

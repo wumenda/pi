@@ -1,6 +1,6 @@
 /**
- * 数据中心适配层：pi 后端无数据中心领域（任务/资料/成果注册表）。
- * 页面结构完整复刻，数据面返回空集合（渲染空态），写入操作本地 no-op。
+ * 数据中心适配层：app-server /api/v1/data-center/* 真实端点。
+ * 后端 wire 形状与 @platform/shared DataCenter*DTO 1:1（data-center-store 为服务端真源）。
  */
 
 import type {
@@ -11,8 +11,9 @@ import type {
 	DataCenterTaskDTO,
 	UpdateDataCenterMaterialInput,
 } from "@platform/shared";
+import { http, unwrap } from "./client";
 
-/** 上传资料元数据输入 */
+/** 上传资料元数据输入（multipart 文本字段形态；taskIds 逗号拼接） */
 export interface UploadMaterialMetaInput {
 	name?: string;
 	type?: string;
@@ -22,60 +23,71 @@ export interface UploadMaterialMetaInput {
 	taskIds?: string;
 }
 
-/** 数据中心聚合清单（空集合：页面渲染空态） */
+/** 数据中心聚合清单 */
 export async function fetchDataCenterOverview(): Promise<DataCenterOverviewDTO> {
-	return { tasks: [], materials: [], results: [] };
+	return unwrap(http.get<DataCenterOverviewDTO>("/data-center/overview"));
 }
 
-/** 创建任务（本地回显：pi 后端无持久化） */
+/** 创建任务 */
 export async function createDataCenterTask(input: CreateDataCenterTaskInput): Promise<DataCenterTaskDTO> {
-	const now = new Date().toISOString();
-	return {
-		id: `local-${Date.now()}`,
-		name: input.name,
-		taskType: input.taskType,
-		status: "未开始",
-		createdAt: now,
-		updatedAt: now,
-	};
+	return unwrap(http.post<DataCenterTaskDTO>("/data-center/tasks", input));
 }
 
-/** 上传资料（no-op：pi 后端无资料注册表） */
+/** 上传资料（multipart：file + 元数据文本字段） */
 export async function uploadDataCenterMaterial(
-	_file: File,
-	_meta: UploadMaterialMetaInput,
+	file: File,
+	meta: UploadMaterialMetaInput,
 ): Promise<DataCenterMaterialDTO> {
-	throw new Error("pi 后端尚未接入数据中心存储");
+	const form = new FormData();
+	form.append("file", file);
+	for (const [key, value] of Object.entries(meta)) {
+		if (value !== undefined) form.append(key, value);
+	}
+	return unwrap(http.post<DataCenterMaterialDTO>("/data-center/materials", form));
 }
 
-/** 编辑资料元数据（no-op） */
+/** 编辑资料元数据 */
 export async function updateDataCenterMaterial(
 	id: string,
-	_patch: UpdateDataCenterMaterialInput,
+	patch: UpdateDataCenterMaterialInput,
 ): Promise<DataCenterMaterialDTO> {
-	throw new Error(`pi 后端尚未接入数据中心存储（id=${id}）`);
+	return unwrap(http.patch<DataCenterMaterialDTO>(`/data-center/materials/${encodeURIComponent(id)}`, patch));
 }
 
-/** 任务资料关系图（空图） */
+/** 任务资料关系图 */
 export async function fetchDataCenterGraph(taskId: string): Promise<DataCenterGraphDTO> {
-	return { taskId, nodes: [], edges: [] };
+	return unwrap(http.get<DataCenterGraphDTO>(`/data-center/graph/${encodeURIComponent(taskId)}`));
 }
 
-/** 数据中心文件流地址（拼接，不发请求） */
+/** 数据中心文件流地址（预览 iframe/img 与下载共用；同源代理直达） */
 export function dataCenterFileUrl(id: string, disposition: "inline" | "attachment"): string {
 	return `/api/v1/data-center/files/${encodeURIComponent(id)}?disposition=${disposition}`;
 }
 
-/** 触发浏览器下载（pi 后端无文件流端点，抛错提示） */
+/** 触发浏览器下载（同源端点，anchor download 即流式落盘） */
 export function downloadDataCenterFile(id: string, _name: string): void {
-	void id;
-	void _name;
-	throw new Error("pi 后端尚未接入数据中心存储");
+	void _name; // 文件名由后端 content-disposition 提供
+	const anchor = document.createElement("a");
+	anchor.href = dataCenterFileUrl(id, "attachment");
+	anchor.download = "";
+	document.body.append(anchor);
+	anchor.click();
+	anchor.remove();
 }
 
-/** 下载成果包（no-op） */
-export async function downloadResultPackage(taskId: string, ids: string[], _taskName: string): Promise<void> {
-	void taskId;
-	void ids;
-	throw new Error("pi 后端尚未接入数据中心存储");
+/** 下载成果包（POST 选中的成果 id 列表，zip blob 落盘） */
+export async function downloadResultPackage(taskId: string, ids: string[], taskName: string): Promise<void> {
+	const response = await http.post<Blob>(
+		`/data-center/tasks/${encodeURIComponent(taskId)}/package`,
+		{ ids },
+		{ responseType: "blob" },
+	);
+	const url = URL.createObjectURL(response.data);
+	const anchor = document.createElement("a");
+	anchor.href = url;
+	anchor.download = `${taskName}-成果包.zip`;
+	document.body.append(anchor);
+	anchor.click();
+	anchor.remove();
+	URL.revokeObjectURL(url);
 }

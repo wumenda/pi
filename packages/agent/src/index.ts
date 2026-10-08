@@ -141,6 +141,7 @@ export {
 	type ShellOutputUpdate,
 	type ShellOutputView,
 	type Skill,
+	type SkillToolDeclaration,
 	toError,
 } from "./harness/types.ts";
 export { applyShellOutputUpdate } from "./harness/utils/output-capture.ts";
