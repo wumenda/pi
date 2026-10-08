@@ -2125,3 +2125,73 @@ describe("agentLoopContinue with AgentMessage", () => {
 		expect(messages[0].role).toBe("assistant");
 	});
 });
+
+describe("agentLoop failure termination", () => {
+	const failureOf = (messages: AgentMessage[]): AssistantMessage => {
+		const last = messages[messages.length - 1];
+		expect(last.role).toBe("assistant");
+		return last as AssistantMessage;
+	};
+
+	it("ends the stream with a synthesized error result when streamFn throws", async () => {
+		const context: AgentContext = { messages: [], tools: [] };
+		const config: AgentLoopConfig = { model: createModel(), convertToLlm: identityConverter };
+
+		const stream = agentLoop([createUserMessage("Hello")], context, config, undefined, () => {
+			throw new Error("provider exploded");
+		});
+
+		// Before the fix this never completed: the rejection was unhandled and the
+		// iterator hung forever. Now the loop must terminate with agent_end.
+		const events: AgentEvent[] = [];
+		for await (const event of stream) {
+			events.push(event);
+		}
+		const messages = await stream.result();
+
+		const failure = failureOf(messages);
+		expect(failure.stopReason).toBe("error");
+		expect(failure.errorMessage).toBe("provider exploded");
+		expect(events.slice(-4).map((event) => event.type)).toEqual([
+			"message_start",
+			"message_end",
+			"turn_end",
+			"agent_end",
+		]);
+	});
+
+	it("ends the stream with an error result when convertToLlm throws", async () => {
+		const context: AgentContext = { messages: [], tools: [] };
+		const config: AgentLoopConfig = {
+			model: createModel(),
+			convertToLlm: () => {
+				throw new Error("convert failed");
+			},
+		};
+
+		const stream = agentLoop([createUserMessage("Hello")], context, config, undefined, () => {
+			throw new Error("stream should not be called");
+		});
+
+		const messages = await stream.result();
+		const failure = failureOf(messages);
+		expect(failure.stopReason).toBe("error");
+		expect(failure.errorMessage).toBe("convert failed");
+	});
+
+	it("marks the failure as aborted when the signal is aborted and streamFn throws (agentLoopContinue)", async () => {
+		const controller = new AbortController();
+		controller.abort();
+		const context: AgentContext = { messages: [createUserMessage("Hello")], tools: [] };
+		const config: AgentLoopConfig = { model: createModel(), convertToLlm: identityConverter };
+
+		const stream = agentLoopContinue(context, config, controller.signal, () => {
+			throw new Error("cancelled mid-flight");
+		});
+
+		const messages = await stream.result();
+		const failure = failureOf(messages);
+		expect(failure.stopReason).toBe("aborted");
+		expect(failure.errorMessage).toBe("cancelled mid-flight");
+	});
+});

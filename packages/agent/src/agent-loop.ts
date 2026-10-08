@@ -52,9 +52,13 @@ export function agentLoop(
 		},
 		signal,
 		streamFn,
-	).then((messages) => {
-		stream.end(messages);
-	});
+	)
+		.then((messages) => {
+			stream.end(messages);
+		})
+		.catch((error: unknown) => {
+			endStreamWithFailure(stream, config, signal, error);
+		});
 
 	return stream;
 }
@@ -91,9 +95,13 @@ export function agentLoopContinue(
 		},
 		signal,
 		streamFn,
-	).then((messages) => {
-		stream.end(messages);
-	});
+	)
+		.then((messages) => {
+			stream.end(messages);
+		})
+		.catch((error: unknown) => {
+			endStreamWithFailure(stream, config, signal, error);
+		});
 
 	return stream;
 }
@@ -154,6 +162,46 @@ function createAgentStream(): EventStream<AgentEvent, AgentMessage[]> {
 		(event: AgentEvent) => event.type === "agent_end",
 		(event: AgentEvent) => (event.type === "agent_end" ? event.messages : []),
 	);
+}
+
+const EMPTY_USAGE = {
+	input: 0,
+	output: 0,
+	cacheRead: 0,
+	cacheWrite: 0,
+	totalTokens: 0,
+	cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+};
+
+/**
+ * Terminate the stream with a synthesized failure sequence when the loop
+ * rejects (e.g. streamFn or convertToLlm throwing). Mirrors
+ * `Agent.handleRunFailure` so low-level consumers get the same "the loop
+ * always ends with agent_end" contract instead of an unhandled rejection and
+ * a stream whose iteration never completes.
+ */
+function endStreamWithFailure(
+	stream: EventStream<AgentEvent, AgentMessage[]>,
+	config: AgentLoopConfig,
+	signal: AbortSignal | undefined,
+	error: unknown,
+): void {
+	const failureMessage: AgentMessage = {
+		role: "assistant",
+		content: [{ type: "text", text: "" }],
+		api: config.model.api,
+		provider: config.model.provider,
+		model: config.model.id,
+		usage: EMPTY_USAGE,
+		stopReason: signal?.aborted ? "aborted" : "error",
+		errorMessage: error instanceof Error ? error.message : String(error),
+		timestamp: Date.now(),
+	};
+	stream.push({ type: "message_start", message: failureMessage });
+	stream.push({ type: "message_end", message: failureMessage });
+	stream.push({ type: "turn_end", message: failureMessage, toolResults: [] });
+	stream.push({ type: "agent_end", messages: [failureMessage] });
+	stream.end([failureMessage]);
 }
 
 /**
