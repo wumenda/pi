@@ -857,7 +857,7 @@ async function createCodingAgentHarness(
 		createWriteTool(),
 		createBashTool(),
 		createAskUserQuestionTool(),
-		...createMcpTools(mcpManager),
+		...createMcpTools(mcpManager).tools,
 	];
 	const activeToolNames = tools.map((tool) => tool.name);
 	const harness = (
