@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { PiTranscriptEntry } from "../src/api/transcript";
-import { knownSkills, projectTranscript, resetSkillRegistry } from "../src/api/transcript";
+import { projectTranscript } from "../src/api/transcript";
 
 /** 构造 pi transcript 条目（wire JSON 最小形状） */
 function entry(id: string, message: unknown): PiTranscriptEntry {
@@ -8,10 +8,6 @@ function entry(id: string, message: unknown): PiTranscriptEntry {
 }
 
 describe("projectTranscript", () => {
-	beforeEach(() => {
-		resetSkillRegistry();
-	});
-
 	it("投影 user/assistant 消息并合并 toolResult 进 tool part", () => {
 		const snapshot = {
 			transcript: [
@@ -83,7 +79,7 @@ describe("projectTranscript", () => {
 		expect(toolPart.state.status).toBe("running");
 	});
 
-	it("skill 块合成 assistant skill tool part 并登记注册表（title/tools 来自 skill-meta）", () => {
+	it("skill 块合成 assistant skill tool part（title/tools 来自 skill-meta）", () => {
 		const skillText =
 			'<skill name="pfd-review" location="/data/skills/pfd-review/SKILL.md">\nReferences are relative to /data/skills/pfd-review.\n<!-- skill-meta {"title":"PFD 审查","tools":[{"name":"review_pfd","title":"审查图纸"}]} -->\n\n# 步骤\n读取图纸。\n</skill>\n\n请审查 T201 塔的 PFD。';
 		const snapshot = {
@@ -111,16 +107,6 @@ describe("projectTranscript", () => {
 		expect(skillPart.state.input).toEqual({ name: "pfd-review" });
 		expect(skillPart.state.output).toContain("Base directory for this skill: /data/skills/pfd-review");
 		expect(messages[1]).toMatchObject({ role: "user" });
-		// 注册表（fetchSkills 数据源）
-		const skills = knownSkills();
-		expect(skills).toHaveLength(1);
-		expect(skills[0]).toMatchObject({
-			name: "pfd-review",
-			title: "PFD 审查",
-			directory: "/data/skills/pfd-review",
-			metadataUnavailable: false,
-		});
-		expect(skills[0]!.tools).toEqual([{ name: "review_pfd", title: "审查图纸" }]);
 	});
 
 	it("空 operation 的 thinking part 投影为 reasoning", () => {
@@ -137,6 +123,31 @@ describe("projectTranscript", () => {
 		const part = (messages[0]!.parts[0] ?? null) as { type: string; text?: string };
 		expect(part.type).toBe("reasoning");
 		expect(part.text).toBe("推理过程");
+	});
+
+	it("assistant 条目的 usage 合成 step-finish part（权威上下文值数据源）", () => {
+		const snapshot = {
+			transcript: [
+				entry("e-usage", {
+					role: "assistant",
+					content: [{ type: "text", text: "完成" }],
+					timestamp: 1000,
+					usage: { input: 1200, output: 300, cacheRead: 400, cacheWrite: 0, totalTokens: 1900 },
+				}),
+				entry("e-nousage", {
+					role: "assistant",
+					content: [{ type: "text", text: "流式中间态" }],
+					timestamp: 2000,
+				}),
+			],
+		};
+		const { messages } = projectTranscript(snapshot);
+		expect(messages).toHaveLength(2);
+		const finishPart = messages[0]!.parts.find((p) => (p as { type?: string }).type === "step-finish");
+		// 权威值语义：input + cacheRead（与 opencode step-finish 的 tokens.input + tokens.cache.read 同义）
+		expect(finishPart).toEqual({ type: "step-finish", tokens: { input: 1200, cache: { read: 400 } } });
+		// 无 usage（流式中间态）不合成
+		expect(messages[1]!.parts.some((p) => (p as { type?: string }).type === "step-finish")).toBe(false);
 	});
 
 	it("中止/错误终态 toolResult 携带 mcpUi 时投影进 part metadata（含 serverId）", () => {
@@ -172,5 +183,62 @@ describe("projectTranscript", () => {
 		const ui = (toolPart.state.metadata._meta as { ui: { resourceUri: string; serverId: string } }).ui;
 		expect(ui.resourceUri).toBe("ui://demo/panel");
 		expect(ui.serverId).toBe("demo");
+	});
+});
+
+describe("projectTranscript 记忆化", () => {
+	it("未变更 entry 复用同一 MessageDTO 引用（React.memo 依赖）", () => {
+		const e1 = entry("e1", { role: "user", content: [{ type: "text", text: "问题" }], timestamp: 1000 });
+		const e2 = entry("e2", {
+			role: "assistant",
+			content: [{ type: "text", text: "回答" }],
+			timestamp: 2000,
+		});
+		const first = projectTranscript({ transcript: [e1, e2], operation: null });
+		const second = projectTranscript({ transcript: [e1, e2], operation: null });
+		expect(second.messages[0]).toBe(first.messages[0]);
+		expect(second.messages[1]).toBe(first.messages[1]);
+	});
+
+	it("toolResult entry 引用变化时重建依赖它的 assistant 投影", () => {
+		const e1 = entry("e1", {
+			role: "assistant",
+			content: [{ type: "toolCall", id: "call-1", name: "tool", arguments: {} }],
+			timestamp: 1000,
+		});
+		// 结果到达：toolResult entry 追加（新对象）→ assistant 的 state 从 running 变 completed
+		const resultV1 = entry("r1", {
+			role: "toolResult",
+			toolCallId: "call-1",
+			isError: false,
+			content: [{ type: "text", text: "v1" }],
+			timestamp: 2000,
+		});
+		const first = projectTranscript({ transcript: [e1, resultV1], operation: null });
+		expect((first.messages[0]!.parts[0] as { state: { status: string } }).state.status).toBe("completed");
+
+		// 结果更新（同 id 新对象）→ 缓存失效，投影重建
+		const resultV2 = entry("r1", {
+			role: "toolResult",
+			toolCallId: "call-1",
+			isError: false,
+			content: [{ type: "text", text: "v2" }],
+			timestamp: 3000,
+		});
+		const second = projectTranscript({ transcript: [e1, resultV2], operation: null });
+		expect(second.messages[0]).not.toBe(first.messages[0]);
+		expect((second.messages[0]!.parts[0] as { state: { output?: string } }).state.output).toBe("v2");
+	});
+
+	it("缓存命中时 pendingAskUser 仍然收集（ask_user 挂起不丢）", () => {
+		const e1 = entry("e1", {
+			role: "assistant",
+			content: [{ type: "toolCall", id: "ask-1", name: "ask_user_question", arguments: { q: 1 } }],
+			timestamp: 1000,
+		});
+		const first = projectTranscript({ transcript: [e1], operation: { id: "op" } });
+		const second = projectTranscript({ transcript: [e1], operation: { id: "op" } });
+		expect(second.messages[0]).toBe(first.messages[0]);
+		expect(second.pendingAskUser).toEqual([{ toolCallId: "ask-1", input: { q: 1 }, messageID: "e1" }]);
 	});
 });

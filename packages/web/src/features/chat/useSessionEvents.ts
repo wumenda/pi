@@ -12,7 +12,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { App as AntdApp } from "antd";
 import { useEffect } from "react";
 import { messageSummary } from "../../api/events";
-import { isSessionRunning, projectTranscript } from "../../api/transcript";
+import {
+	isSessionRunning,
+	projectTranscript,
+	projectTranscriptIncremental,
+	TranscriptProjectionWorkspace,
+} from "../../api/transcript";
 import { i18n } from "../../i18n";
 import { usePiStore } from "../../pi/pi-app";
 import { useAppStore } from "../../stores/app-store";
@@ -57,6 +62,10 @@ export function useSessionEvents(sessionId: string | null): void {
 		let prevPhase: string | undefined;
 		let prevConnectionState: string | undefined;
 		let prevPromptError: string | undefined;
+		// 增量投影工作区（闭包持有）：primed 表示 workspace 已基于当前 transcript 值建立，
+		// 之后的 update delivery 才可走 ops 增量；会话切换/重连清空 transcript 时重置。
+		let workspace = new TranscriptProjectionWorkspace();
+		let primed = false;
 
 		const syncConnectionState = (state: ReturnType<typeof usePiStore.getState>): void => {
 			if (state.phase === prevPhase && state.connectionState === prevConnectionState) return;
@@ -77,7 +86,24 @@ export function useSessionEvents(sessionId: string | null): void {
 			prevTranscript = state.transcript;
 			// 仅当 pi 当前 attach 的会话就是本 hook 的会话时写入缓存（切换会话防串）
 			if (state.activeSessionId !== sessionId) return;
-			const projection = projectTranscript(state.transcript?.snapshot ?? null);
+			// 增量分路：delivery.ops 可行时只重投影被触碰条目（fuzz 对拍兜底等价全量）；
+			// hydrate / 无 ops / workspace 未建立 / 会话重置一律全量重建。
+			if (state.transcript === undefined) {
+				workspace = new TranscriptProjectionWorkspace();
+				primed = false;
+			}
+			const delivery = state.lastDelivery;
+			let projection: ReturnType<typeof projectTranscript>;
+			if (state.transcript === undefined) {
+				projection = projectTranscript(null);
+			} else if (!primed) {
+				primed = true;
+				projection = workspace.rebuild(state.transcript.snapshot);
+			} else if (delivery?.kind === "update" && delivery.ops !== undefined) {
+				projection = projectTranscriptIncremental(state.transcript.snapshot, delivery.ops, workspace);
+			} else {
+				projection = workspace.rebuild(state.transcript.snapshot);
+			}
 			queryClient.setQueryData<MessageDTO[]>(["messages", sessionId], projection.messages);
 			// ask_user 挂起槽位同步（MessageList 锚点绑定的数据源）：
 			// 挂起 → 置入（占位 questions 形状标识 ask 流；tool 字段精确绑定到 part）；

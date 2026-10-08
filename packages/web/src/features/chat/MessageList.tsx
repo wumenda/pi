@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { App as AntdApp, Button, Tag } from "antd"
 import { useQuery } from "@tanstack/react-query"
 import { BulbOutlined, CheckOutlined, CopyOutlined } from "@ant-design/icons"
@@ -14,85 +14,14 @@ import { useTranslation } from "../../i18n"
 import {
   diagnoseAskUserInput,
   isAskUserTool,
-  isPlaceholderQuestions,
-  QUESTION_TOOL_NAME,
 } from "./cards/answers"
 import { AskUserCard } from "./cards/AskUserCard"
 import { AskUserRetryCard } from "./cards/AskUserRetryCard"
 import { QuestionCard } from "./cards/QuestionCard"
 import { PermissionCard } from "./cards/PermissionCard"
 import { isNearBottom } from "./scroll"
-
-/** 一个挂起请求在消息流中的锚点（part → requestID 的确定性绑定，T9） */
-export interface AskAnchor {
-  partId: string
-  requestID: string
-  /** 锚定的卡片类型：ask_user 占位流（AskUserCard/Retry）或原生 question 流（QuestionCard） */
-  kind: "ask" | "question"
-}
-
-/**
- * 解析各挂起请求（requestID）应锚定的交互卡片 part（T9：request-scoped，多请求不串）：
- * - 每个 pending 独立成锚点——同会话并发多个 ask_user/question 互不串扰；
- * - 按确定性优先级绑定（阻止同消息多 part 时 messageID 弱匹配造成错绑）：
- *     ① callID 精确命中（发起调用的那个 part）；
- *     ② messageID 精确且候选唯一；
- *     ③ 回退最近未认领同类 part（keep MVP 串行兼容，缺 tool 字段时仍能弹卡）。
- * - ask_user 占位流只认 ask part；原生 question 流只认 running question part。
- */
-function resolveAskAnchors(
-  messages: MessageDTO[],
-  pendingByRequest: Record<string, PendingQuestion>,
-): AskAnchor[] {
-  const anchors: AskAnchor[] = []
-  const claimed = new Set<string>()
-
-  interface Candidate {
-    part: ToolPartLike
-    kind: AskAnchor["kind"]
-  }
-  // 倒序收集候选 part（"最近优先"用于回退）
-  const candidates: Candidate[] = []
-  for (let mi = messages.length - 1; mi >= 0; mi--) {
-    for (const part of [...messages[mi]!.parts].reverse()) {
-      if (!isToolPart(part)) continue
-      const toolPart = part as ToolPartLike
-      if (isAskUserTool(toolPart.tool)) {
-        candidates.push({ part: toolPart, kind: "ask" })
-      } else if (toolPart.tool === QUESTION_TOOL_NAME && toolPart.state.status === "running") {
-        candidates.push({ part: toolPart, kind: "question" })
-      }
-    }
-  }
-
-  const callIDOf = (p: ToolPartLike): unknown => (p as ToolPartLike & { callID?: unknown }).callID
-  const messageIDOf = (p: ToolPartLike): unknown =>
-    (p as ToolPartLike & { messageID?: unknown }).messageID
-
-  for (const q of Object.values(pendingByRequest)) {
-    const kind: AskAnchor["kind"] = isPlaceholderQuestions(q.questions) ? "ask" : "question"
-    const free = candidates.filter((c) => c.kind === kind && !claimed.has(c.part.id))
-
-    let hit: Candidate | undefined = undefined
-    // ① callID 精确
-    if (q.tool?.callID !== undefined) {
-      hit = free.find((c) => callIDOf(c.part) === q.tool?.callID)
-    }
-    // ② messageID 精确（候选唯一时才用；多候选时保持候选序 = 最近未认领，串行兼容）
-    if (!hit && q.tool?.messageID !== undefined) {
-      const byMsg = free.filter((c) => messageIDOf(c.part) === q.tool?.messageID)
-      if (byMsg.length > 0) hit = byMsg[0]
-    }
-    // ③ 回退最近未认领同类 part（缺 tool 字段的兼容路径）
-    if (!hit) hit = free[0]
-
-    if (hit) {
-      anchors.push({ partId: hit.part.id, requestID: q.requestID, kind })
-      claimed.add(hit.part.id)
-    }
-  }
-  return anchors
-}
+import { resolveAskAnchors, type AskAnchor } from "./ask-anchors"
+import { shouldExpandWindow, windowedSlice, WINDOW_INIT, WINDOW_STEP } from "./message-window"
 
 /** 已知但不渲染的内部 part（step 边界/快照/diff 补丁/agent 切换等噪音） */
 const SILENT_PART_TYPES = new Set([
@@ -103,6 +32,8 @@ const SILENT_PART_TYPES = new Set([
   "agent",
   "file",
 ])
+
+// ---- T2.8-6 条件窗口化（常量与切片/扩窗判定见 ./message-window） ----
 
 /** error part 的可读文本提取（常见承载位：message / text / data.message） */
 function errorPartText(part: unknown): string {
@@ -222,8 +153,9 @@ function TextBlock({ text }: { text: string }) {
   )
 }
 
-/** 单条消息：扁平列表展示（无气泡），每种 part 类型独立渲染 */
-function MessageBubble({
+/** 单条消息：扁平列表展示（无气泡），每种 part 类型独立渲染。
+ * memo + 投影层引用记忆化：流式期间只有正在更新的消息重渲染，历史消息跳过。 */
+const MessageBubble = memo(function MessageBubble({
   message,
   sessionId,
   anchors,
@@ -253,20 +185,24 @@ function MessageBubble({
         <div className="message-body">
           {message.parts.map((part, i) => {
             const type = (part as { type?: unknown }).type
+            // tool part 有稳定 id（callID）；其余按 type+序号（part 列表为追加式，中段稳定）
+            const partKey = isToolPart(part)
+              ? ((part as ToolPartLike).id as string | undefined) ?? `tool-${i}`
+              : `${String(type ?? "part")}-${i}`
             if (type === "text") {
               const text = (part as { text?: string }).text ?? ""
               if (text.trim().length === 0) return null
-              return <TextBlock key={i} text={text} />
+              return <TextBlock key={partKey} text={text} />
             }
             if (type === "reasoning") {
               const text = (part as { text?: string }).text ?? ""
               if (text.trim().length === 0) return null
-              return <ReasoningBlock key={i} text={text} />
+              return <ReasoningBlock key={partKey} text={text} />
             }
             if (type === "subtask") {
               const p = part as { description?: unknown; agent?: unknown }
               return (
-                <div key={i} className="subtask-note">
+                <div key={partKey} className="subtask-note">
                   <Tag color="purple">启动 Subagent</Tag>
                   <span>
                     {typeof p.description === "string" && p.description.length > 0
@@ -280,7 +216,7 @@ function MessageBubble({
             if (isToolPart(part)) {
               const toolPart = part as ToolPartLike
               if (toolPart.tool === "task") {
-                return <TaskCard key={i} sessionId={sessionId} part={toolPart} />
+                return <TaskCard key={partKey} sessionId={sessionId} part={toolPart} />
               }
               const anchor = anchors.find((a) => a.partId === toolPart.id)
               if (isAskUserTool(toolPart.tool)) {
@@ -292,7 +228,7 @@ function MessageBubble({
                   if (diagnosed.ok) {
                     return (
                       <AskUserCard
-                        key={i}
+                        key={partKey}
                         sessionId={sessionId}
                         part={toolPart}
                         input={diagnosed.input}
@@ -302,7 +238,7 @@ function MessageBubble({
                   }
                   return (
                     <AskUserRetryCard
-                      key={i}
+                      key={partKey}
                       sessionId={sessionId}
                       part={toolPart}
                       reason={diagnosed.reason}
@@ -311,15 +247,15 @@ function MessageBubble({
                     />
                   )
                 }
-                return <ToolCard key={i} part={toolPart} />
+                return <ToolCard key={partKey} part={toolPart} />
               }
               if (anchor && anchor.kind === "question") {
                 const pending = pendingByRequest[anchor.requestID]
                 if (pending) {
-                  return <QuestionCard key={i} sessionId={sessionId} pending={pending} />
+                  return <QuestionCard key={partKey} sessionId={sessionId} pending={pending} />
                 }
               }
-              return <ToolCard key={i} part={toolPart} />
+              return <ToolCard key={partKey} part={toolPart} />
             }
             if (typeof type === "string" && SILENT_PART_TYPES.has(type)) {
               return null // 内部噪音 part：静默跳过
@@ -328,7 +264,7 @@ function MessageBubble({
               // 错误 part：可见占位（不再静默吞掉），提取可读 message
               const text = errorPartText(part)
               return (
-                <div key={i} className="message-part-error" role="alert">
+                <div key={partKey} className="message-part-error" role="alert">
                   {text.length > 0 ? t("chat.partError", { message: text }) : t("chat.execError")}
                 </div>
               )
@@ -336,7 +272,7 @@ function MessageBubble({
             if (typeof type === "string" && type.length > 0) {
               // 未知 part 类型：可见占位，避免内容被静默丢弃而无痕迹
               return (
-                <div key={i} className="message-part-unknown">
+                <div key={partKey} className="message-part-unknown">
                   {t("chat.unknownPart", { type })}
                 </div>
               )
@@ -348,7 +284,7 @@ function MessageBubble({
       </div>
     </div>
   )
-}
+})
 
 /** 消息流（布局文档 4.1）：历史经 React Query，增量由 SSE 更新缓存；智能滚动 */
 export function MessageList({ sessionId }: { sessionId: string }) {
@@ -370,10 +306,27 @@ export function MessageList({ sessionId }: { sessionId: string }) {
   // 与交互卡片锚点（每个 pending 独立锚点，T9：同会话并发多请求不串）
   const pendingByRequest = useAppStore((s) => s.pendingQuestions)
   const pendingPermission = useAppStore((s) => s.pendingPermission)
-  const anchors = useMemo(
-    () => resolveAskAnchors(messages, pendingByRequest),
-    [messages, pendingByRequest],
-  )
+  // anchors 引用稳定化：投影记忆化后 messages 元素引用稳定但数组引用每 token 新建，
+  // 直接依赖会让 anchors 每 token 重建、击穿 MessageBubble 的 memo。
+  // 元素逐项引用相等 → 复用上次数组。
+  const anchorsRef = useRef<AskAnchor[]>([])
+  const anchors = useMemo(() => {
+    const next = resolveAskAnchors(messages, pendingByRequest)
+    const previous = anchorsRef.current
+    const same =
+      previous.length === next.length &&
+      previous.every((anchor, i) => {
+        const candidate = next[i]!
+        return (
+          anchor.partId === candidate.partId &&
+          anchor.requestID === candidate.requestID &&
+          anchor.kind === candidate.kind
+        )
+      })
+    if (same) return previous
+    anchorsRef.current = next
+    return next
+  }, [messages, pendingByRequest])
 
   // 发送后等待首个响应：最后一条为用户消息且流未结束 → 末尾三点加载指示
   const streamingSessionId = useAppStore((s) => s.streamingSessionId)
@@ -384,30 +337,57 @@ export function MessageList({ sessionId }: { sessionId: string }) {
   // 渲染时过滤历史空 assistant 消息（abort 残留的空壳，无任何 part）。
   // 仅保留"streaming 中追加到末尾的那条空消息"（即当前正在生成的），
   // 避免之前 abort 留下的空消息在每次发送时都显示三点 loading。
+  // T2.8-4 游标化：memo 化避免每次渲染 O(n) filter（仅 messages/streaming 变化时重算）。
+  // T2.8-6 条件窗口化：超阈值时只渲染尾部窗口（向上滚动扩窗）。
   const streaming = streamingSessionId === sessionId
-  const visibleMessages = messages.filter(
-    (m, i) =>
-      m.role !== "assistant" ||
-      m.parts.length > 0 ||
-      (streaming && i === messages.length - 1),
+  const [windowSize, setWindowSize] = useState(WINDOW_INIT)
+  const filteredMessages = useMemo(
+    () =>
+      messages.filter(
+        (m, i) =>
+          m.role !== "assistant" ||
+          m.parts.length > 0 ||
+          (streaming && i === messages.length - 1),
+      ),
+    [messages, streaming],
+  )
+  const visibleMessages = useMemo(
+    () => windowedSlice(filteredMessages, windowSize),
+    [filteredMessages, windowSize],
   )
 
-  // 会话切换时重置滚动状态
+  // 会话切换时重置滚动状态与窗口
   useEffect(() => {
     stickToBottom.current = true
     setHasUnread(false)
+    setWindowSize(WINDOW_INIT)
   }, [sessionId])
 
-  // 新消息/权限请求/等待态变化：位于底部附近则自动滚动，否则显示"有新消息"浮标
+  // 新消息/权限请求/等待态变化：位于底部附近则自动滚动，否则显示"有新消息"浮标。
+  // rAF 合帧：流式期间每 token 触发本 effect，直接写 scrollTop 会逐次强制同步
+  // reflow——合并到下一帧，一帧至多一次。
+  const scrollRafRef = useRef(0)
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    if (stickToBottom.current) {
-      el.scrollTop = el.scrollHeight
-    } else {
+    if (!stickToBottom.current) {
       setHasUnread(true)
+      return
+    }
+    if (scrollRafRef.current !== 0) return // 已有排程，合并
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = 0
+      const el = containerRef.current
+      if (el && stickToBottom.current) el.scrollTop = el.scrollHeight
+    })
+    return () => {
+      if (scrollRafRef.current !== 0) {
+        cancelAnimationFrame(scrollRafRef.current)
+        scrollRafRef.current = 0
+      }
     }
   }, [messages, pendingPermission, waitingForReply])
+
+  // 扩窗补偿基准：扩窗 setState 前记录视口位置，渲染后用 scrollHeight 差回补
+  const expandingRef = useRef<{ scrollTop: number; scrollHeight: number } | undefined>(undefined)
 
   const handleScroll = () => {
     const el = containerRef.current
@@ -418,7 +398,22 @@ export function MessageList({ sessionId }: { sessionId: string }) {
       el.scrollHeight,
     )
     if (stickToBottom.current) setHasUnread(false)
+    // T2.8-6：接近顶部且窗口未全开 → 扩窗（渲染后由 layout effect 补偿视口位置）。
+    // 判定基数与窗口化一致：过滤后条数（空 assistant 不计入窗口阈值）
+    if (shouldExpandWindow(el.scrollTop, windowSize, filteredMessages.length)) {
+      expandingRef.current = { scrollTop: el.scrollTop, scrollHeight: el.scrollHeight }
+      setWindowSize((size) => Math.min(filteredMessages.length, size + WINDOW_STEP))
+    }
   }
+
+  // 扩窗渲染后保持视口位置：prepend 内容使 scrollHeight 增长，scrollTop 增加同差值
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    const pending = expandingRef.current
+    expandingRef.current = undefined
+    if (el === null || pending === undefined) return
+    el.scrollTop = pending.scrollTop + (el.scrollHeight - pending.scrollHeight)
+  }, [windowSize])
 
   const scrollToBottom = () => {
     const el = containerRef.current

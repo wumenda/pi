@@ -1091,6 +1091,11 @@ body.pane-col-resizing iframe {
 .message-row {
   display: flex;
   gap: 10px;
+  /* T2.8-5 长会话渲染成本与可见行数挂钩：视口外行跳过布局/绘制。
+     contain-intrinsic-size 提供未渲染行占位（auto = 记住上次真实尺寸，
+     首次渲染前宽度占满 100%、高度按平均消息行 120px 估算）。 */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100% auto 120px;
 }
 
 .message-row-user {
@@ -1181,7 +1186,9 @@ body.pane-col-resizing iframe {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0;
+  /* .message-row 的 content-visibility:auto 隐含 paint containment，会把
+     上浮 translateY(-4px) 的点裁在行顶；留出内边距让跳动留在行边界内 */
+  padding: 4px 2px;
   background: none;
   border: none;
   border-radius: 0;
@@ -3086,12 +3093,12 @@ body.settings-modal-open {
 	gap: 6px;
 	padding: 6px 12px;
 	border-radius: 999px;
-	border: 1px solid var(--th-border, rgba(0, 0, 0, 0.12));
-	background: var(--th-surface, #fff);
-	color: var(--th-text, rgba(0, 0, 0, 0.88));
+	border: 1px solid var(--border);
+	background: var(--s1);
+	color: var(--t1);
 	font-size: 12px;
 	line-height: 1;
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+	box-shadow: var(--shadow-overlay);
 }
 .pi-connection-badge .pi-connection-text {
 	font-size: 12px;

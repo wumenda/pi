@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 const source = (packagePath: string): string => fileURLToPath(new URL(packagePath, import.meta.url));
 
@@ -8,6 +8,7 @@ const source = (packagePath: string): string => fileURLToPath(new URL(packagePat
 const workspaceAliases = [
 	{ find: "@platform/shared", replacement: source("./src/shared/index.ts") },
 	{ find: /^@earendil-works\/chord\/context$/, replacement: source("../chord/src/context/index.ts") },
+	{ find: /^@earendil-works\/chord\/delta$/, replacement: source("../chord/src/delta/index.ts") },
 	{ find: /^@earendil-works\/chord$/, replacement: source("../chord/src/index.ts") },
 	{ find: /^@earendil-works\/pi-agent-core$/, replacement: source("../agent/src/index.ts") },
 	{ find: /^@earendil-works\/pi-ai$/, replacement: source("../ai/src/index.ts") },
@@ -31,5 +32,10 @@ export default defineConfig({
 				changeOrigin: true,
 			},
 		},
+	},
+	test: {
+		// 默认单测 + bench/*.bench.ts（P2-9 长会话基线；常规 `--run test` 过滤器不含
+		// bench/ 路径，bench 仅在显式指定 `--run bench/...` 时运行，避免拖慢 CI）。
+		include: ["test/**/*.{test,spec}.?(c|m)[jt]s?(x)", "bench/*.bench.ts"],
 	},
 });
