@@ -28,13 +28,13 @@ export function restoreLineEndings(text: string, ending: "\r\n" | "\n"): string 
  * - Normalize special Unicode spaces to regular space
  */
 export function normalizeForFuzzyMatch(text: string): string {
+	return fuzzyNormalize(text);
+}
+
+/** Per-character 1:1 punctuation/space folding applied after NFKC (mapping-safe). */
+function foldPunctuationAndSpaces(text: string): string {
 	return (
 		text
-			.normalize("NFKC")
-			// Strip trailing whitespace per line
-			.split("\n")
-			.map((line) => line.trimEnd())
-			.join("\n")
 			// Smart single quotes → '
 			.replace(/[\u2018\u2019\u201A\u201B]/g, "'")
 			// Smart double quotes → "
@@ -48,6 +48,81 @@ export function normalizeForFuzzyMatch(text: string): string {
 			// U+205F medium math space, U+3000 ideographic space
 			.replace(/[\u00A0\u2002-\u200A\u202F\u205F\u3000]/g, " ")
 	);
+}
+
+function fuzzyNormalize(text: string): string {
+	return foldPunctuationAndSpaces(
+		text
+			.normalize("NFKC")
+			// Strip trailing whitespace per line
+			.split("\n")
+			.map((line) => line.trimEnd())
+			.join("\n"),
+	);
+}
+
+interface FuzzyCharOrigin {
+	/** Offset of the first code unit of the origin cluster in the original text. */
+	origin: number;
+	/** Offset past the last code unit of the origin cluster in the original text. */
+	end: number;
+}
+
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+
+/**
+ * Fuzzy-normalize `text` while tracking every normalized character back to its
+ * origin cluster in `text`（`map[i]` 为第 i 个规范化字符来源簇的原始区间）。
+ * 一个原始簇可展开为多个规范化字符（ﬁ → fi），因此映射是多对一。
+ *
+ * 逐 grapheme 簇做 NFKC 与整串 NFKC 结果一致：规范重组不跨越字素簇边界
+ * （UAX#29 的簇已包含全部组合标记）。trimEnd 与 1:1 标点/空格折叠在簇级
+ * 同步维护映射，保证与 {@link normalizeForFuzzyMatch} 语义一致。
+ */
+export function fuzzyNormalizeWithMap(text: string): { normalized: string; map: FuzzyCharOrigin[] } {
+	interface Piece {
+		normalized: string;
+		origin: number;
+		end: number;
+		whitespace: boolean;
+		newline: boolean;
+	}
+	const pieces: Piece[] = [];
+	for (const { segment, index } of graphemeSegmenter.segment(text)) {
+		const normalized = foldPunctuationAndSpaces(segment.normalize("NFKC"));
+		pieces.push({
+			normalized,
+			origin: index,
+			end: index + segment.length,
+			whitespace: /\s/u.test(normalized),
+			newline: normalized === "\n",
+		});
+	}
+	// 行级 trimEnd：从串尾/每个 \n 往前，删除连续空白簇（与 trimEnd 的
+	// 行尾语义一致；行首与行中间的空白保留）
+	const keep: boolean[] = new Array<boolean>(pieces.length).fill(true);
+	let inTrailingRun = true;
+	for (let i = pieces.length - 1; i >= 0; i--) {
+		const piece = pieces[i]!;
+		if (piece.newline) {
+			inTrailingRun = true;
+			continue;
+		}
+		if (piece.whitespace && inTrailingRun) {
+			keep[i] = false;
+			continue;
+		}
+		inTrailingRun = false;
+	}
+	let normalized = "";
+	const map: FuzzyCharOrigin[] = [];
+	for (let i = 0; i < pieces.length; i++) {
+		if (!keep[i]) continue;
+		const piece = pieces[i]!;
+		normalized += piece.normalized;
+		for (let k = 0; k < piece.normalized.length; k++) map.push({ origin: piece.origin, end: piece.end });
+	}
+	return { normalized, map };
 }
 
 function splitLinesWithEndings(content: string): string[] {
@@ -119,6 +194,11 @@ function applyReplacements(content: string, replacements: TextReplacement[], off
  * Apply replacements matched against `baseContent` to `originalContent` while
  * preserving unchanged line blocks from the original.
  *
+ * Kept for extension callers. The internal edit path no longer uses it: fuzzy
+ * matches are mapped back to original coordinates instead, which preserves the
+ * original bytes of every character outside the matched range (this helper
+ * rewrites touched lines from the normalized base).
+ *
  * This is useful when `baseContent` is a normalized view of the original. Each
  * replacement is widened to the lines it actually touches, those touched lines
  * are rewritten from the normalized base, and all other lines are copied back
@@ -178,8 +258,9 @@ export interface FuzzyMatchResult {
 	/** Whether fuzzy matching was used (false = exact match) */
 	usedFuzzyMatch: boolean;
 	/**
-	 * The content to use for replacement operations.
-	 * When exact match: original content. When fuzzy match: normalized content.
+	 * The content to use for replacement operations. Always the original
+	 * content: fuzzy match offsets are mapped back to original coordinates, so
+	 * replacements applied there never rewrite bytes outside the matched range.
 	 */
 	contentForReplacement: string;
 }
@@ -196,9 +277,9 @@ export interface AppliedEditsResult {
 
 /**
  * Find oldText in content, trying exact match first, then fuzzy match.
- * When fuzzy matching is used, the returned contentForReplacement is the
- * fuzzy-normalized version of the content (trailing whitespace stripped,
- * Unicode quotes/dashes normalized to ASCII).
+ * Both paths return offsets in original-content coordinates and the original
+ * content as contentForReplacement, so callers can replace the matched range
+ * without rewriting any bytes outside it.
  */
 export function fuzzyFindText(content: string, oldText: string): FuzzyMatchResult {
 	// Try exact match first
@@ -213,12 +294,8 @@ export function fuzzyFindText(content: string, oldText: string): FuzzyMatchResul
 		};
 	}
 
-	// Try fuzzy match - work entirely in normalized space
-	const fuzzyContent = normalizeForFuzzyMatch(content);
-	const fuzzyOldText = normalizeForFuzzyMatch(oldText);
-	const fuzzyIndex = fuzzyContent.indexOf(fuzzyOldText);
-
-	if (fuzzyIndex === -1) {
+	const range = findFuzzyRange(fuzzyNormalizeWithMap(content), normalizeForFuzzyMatch(oldText));
+	if (range === undefined) {
 		return {
 			found: false,
 			index: -1,
@@ -227,28 +304,38 @@ export function fuzzyFindText(content: string, oldText: string): FuzzyMatchResul
 			contentForReplacement: content,
 		};
 	}
-
-	// When fuzzy matching, return offsets in normalized space. Callers can use
-	// the normalized content to compute replacements, then decide how much of
-	// that normalized output should be written back.
 	return {
 		found: true,
-		index: fuzzyIndex,
-		matchLength: fuzzyOldText.length,
+		index: range.start,
+		matchLength: range.end - range.start,
 		usedFuzzyMatch: true,
-		contentForReplacement: fuzzyContent,
+		contentForReplacement: content,
 	};
+}
+
+/** Map a fuzzy-space match back to the original-text range it came from. */
+function findFuzzyRange(
+	fuzzy: { normalized: string; map: FuzzyCharOrigin[] },
+	fuzzyOldText: string,
+): { start: number; end: number } | undefined {
+	if (fuzzyOldText.length === 0) return undefined;
+	const fuzzyIndex = fuzzy.normalized.indexOf(fuzzyOldText);
+	if (fuzzyIndex === -1) return undefined;
+	// 端点取来源簇的原始区间：起点 = 首个匹配字符的簇起点；终点 = 末个匹配
+	// 字符的簇终点。末字符之后被 trimEnd 吸收的行尾空白留在区间外，除非
+	// oldText 自身延伸到换行符（此时 \n 的簇终点越过行尾空白，整行替换）。
+	const start = fuzzy.map[fuzzyIndex]!.origin;
+	const end = fuzzy.map[fuzzyIndex + fuzzyOldText.length - 1]!.end;
+	return { start, end };
+}
+
+function countExact(content: string, needle: string): number {
+	return content.split(needle).length - 1;
 }
 
 /** Strip UTF-8 BOM if present, return both the BOM (if any) and the text without it */
 export function stripBom(content: string): { bom: string; text: string } {
 	return content.startsWith("\uFEFF") ? { bom: "\uFEFF", text: content.slice(1) } : { bom: "", text: content };
-}
-
-function countOccurrences(content: string, oldText: string): number {
-	const fuzzyContent = normalizeForFuzzyMatch(content);
-	const fuzzyOldText = normalizeForFuzzyMatch(oldText);
-	return fuzzyContent.split(fuzzyOldText).length - 1;
 }
 
 function getNotFoundError(path: string, editIndex: number, totalEdits: number): Error {
@@ -293,10 +380,11 @@ function getNoChangeError(path: string, totalEdits: number): Error {
  * Apply one or more exact-text replacements to LF-normalized content.
  *
  * All edits are matched against the same original content. Replacements are
- * then applied in reverse order so offsets remain stable. If any edit needs
- * fuzzy matching, the operation runs in fuzzy-normalized content space and then
- * overlays those line-level changes onto the original content so unchanged line
- * blocks keep their original bytes.
+ * then applied in reverse order so offsets remain stable. Exact matches
+ * replace their range directly; fuzzy matches are located in fuzzy-normalized
+ * space and mapped back to the original-text range they came from, so bytes
+ * outside each matched range (NBSP, smart quotes, trailing whitespace, ...)
+ * always keep their original values.
  */
 export function applyEditsToNormalizedContent(
 	normalizedContent: string,
@@ -314,27 +402,53 @@ export function applyEditsToNormalizedContent(
 		}
 	}
 
-	const initialMatches = normalizedEdits.map((edit) => fuzzyFindText(normalizedContent, edit.oldText));
-	const usedFuzzyMatch = initialMatches.some((match) => match.usedFuzzyMatch);
-	const replacementBaseContent = usedFuzzyMatch ? normalizeForFuzzyMatch(normalizedContent) : normalizedContent;
+	// 内容的 fuzzy 视图每次调用只构建一次（含原始坐标映射）；
+	// oldText 的 fuzzy 视图按内容缓存，多编辑时不重复规范化
+	const contentFuzzy = fuzzyNormalizeWithMap(normalizedContent);
+	const oldTextFuzzy = new Map<string, string>();
+	const fuzzyViewOf = (oldText: string): string => {
+		let view = oldTextFuzzy.get(oldText);
+		if (view === undefined) {
+			view = normalizeForFuzzyMatch(oldText);
+			oldTextFuzzy.set(oldText, view);
+		}
+		return view;
+	};
 
 	const matchedEdits: MatchedEdit[] = [];
 	for (let i = 0; i < normalizedEdits.length; i++) {
 		const edit = normalizedEdits[i];
-		const matchResult = fuzzyFindText(replacementBaseContent, edit.oldText);
-		if (!matchResult.found) {
+		// 精确优先：在原始（LF）空间查找与计数
+		const exactIndex = normalizedContent.indexOf(edit.oldText);
+		if (exactIndex !== -1) {
+			const occurrences = countExact(normalizedContent, edit.oldText);
+			if (occurrences > 1) {
+				throw getDuplicateError(path, i, normalizedEdits.length, occurrences);
+			}
+			matchedEdits.push({
+				editIndex: i,
+				matchIndex: exactIndex,
+				matchLength: edit.oldText.length,
+				newText: edit.newText,
+			});
+			continue;
+		}
+		// fuzzy：规范化空间查找，映射回原始区间后整体替换——命中区间之外的
+		// 原始字节保持原样。唯一性也在 fuzzy 空间计数（此路径原始空间必 miss，
+		// 原始计数恒为 0）。
+		const fuzzyOldText = fuzzyViewOf(edit.oldText);
+		const range = findFuzzyRange(contentFuzzy, fuzzyOldText);
+		if (range === undefined) {
 			throw getNotFoundError(path, i, normalizedEdits.length);
 		}
-
-		const occurrences = countOccurrences(replacementBaseContent, edit.oldText);
+		const occurrences = countExact(contentFuzzy.normalized, fuzzyOldText);
 		if (occurrences > 1) {
 			throw getDuplicateError(path, i, normalizedEdits.length, occurrences);
 		}
-
 		matchedEdits.push({
 			editIndex: i,
-			matchIndex: matchResult.index,
-			matchLength: matchResult.matchLength,
+			matchIndex: range.start,
+			matchLength: range.end - range.start,
 			newText: edit.newText,
 		});
 	}
@@ -350,16 +464,12 @@ export function applyEditsToNormalizedContent(
 		}
 	}
 
-	const baseContent = normalizedContent;
-	const newContent = usedFuzzyMatch
-		? applyReplacementsPreservingUnchangedLines(normalizedContent, replacementBaseContent, matchedEdits)
-		: applyReplacements(replacementBaseContent, matchedEdits);
-
-	if (baseContent === newContent) {
+	const newContent = applyReplacements(normalizedContent, matchedEdits);
+	if (normalizedContent === newContent) {
 		throw getNoChangeError(path, normalizedEdits.length);
 	}
 
-	return { baseContent, newContent };
+	return { baseContent: normalizedContent, newContent };
 }
 
 /** Generate a standard unified patch. */
