@@ -20,9 +20,10 @@ export function ConnectionGate(): ReactNode {
 	const connected = phase === "ready" && connectionState === "connected"
 	const connecting = phase === "connecting"
 
-	// 自动连接失败（error 非空且未在连接中）→ 自动弹开配置（预填已保存偏好）
+	// 自动连接失败或运行中断线（error 非空且未在连接中）→ 自动弹开配置（预填已保存偏好）。
+	// 此前条件限定 phase === "idle"，运行中断线时 phase 保持 "ready"，弹窗永不触发。
 	useEffect(() => {
-		if (error !== undefined && phase === "idle" && connectionState === "disconnected") {
+		if (error !== undefined && phase !== "connecting" && connectionState === "disconnected") {
 			const prefs = loadConnectionPrefs()
 			form.setFieldsValue({ url: prefs.url, serverId: prefs.serverId, token: prefs.token })
 			setOpen(true)
@@ -57,7 +58,13 @@ export function ConnectionGate(): ReactNode {
 			>
 				<ApiOutlined style={{ fontSize: 14 }} />
 				<span
-					className={`status-dot ${connected ? "status-dot-on" : connecting ? "status-dot-on" : "status-dot-off"}`}
+					className={
+						connected
+							? "status-dot"
+							: connecting
+								? "status-dot status-dot-connecting"
+								: "status-dot status-dot-warning"
+					}
 					aria-hidden="true"
 				/>
 				<span className="pi-connection-text">
@@ -101,7 +108,7 @@ export function ConnectionGate(): ReactNode {
 					</Form.Item>
 				</Form>
 				{error !== undefined && (
-					<div style={{ color: "var(--th-danger, #cf1322)", fontSize: 12 }}>{error}</div>
+					<div style={{ color: "var(--err)", fontSize: 12 }}>{error}</div>
 				)}
 			</Modal>
 		</>

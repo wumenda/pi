@@ -1,4 +1,4 @@
-import type { JsonValue } from "@earendil-works/chord";
+import type { JsonValue, ReplicatedStateDelivery } from "@earendil-works/chord";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import type { Client, ConnectionState } from "@earendil-works/pi-client";
 import type { ServerHello } from "@earendil-works/pi-protocol";
@@ -37,6 +37,8 @@ export interface PiAppState {
 	readonly sessions: SessionSummary[] | undefined;
 	readonly activeSessionId: string | undefined;
 	readonly transcript: TranscriptState | undefined;
+	/** transcript 最近一次投递（update 携带 ops，供增量投影；与 transcript 同批更新） */
+	readonly lastDelivery: ReplicatedStateDelivery | undefined;
 	readonly promptError: string | undefined;
 }
 
@@ -116,6 +118,48 @@ const logError = (message: string): void => {
 };
 const truncate = (text: string, max = 200): string =>
 	text.length <= max ? text : `${text.slice(0, max)}…(${text.length} chars)`;
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const REATTACH_RETRY_MS = 100;
+const REATTACH_MAX_ATTEMPTS = 50;
+
+/**
+ * 断线恢复编排：重连后幂等 re-attach 记住的会话，并清空 transcript。
+ *
+ * 为什么需要：断线时服务端丢弃 attachment，会话级 chord 服务（transcript 等）
+ * 全部解绑；客户端自动重连成功只恢复 server 通道，会话仍处于未 attach 态——
+ * 不主动恢复的话，transcript 快照被 useSessionEvents 的会话匹配静默丢弃，
+ * UI 冻结在断线前内容。清空 transcript 让快照引用比较失效，新快照到达后
+ * 必然触发重投影。
+ *
+ * attach 依赖 server 通道重绑定完成（异步），刚重连时可能尚未就绪，
+ * 按固定间隔重试，有界不无限；isCurrent 失真（连接被替换/释放）立即中止。
+ */
+async function reattachAfterReconnect(
+	services: PiServices,
+	sessionId: string,
+	isCurrent: () => boolean,
+): Promise<boolean> {
+	for (let attempt = 1; attempt <= REATTACH_MAX_ATTEMPTS; attempt++) {
+		if (!isCurrent()) return false;
+		try {
+			await services.ready();
+			if (!isCurrent()) return false;
+			await services.sessionManagement.attach(sessionId, BACKGROUND_CONTEXT);
+			if (!isCurrent()) return false;
+			usePiStore.setState({ transcript: undefined, lastDelivery: undefined });
+			logInfo(`reattachAfterReconnect: ${sessionId} attached after reconnect (attempt ${attempt})`);
+			return true;
+		} catch (error) {
+			logError(
+				`reattachAfterReconnect: attempt ${attempt} failed: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			await sleep(REATTACH_RETRY_MS);
+		}
+	}
+	logError(`reattachAfterReconnect: gave up on ${sessionId} after ${REATTACH_MAX_ATTEMPTS} attempts`);
+	return false;
+}
 
 interface PiStoreState extends PiAppState {
 	connect: (prefs: PiConnectionPrefs) => void;
@@ -139,6 +183,7 @@ const initialState: PiAppState = {
 	sessions: undefined,
 	activeSessionId: undefined,
 	transcript: undefined,
+	lastDelivery: undefined,
 	promptError: undefined,
 };
 
@@ -177,17 +222,26 @@ export const usePiStore = create<PiStoreState>()((set) => ({
 			if (seq !== connectSeq) return;
 			if (change.state === "disconnected") {
 				logError(`connection lost: ${change.error?.message ?? "no error detail"}`);
+				// 保留 activeSessionId 作为断线恢复记忆：自动重连成功后由
+				// reattachAfterReconnect 幂等 re-attach。手动 connect()/disconnect()
+				// 仍经 initialState 清空（新连接上下文，无需恢复旧会话）。
 				set({
 					connectionState: change.state,
 					hello: undefined,
 					sessions: undefined,
-					activeSessionId: undefined,
 					transcript: undefined,
+					lastDelivery: undefined,
 					error: change.error?.message,
 				});
 			} else {
 				logInfo(`connection state: ${change.state}`);
 				set({ connectionState: change.state });
+				// 自动重连成功：恢复断线前 attach 的会话（初次连接时 activeSessionId
+				// 尚为 undefined，自然跳过）。attach 是幂等的，重复 attach 安全。
+				const remembered = usePiStore.getState().activeSessionId;
+				if (remembered !== undefined) {
+					void reattachAfterReconnect(nextServices, remembered, () => seq === connectSeq);
+				}
 			}
 		});
 
@@ -207,11 +261,11 @@ export const usePiStore = create<PiStoreState>()((set) => ({
 					if (value !== undefined) set({ sessions: value.sessions });
 				});
 				logInfo("session-directory subscribed");
-				nextServices.transcript.state.subscribe((value) => {
+				nextServices.transcript.state.subscribe((value, _context, delivery) => {
 					if (value === undefined) return;
 					const eventType = value.event?.type;
 					if (eventType !== undefined) logDebug(`transcript event: ${eventType}`);
-					set({ transcript: value });
+					set({ transcript: value, lastDelivery: delivery });
 				});
 				logInfo("transcript subscribed (awaiting attach)");
 			} catch (error) {
@@ -239,7 +293,7 @@ export const usePiStore = create<PiStoreState>()((set) => ({
 		logInfo(`createSession: created ${summary.sessionId}, attaching`);
 		await s.sessionManagement.attach(summary.sessionId, BACKGROUND_CONTEXT);
 		logInfo(`createSession: attached ${summary.sessionId} (session services bound)`);
-		set({ activeSessionId: summary.sessionId, transcript: undefined });
+		set({ activeSessionId: summary.sessionId, transcript: undefined, lastDelivery: undefined });
 		return summary.sessionId;
 	},
 
@@ -248,7 +302,7 @@ export const usePiStore = create<PiStoreState>()((set) => ({
 		logInfo(`attachSession: ${sessionId}`);
 		await s.sessionManagement.attach(sessionId, BACKGROUND_CONTEXT);
 		logInfo(`attachSession: ${sessionId} attached (session services bound)`);
-		set({ activeSessionId: sessionId, transcript: undefined });
+		set({ activeSessionId: sessionId, transcript: undefined, lastDelivery: undefined });
 	},
 
 	detach: async () => {
@@ -256,7 +310,7 @@ export const usePiStore = create<PiStoreState>()((set) => ({
 		if (s === undefined) return;
 		logInfo("detach");
 		await s.sessionManagement.detach(BACKGROUND_CONTEXT);
-		set({ activeSessionId: undefined, transcript: undefined });
+		set({ activeSessionId: undefined, transcript: undefined, lastDelivery: undefined });
 	},
 
 	prompt: async (message) => {
