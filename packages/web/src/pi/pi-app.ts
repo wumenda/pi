@@ -99,13 +99,14 @@ export function saveConnectionPrefs(prefs: PiConnectionPrefs): void {
 }
 
 /**
- * 零手填连接（合并规则）：仅当存档 serverId 为空时采纳自动发现的 id——
- * 非空存档可能是有意指向另一个 server，不覆盖；发现值必须是规范 UUIDv4，否则忽略。
+ * 零手填连接（合并规则）：规范 UUIDv4 的发现值始终优先——serverId 是 server 身份
+ * 而非用户偏好，app-server 重启换数据目录/重生 id 后存档必然过期（hello 校验
+ * "does not match"），以 HTTP 面（同源静态托管/开发代理）发现值为准可自愈陈旧
+ * 存档；发现值缺失/不合法时回退存档。
  */
 export function withDiscoveredServerId(prefs: PiConnectionPrefs, discovered: string | undefined): PiConnectionPrefs {
-	if (prefs.serverId.trim().length > 0) return prefs;
-	if (discovered === undefined || !isServerId(discovered)) return prefs;
-	return { ...prefs, serverId: discovered };
+	if (discovered !== undefined && isServerId(discovered)) return { ...prefs, serverId: discovered };
+	return prefs;
 }
 
 // ---- 排查日志 ----

@@ -6,9 +6,11 @@ import { useAppStore } from "../stores/app-store";
 
 /**
  * 启动壳层职责（pi 适配版）：
- * - 自动连接：localStorage 已保存连接配置（serverId 非空）时启动即连；
- * - 零手填：serverId 为空时从 app-server HTTP 面自动发现（同源 /api 代理与静态
- *   托管均可达），发现成功才存档并连接；失败维持"未连接"，弹窗仍可手动配置；
+ * - 零手填：启动总是先从 app-server HTTP 面发现 serverId（同源 /api 代理与静态
+ *   托管均可达）——发现值优先，自愈 localStorage 里指向旧 server 的陈旧存档；
+ *   发现成功才存档并连接；
+ * - 兜底：发现失败（app-server 未起）回退存档直连（存档为空则维持"未连接"，
+ *   弹窗仍可手动配置）；
  * - 会话清单：连接就绪后从 session-directory 拉取并写入 store。
  */
 export function useAppBootstrap(): void {
@@ -16,10 +18,6 @@ export function useAppBootstrap(): void {
 
 	useEffect(() => {
 		const prefs = loadConnectionPrefs();
-		if (prefs.serverId.trim().length > 0) {
-			usePiStore.getState().connect(prefs);
-			return;
-		}
 		void fetchServerId(prefs.token)
 			.then((discovered) => {
 				const resolved = withDiscoveredServerId(prefs, discovered);
@@ -27,7 +25,10 @@ export function useAppBootstrap(): void {
 				saveConnectionPrefs(resolved);
 				usePiStore.getState().connect(resolved);
 			})
-			.catch(() => undefined);
+			.catch(() => {
+				if (prefs.serverId.trim().length === 0) return;
+				usePiStore.getState().connect(prefs);
+			});
 	}, []);
 
 	useEffect(() => {

@@ -8,19 +8,16 @@ function prefs(serverId: string) {
 }
 
 describe("withDiscoveredServerId", () => {
-	it("adopts the discovered id only when the saved one is empty", () => {
+	it("a valid discovered id always wins (server identity, heals stale archives)", () => {
 		expect(withDiscoveredServerId(prefs(""), VALID)).toEqual(prefs(VALID));
 		expect(withDiscoveredServerId(prefs("  "), VALID)).toEqual(prefs(VALID));
-	});
-
-	it("never overwrites a non-empty saved id (it may target another server on purpose)", () => {
 		const saved = prefs("11111111-1111-4111-8111-111111111111");
-		expect(withDiscoveredServerId(saved, VALID)).toBe(saved);
+		expect(withDiscoveredServerId(saved, VALID)).toEqual(prefs(VALID));
 	});
 
-	it("ignores discovered values that are not canonical UUIDv4", () => {
-		const empty = prefs("");
-		expect(withDiscoveredServerId(empty, "not-a-uuid")).toBe(empty);
-		expect(withDiscoveredServerId(empty, undefined)).toBe(empty);
+	it("falls back to the saved id when discovery is missing or not canonical UUIDv4", () => {
+		const saved = prefs("11111111-1111-4111-8111-111111111111");
+		expect(withDiscoveredServerId(saved, "not-a-uuid")).toBe(saved);
+		expect(withDiscoveredServerId(saved, undefined)).toBe(saved);
 	});
 });
