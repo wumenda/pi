@@ -22,6 +22,7 @@ import { loadMcpServerConfigs } from "./mcp-config.ts";
 import { createSessionRuntime, type SessionRuntime } from "./runtime.ts";
 import { createServerServices, type ServerServices } from "./services/server-services.ts";
 import { createSessionServices, type SessionServiceRuntime } from "./services/session-services.ts";
+import { isValidSessionId } from "./session-id.ts";
 import { createSessionStore, type SessionStore } from "./sessions.ts";
 import { resolveSkillDirs, type SkillDetailEntry, type SkillManifestEntry, scanSkills } from "./skills-manifest.ts";
 import { createToolEventRecorder, recordToolEvent, type ToolEventRecorder } from "./tool-events.ts";
@@ -213,8 +214,10 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 		const skill = skillScan.skills.find((candidate) => candidate.name === name);
 		return { ...entry, body: skill?.content ?? "", metadataUnavailable: false };
 	};
-	// 会话文件根：<dataDir>/sessions-workspace/<sessionId>；store.resolve 校验存在性（含路径注入拒绝）
+	// 会话文件根：<dataDir>/sessions-workspace/<sessionId>；store.resolve 校验存在性，
+	// isValidSessionId 校验格式（拒绝路径分隔符/点段，封堵目录穿越——含历史遗留的恶意 id 会话）
 	const sessionFilesRoot = async (sessionId: string): Promise<string | null> => {
+		if (!isValidSessionId(sessionId)) return null;
 		try {
 			await store.resolve(sessionId);
 			return resolve(deps.config.dataDir, "sessions-workspace", sessionId);
@@ -224,7 +227,14 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 	};
 	const services = await createServerServices({
 		list: async () => (await store.list()).map(toSummary),
-		create: async (createOptions) => toSummary(await store.create(createOptions.id)),
+		create: async (createOptions) => {
+			// 客户端自定义 id 在创建边界做白名单校验：非法 id（路径分隔符/点段）直接拒绝，
+			// 不落盘、不进入目录；错误经 WS RPC 返回给调用方
+			if (createOptions.id !== undefined && !isValidSessionId(createOptions.id)) {
+				throw new Error(`Invalid session id: ${JSON.stringify(createOptions.id)}`);
+			}
+			return toSummary(await store.create(createOptions.id));
+		},
 		remove: async (sessionId) => {
 			await closeRuntime(sessionId);
 			await store.delete(sessionId);
@@ -243,6 +253,11 @@ export async function createAppServerHost(deps: AppServerHostDeps, serverId: str
 			}
 		},
 		async openSession(metadata) {
+			// 边界校验：遗留的恶意 id 会话（修复前可能已落盘）不允许 attach 打开运行时——
+			// tool-events 落盘文件名派生自 metadata.id，放行会让工具事件逃出 <dataDir>/tool-events/
+			if (!isValidSessionId(metadata.id)) {
+				throw new Error(`Invalid session id: ${JSON.stringify(metadata.id)}`);
+			}
 			let entry = runtimes.get(metadata.id);
 			if (entry === undefined) {
 				const startedAt = Date.now();
