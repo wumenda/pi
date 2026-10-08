@@ -84,6 +84,8 @@ MCP Apps related features are documented under `docs/` (see `docs/MCP-Apps-概�
 - Record a reference to that doc in this file (AGENTS.md) so future sessions can find it.
 - app-server platform (real backend + web + MCP Apps protocol): see [docs/app-server-平台.md](docs/app-server-平台.md).
 - web 前端复刻（工业 Agent 工作台 UI + pi 后端适配层）: see [docs/pi-web-工业工作台复刻.md](docs/pi-web-工业工作台复刻.md).
+- web 长会话渲染性能（P2-8/P2-9：增量投影 / 游标化扫描 / 窗口化 / 基线设施）: see [docs/pi-web-长会话渲染性能.md](docs/pi-web-长会话渲染性能.md).
+- web 运行失败提示（输入区红色 pill，transcript lastResult 失败态派生）: see [docs/pi-web-运行失败提示.md](docs/pi-web-运行失败提示.md).
 - app-server 技能清单扫描（~/.pi/agent/skills + .pi/skills → harness 注入 + /api/v1/skills）与全量 MCP 工具发现（/api/v1/tools）: see [docs/pi-app-server-技能清单与工具发现.md](docs/pi-app-server-技能清单与工具发现.md).
 - app-server 数据中心（任务/资料/成果注册表 + 文件流 + 关系图 + 成果包 zip，/api/v1/data-center/*）: see [docs/pi-app-server-数据中心.md](docs/pi-app-server-数据中心.md).
 

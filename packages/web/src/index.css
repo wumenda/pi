@@ -1550,6 +1550,28 @@ body.pane-col-resizing iframe {
   }
 }
 
+/* 运行失败 pill（输入区上方，chat-run-error-pill）：红色状态条展示失败原因，
+   超长文案单行省略（悬停 title 看全文）；运行中/成功后隐藏 */
+.chat-run-error-pill {
+  display: flex;
+  align-items: center;
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #ef4444 10%, var(--ind-muted));
+  border: 1px solid color-mix(in srgb, #ef4444 35%, transparent);
+  color: #ef4444;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.chat-run-error-pill-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .chat-input-box {
   display: flex;
   flex-direction: column;
