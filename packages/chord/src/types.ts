@@ -39,6 +39,8 @@ export type JsonRepresentation<T> = IsAny<T> extends true
 export interface ReplicatedStateDelivery {
 	readonly kind: "hydrate" | "update";
 	readonly sequence: number;
+	/** update 投递携带本批 ops（hydrate 为 undefined）；apply(delivery.ops, prev) === value 可对拍验证 */
+	readonly ops?: readonly Op[];
 }
 
 export interface ReplicatedState<T> {

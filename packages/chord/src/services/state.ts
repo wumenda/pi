@@ -98,7 +98,7 @@ export class MutableReplicatedStateImpl<T extends object> implements MutableRepl
 						errors.push(error);
 					}
 				}
-				const delivery = { kind: "update", sequence: publication.sequence } as const;
+				const delivery = { kind: "update", sequence: publication.sequence, ops: publication.ops } as const;
 				for (const [listener, hydratedSequence] of [...this.#listeners]) {
 					if (publication.sequence <= hydratedSequence) continue;
 					try {
@@ -174,7 +174,7 @@ export class ReplicatedStateReplica<T extends JsonValue = JsonValue> implements 
 		}
 		this.#sequence = sequence;
 		this.#value = next;
-		this.#deliverAll(context, { kind: "update", sequence });
+		this.#deliverAll(context, { kind: "update", sequence, ops });
 	}
 
 	clear(): void {

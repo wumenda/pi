@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BACKGROUND_CONTEXT } from "../src/context/index.ts";
+import { applyImmutable } from "../src/delta/index.ts";
 import { replicatedState } from "../src/index.ts";
 import { ReplicatedStateReplica } from "../src/services/state.ts";
 import { getReplicatedStateInternals } from "../src/services/state-internals.ts";
@@ -190,5 +191,65 @@ describe("transactional replicated state", () => {
 		state.replace(BACKGROUND_CONTEXT, { ...state.value, value: { nested: 2 } });
 		expect(state.value).toEqual({ value: { nested: 2 }, retained: { nested: 2 } });
 		expect(state.value.retained).not.toBe(previous.retained);
+	});
+});
+
+describe("replicated state delivery ops", () => {
+	it("attaches replayable ops to update deliveries on the source state", () => {
+		const state = replicatedState({ text: "abcdefgh", values: [{ id: "a" }] });
+		let previous = state.value;
+		let updates = 0;
+		state.subscribe((value, _context, delivery) => {
+			if (delivery.kind === "hydrate") {
+				expect(delivery.ops).toBeUndefined();
+				return;
+			}
+			expect(delivery.ops).toBeDefined();
+			expect(applyImmutable(previous, delivery.ops!)).toEqual(value);
+			previous = value;
+			updates += 1;
+		});
+		state.change(BACKGROUND_CONTEXT, (draft) => {
+			draft.text = "defghxyz";
+		});
+		state.change(BACKGROUND_CONTEXT, (draft) => {
+			draft.values[0].id = "b";
+			draft.values.push({ id: "c" });
+		});
+		state.replace(BACKGROUND_CONTEXT, { text: "xyz", values: [] });
+		expect(updates).toBe(3);
+		expect(state.value).toEqual({ text: "xyz", values: [] });
+	});
+
+	it("attaches replayable ops to replica update deliveries", () => {
+		const errors: Error[] = [];
+		const replica = new ReplicatedStateReplica<{ text: string; values: number[] }>((error) => errors.push(error));
+		let previous: { text: string; values: number[] } | undefined;
+		const updates: Array<{ sequence: number; replay: { text: string; values: number[] } }> = [];
+		replica.subscribe((value, _context, delivery) => {
+			if (delivery.kind === "hydrate") {
+				expect(delivery.ops).toBeUndefined();
+				previous = value;
+				return;
+			}
+			expect(delivery.ops).toBeDefined();
+			updates.push({
+				sequence: delivery.sequence,
+				replay: applyImmutable(previous!, delivery.ops!),
+			});
+			previous = value;
+		});
+		replica.hydrate(0, [["r", { text: "ab", values: [1] }]], BACKGROUND_CONTEXT);
+		replica.update(
+			1,
+			[
+				["a", ["text"], "cde"],
+				["p", ["values"], 1, 0, [2]],
+			],
+			BACKGROUND_CONTEXT,
+		);
+		expect(updates).toEqual([{ sequence: 1, replay: { text: "abcde", values: [1, 2] } }]);
+		expect(replica.value).toEqual({ text: "abcde", values: [1, 2] });
+		expect(errors).toEqual([]);
 	});
 });

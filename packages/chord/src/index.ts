@@ -10,6 +10,7 @@ export {
 	defineService,
 	replicatedState,
 } from "./api.ts";
+export type { Op, Path } from "./delta/index.ts";
 export { isJsonValue } from "./json.ts";
 export {
 	isRemoteServiceErrorCode,
