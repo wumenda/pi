@@ -1,9 +1,10 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import { constants } from "fs";
-import { access as fsAccess, readFile as fsReadFile, writeFile as fsWriteFile } from "fs/promises";
+import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
 import { type Static, Type } from "typebox";
 import { splitBom } from "../../utils/text.ts";
 import type { ExtensionContext, ToolDefinition } from "../extensions/types.ts";
+import { writeFileAtomic } from "./atomic-write.ts";
 import {
 	applyEditsToNormalizedContent,
 	detectLineEnding,
@@ -91,7 +92,8 @@ export interface EditOperations {
 
 const defaultEditOperations: EditOperations = {
 	readFile: (path) => fsReadFile(path),
-	writeFile: (path, content) => fsWriteFile(path, content, "utf-8"),
+	// 原子替换：写一半崩溃不留损坏文件（temp + fsync + rename）
+	writeFile: (path, content) => writeFileAtomic(path, content),
 	access: (path) => fsAccess(path, constants.R_OK | constants.W_OK),
 };
 
