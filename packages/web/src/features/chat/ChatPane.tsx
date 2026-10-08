@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { EllipsisOutlined } from "@ant-design/icons"
+import { ErrorBoundary } from "../../components/ErrorBoundary"
 import { ChatInput } from "./ChatInput"
 import { MessageList } from "./MessageList"
 import { SessionActivityCard } from "./SessionActivityCard"
@@ -64,7 +65,10 @@ export function ChatPane() {
           </button>
         </div>
       </div>
-      <MessageList sessionId={sessionId} />
+      {/* 面板级边界：单条消息渲染异常降级为局部占位，不卸载整个会话 */}
+      <ErrorBoundary label="消息流渲染出错">
+        <MessageList sessionId={sessionId} />
+      </ErrorBoundary>
       {/* key=sessionId：切换/创建会话时重挂载，播放输入框上移入场动画 */}
       <ChatInput key={sessionId} sessionId={sessionId} />
       <SessionActivityCard

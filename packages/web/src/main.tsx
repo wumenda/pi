@@ -5,6 +5,7 @@ import { App as AntdApp, ConfigProvider } from "antd"
 import zhCN from "antd/locale/zh_CN"
 import enUS from "antd/locale/en_US"
 import App from "./App"
+import { ErrorBoundary } from "./components/ErrorBoundary"
 import { useAppStore } from "./stores/app-store"
 import { antdThemeConfig } from "./theme"
 import { useLangStore } from "./i18n/lang-store"
@@ -40,7 +41,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemedProviders>
       <QueryClientProvider client={queryClient}>
-        <App />
+        {/* 根兜底：任何渲染异常降级为可操作页，不白屏 */}
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </QueryClientProvider>
     </ThemedProviders>
   </React.StrictMode>,

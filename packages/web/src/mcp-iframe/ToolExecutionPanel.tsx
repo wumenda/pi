@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import { SOLO_GROUP_KEY, useAppStore } from "../stores/app-store"
+import { ErrorBoundary } from "../components/ErrorBoundary"
 import { messageBridge } from "./MessageBridge"
 import { TechDiamondIcon } from "../components/icons/TechDiamondIcon"
 
@@ -41,17 +42,20 @@ export function ToolExecutionPanel() {
     pool.has(activeUri) &&
     (pool.get(activeUri)!.group ?? SOLO_GROUP_KEY) === activeSkillName
 
+  // 面板级边界：第三方 MCP App 数据路径突变时降级为局部占位，不影响其余工作台
   return (
-    <div className="tool-exec-panel">
-      <div ref={containerRef} className="tool-exec-container" />
-      {!hasActiveInGroup && (
-        <div className="center-placeholder tool-exec-placeholder">
-          <TechDiamondIcon className="center-placeholder-icon tech-diamond" aria-hidden="true" />
-          <div className="center-placeholder-sub">
-            会话触发 Skill 加载后，将在此展示元数据与 tool 清单
+    <ErrorBoundary label="工具面板渲染出错">
+      <div className="tool-exec-panel">
+        <div ref={containerRef} className="tool-exec-container" />
+        {!hasActiveInGroup && (
+          <div className="center-placeholder tool-exec-placeholder">
+            <TechDiamondIcon className="center-placeholder-icon tech-diamond" aria-hidden="true" />
+            <div className="center-placeholder-sub">
+              会话触发 Skill 加载后，将在此展示元数据与 tool 清单
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </ErrorBoundary>
   )
 }
